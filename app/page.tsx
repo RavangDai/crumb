@@ -1,65 +1,97 @@
-import Image from "next/image";
+'use client'
+
+import { useState } from 'react'
+import ConversationInput from '@/components/ConversationInput'
+import BrainFileOutput from '@/components/BrainFileOutput'
 
 export default function Home() {
+  const [conversation, setConversation] = useState('')
+  const [crumbFile, setCrumbFile] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  const handleCompress = async () => {
+    if (!conversation.trim()) return
+
+    setIsLoading(true)
+    setError('')
+    setCrumbFile('')
+
+    try {
+      const res = await fetch('/api/compress', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ conversation }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) throw new Error(data.error || 'Something went wrong')
+
+      setCrumbFile(data.crumbFile)
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Something went wrong'
+      setError(message)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <main className="min-h-screen bg-zinc-950 text-white">
+      <div className="max-w-2xl mx-auto px-4 py-16 flex flex-col gap-10">
+
+        {/* Header */}
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-3">
+            <span className="text-3xl">🍞</span>
+            <h1 className="text-3xl font-bold tracking-tight">Crumb</h1>
+          </div>
+          <p className="text-zinc-400 text-sm leading-relaxed">
+            Compress any long AI conversation into a portable memory file.<br />
+            Drop it into any new chat and continue exactly where you left off.
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
-  );
+
+        {/* Input */}
+        <ConversationInput
+          value={conversation}
+          onChange={setConversation}
+          isLoading={isLoading}
+        />
+
+        {/* Button */}
+        <button
+          onClick={handleCompress}
+          disabled={isLoading || !conversation.trim()}
+          className="w-full py-4 rounded-xl font-semibold text-sm bg-orange-500 hover:bg-orange-400 text-white transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+        >
+          {isLoading ? (
+            <>
+              <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+              </svg>
+              Compressing...
+            </>
+          ) : (
+            '⚡ Compress Conversation'
+          )}
+        </button>
+
+        {/* Error */}
+        {error && (
+          <div className="bg-red-950 border border-red-800 rounded-xl px-4 py-3 text-sm text-red-400">
+            {error}
+          </div>
+        )}
+
+        {/* Output */}
+        {crumbFile && (
+          <BrainFileOutput content={crumbFile} />
+        )}
+
+      </div>
+    </main>
+  )
 }
