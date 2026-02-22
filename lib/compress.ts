@@ -1,6 +1,10 @@
-import { COMPRESSION_PROMPT } from './prompt'
+import { CompressionDepth, getCompressionPrompt } from './prompt'
 
-export async function compressConversation(conversation: string, server: number = 1): Promise<string> {
+export async function compressConversation(
+  conversation: string,
+  server: number = 1,
+  depth: CompressionDepth = 'memory'
+): Promise<string> {
   const wordCount = conversation.trim().split(/\s+/).length
 
   // Dynamically select the API key based on the server choice
@@ -15,6 +19,11 @@ export async function compressConversation(conversation: string, server: number 
     throw new Error(`Server ${server} API key is not configured.`)
   }
 
+  const prompt = getCompressionPrompt(depth)
+  let maxTokens = 2000
+  if (depth === 'snapshot') maxTokens = 1200
+  if (depth === 'full') maxTokens = 4000
+
   const response = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
     {
@@ -25,14 +34,14 @@ export async function compressConversation(conversation: string, server: number 
           {
             parts: [
               {
-                text: `${COMPRESSION_PROMPT}\n\nHere is the conversation to compress (approximately ${wordCount} words):\n\n${conversation}`
+                text: `${prompt}\n\nHere is the conversation to compress (approximately ${wordCount} words):\n\n${conversation}`
               }
             ]
           }
         ],
         generationConfig: {
           temperature: 0.3,
-          maxOutputTokens: 2000,
+          maxOutputTokens: maxTokens,
         }
       })
     }
