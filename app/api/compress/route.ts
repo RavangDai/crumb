@@ -3,7 +3,7 @@ import { compressConversation } from '@/lib/compress'
 
 export async function POST(req: NextRequest) {
   try {
-    const { conversation } = await req.json()
+    const { conversation, server = 1 } = await req.json()
 
     if (!conversation || conversation.trim().length === 0) {
       return NextResponse.json(
@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const crumbFile = await compressConversation(conversation)
+    const crumbFile = await compressConversation(conversation, server)
 
     return NextResponse.json({ crumbFile })
 

@@ -6,8 +6,21 @@ interface Props {
   content: string
 }
 
+const SECTIONS = [
+  { emoji: '🎯', key: 'MISSION' },
+  { emoji: '📍', key: 'CURRENT STATE' },
+  { emoji: '✅', key: 'DECISIONS MADE' },
+  { emoji: '❌', key: 'DEAD ENDS' },
+  { emoji: '🧩', key: 'KEY CONTEXT' },
+  { emoji: '❓', key: 'OPEN QUESTIONS' },
+  { emoji: '🚀', key: 'NEXT STEP' },
+]
+
 export default function BrainFileOutput({ content }: Props) {
   const [copied, setCopied] = useState(false)
+  const [view, setView] = useState<'cards' | 'raw'>('cards')
+
+  const wordCount = content.trim().split(/\s+/).length
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(content)
@@ -25,56 +38,85 @@ export default function BrainFileOutput({ content }: Props) {
     URL.revokeObjectURL(url)
   }
 
-  const wordCount = content.trim().split(/\s+/).length
+  const extractSection = (sectionKey: string): string => {
+    const lines = content.split('\n')
+    let capturing = false
+    let result: string[] = []
+
+    for (const line of lines) {
+      if (line.includes(sectionKey)) { capturing = true; continue }
+      if (capturing && line.startsWith('## ')) break
+      if (capturing && line.trim()) result.push(line)
+    }
+
+    return result.join('\n').trim() || 'No content extracted.'
+  }
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-4">
 
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <label className="text-sm font-semibold text-zinc-300">
-            Your Crumb File
-          </label>
-          <p className="text-xs text-zinc-500 mt-0.5">
-            {wordCount} words · Ready to use in any AI
-          </p>
+      {/* Output header */}
+      <div className="rounded-2xl border border-border-ocean bg-surface p-5 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-sm shadow-[0_0_10px_rgba(6,182,212,0.15)] text-primary font-heading font-bold">C.</div>
+          <div>
+            <p className="text-sm font-semibold text-text-bright font-heading">Crumb File Ready</p>
+            <p className="text-xs text-muted font-mono">{wordCount} words · Portable memory snapshot</p>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <button
-            onClick={handleCopy}
-            className="text-xs px-3 py-1.5 rounded-lg border border-zinc-700 text-zinc-400 hover:border-orange-500 hover:text-orange-400 transition"
-          >
-            {copied ? '✓ Copied!' : '📋 Copy'}
+        <div className="flex items-center gap-2">
+          <div className="flex rounded-lg border border-border-ocean/50 overflow-hidden text-xs font-mono">
+            <button
+              onClick={() => setView('cards')}
+              className={`px-3 py-1.5 transition ${view === 'cards' ? 'bg-primary text-[#020B12] font-semibold' : 'text-muted hover:text-text-main hover:bg-surface'}`}
+            >
+              Cards
+            </button>
+            <button
+              onClick={() => setView('raw')}
+              className={`px-3 py-1.5 transition ${view === 'raw' ? 'bg-primary text-[#020B12] font-semibold' : 'text-muted hover:text-text-main hover:bg-surface'}`}
+            >
+              Raw
+            </button>
+          </div>
+          <button onClick={handleCopy} className="text-xs px-3 py-1.5 rounded-lg border border-border-ocean/50 text-text-main hover:border-primary/50 hover:text-primary transition font-mono">
+            {copied ? '✓ Copied' : '📋 Copy'}
           </button>
-          <button
-            onClick={handleDownload}
-            className="text-xs px-3 py-1.5 rounded-lg border border-zinc-700 text-zinc-400 hover:border-orange-500 hover:text-orange-400 transition"
-          >
-            ⬇ Download .md
+          <button onClick={handleDownload} className="text-xs px-3 py-1.5 rounded-lg border border-border-ocean/50 text-text-main hover:border-primary/50 hover:text-primary transition font-mono">
+            ⬇ .md
           </button>
         </div>
       </div>
 
-      {/* Output Box */}
-      <div className="bg-zinc-900 border border-orange-500/30 rounded-xl p-4 max-h-96 overflow-y-auto">
-        <pre className="text-sm text-zinc-300 whitespace-pre-wrap font-mono leading-relaxed">
-          {content}
-        </pre>
-      </div>
+      {/* Cards view */}
+      {view === 'cards' && (
+        <div className="grid grid-cols-1 gap-3">
+          {SECTIONS.map((section) => (
+            <div key={section.key} className="rounded-xl border border-border-ocean/50 bg-surface p-4 flex flex-col gap-2 transition hover:border-border-ocean">
+              <div className="flex items-center gap-2">
+                <span className="text-base drop-shadow-[0_0_4px_rgba(6,182,212,0.3)]">{section.emoji}</span>
+                <span className="text-xs font-semibold text-primary uppercase tracking-widest font-heading">{section.key}</span>
+              </div>
+              <p className="text-sm text-text-bright leading-relaxed whitespace-pre-wrap font-mono">
+                {extractSection(section.key)}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
 
-      {/* How to use tip */}
-      <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
-        <p className="text-xs font-semibold text-zinc-400 mb-2">
-          💡 How to use this Crumb File
-        </p>
-        <p className="text-xs text-zinc-600 leading-relaxed">
-          Open a new chat with any AI. Start your message with:{' '}
-          <span className="text-zinc-400 italic">
-            &ldquo;Here&rsquo;s the context of our previous work: [paste crumb file]&rdquo;
-          </span>
-          {' '}&mdash; the AI will instantly understand everything and continue right where you left off.
-        </p>
+      {/* Raw view */}
+      {view === 'raw' && (
+        <div className="rounded-xl border border-border-ocean/50 bg-background p-4 max-h-96 overflow-y-auto">
+          <pre className="text-xs text-text-main whitespace-pre-wrap font-mono leading-relaxed">
+            {content}
+          </pre>
+        </div>
+      )}
+
+      {/* Usage tip */}
+      <div className="rounded-xl border border-border-ocean/50 bg-surface px-4 py-3 text-xs text-muted leading-relaxed font-mono">
+        💡 Start your next chat with: <span className="text-text-main italic">"Here's context from my previous work: [paste crumb file]"</span>
       </div>
 
     </div>
