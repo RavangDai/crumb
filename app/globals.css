@@ -2,16 +2,16 @@
 
 :root {
   --background: #040D12;
-  --surface: #0A1628;
+  --surface: #0B1929;
   --card: #0E1E33;
   --primary: #06B6D4;
   --primary-blue: #3B82F6;
   --accent: #10FDAC;
   --dim-accent: #0D4F6B;
-  --text-main: #CBD5E1;
+  --text-main: #D4DEE8;
   --text-bright: #F1F5F9;
-  --muted: #475569;
-  --border-ocean: rgba(6, 182, 212, 0.12);
+  --muted: #8899AA;
+  --border-ocean: rgba(6, 182, 212, 0.15);
 }
 
 @theme inline {

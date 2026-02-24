@@ -20,9 +20,16 @@ export async function compressConversation(
   }
 
   const prompt = getCompressionPrompt(depth)
-  let maxTokens = 2000
-  if (depth === 'snapshot') maxTokens = 1200
-  if (depth === 'full') maxTokens = 4000
+
+  // Scale output tokens based on input size — large conversations need more room
+  // The confidence JSON block alone takes ~200 tokens
+  let baseTokens = 2500
+  if (depth === 'snapshot') baseTokens = 1500
+  if (depth === 'full') baseTokens = 5000
+
+  // For larger inputs, scale up proportionally (roughly 1 output token per 4 input words)
+  const scaledTokens = Math.round(wordCount / 4)
+  let maxTokens = Math.max(baseTokens, Math.min(scaledTokens, depth === 'full' ? 8000 : depth === 'memory' ? 5000 : 2500))
 
   const response = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,

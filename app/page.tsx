@@ -56,7 +56,8 @@ export default function Home() {
     }
   }
 
-
+  const wordCount = conversation.trim().split(/\s+/).filter(Boolean).length
+  const charCount = conversation.length
 
   const scrollToCompress = () => {
     document.getElementById('compress')?.scrollIntoView({ behavior: 'smooth' })
@@ -65,38 +66,80 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-background text-text-main font-sans overflow-x-hidden pb-24">
 
-      {/* Background glows */}
+      {/* ─── Background: decorative elements that IGNORE content column ─── */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute top-[-200px] left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-primary/5 rounded-full blur-[120px]" />
         <div className="absolute bottom-0 left-[-100px] w-[400px] h-[400px] bg-dim-accent/10 rounded-full blur-[100px]" />
-        <div className="absolute top-[40%] right-[-100px] w-[350px] h-[350px] bg-dim-accent/5 rounded-full blur-[100px]" />
+        {/* Viewport-edge decoration: large faded logo glyph, right side */}
+        <div className="absolute top-[30%] right-[-60px] w-[300px] h-[300px] opacity-[0.03]">
+          <Image src="/Crumbv2.png" alt="" fill className="object-contain" />
+        </div>
+        {/* Sonar rings anchored to far right */}
+        <svg className="absolute top-[60%] right-[-40px] w-80 h-80 opacity-[0.04]" viewBox="0 0 320 320" fill="none">
+          <circle cx="160" cy="160" r="60" stroke="#06B6D4" strokeWidth="0.5" />
+          <circle cx="160" cy="160" r="100" stroke="#06B6D4" strokeWidth="0.5" />
+          <circle cx="160" cy="160" r="140" stroke="#06B6D4" strokeWidth="0.3" />
+        </svg>
       </div>
 
-      {/* Animated Wave Background */}
       <WaveBackground />
 
+      {/* ─── Edge-pinned metadata strip (right side) ─── */}
+      {crumbFile && confidenceData && (
+        <div className="fixed top-1/2 -translate-y-1/2 right-0 z-40 hidden xl:flex flex-col items-end gap-3 pr-5">
+          <div className="flex flex-col items-center gap-1 py-3 px-2" style={{
+            background: 'linear-gradient(180deg, rgba(6,24,36,0.9) 0%, rgba(10,30,46,0.8) 100%)',
+            borderImage: 'linear-gradient(to bottom, rgba(6,182,212,0.15), transparent) 1',
+            borderLeft: '1px solid',
+          }}>
+            <span className="text-[9px] font-mono text-muted uppercase tracking-widest" style={{ writingMode: 'vertical-lr' }}>Confidence</span>
+            <span className="text-lg font-heading font-bold text-primary mt-1">{confidenceData.confidence}%</span>
+          </div>
+          <div className="flex flex-col items-center gap-1 py-3 px-2" style={{
+            background: 'linear-gradient(180deg, rgba(6,24,36,0.9) 0%, rgba(10,30,46,0.8) 100%)',
+            borderImage: 'linear-gradient(to bottom, rgba(6,182,212,0.15), transparent) 1',
+            borderLeft: '1px solid',
+          }}>
+            <span className="text-[9px] font-mono text-muted uppercase tracking-widest" style={{ writingMode: 'vertical-lr' }}>Sections</span>
+            <span className="text-sm font-mono font-bold text-text-bright mt-1">{confidenceData.sections_filled}/7</span>
+          </div>
+          <div className="flex flex-col items-center gap-1 py-3 px-2" style={{
+            background: 'linear-gradient(180deg, rgba(6,24,36,0.9) 0%, rgba(10,30,46,0.8) 100%)',
+            borderImage: 'linear-gradient(to bottom, rgba(6,182,212,0.15), transparent) 1',
+            borderLeft: '1px solid',
+          }}>
+            <span className="text-[9px] font-mono text-muted uppercase tracking-widest" style={{ writingMode: 'vertical-lr' }}>Topics</span>
+            <span className="text-sm font-mono font-bold text-text-bright mt-1">{confidenceData.key_topics_found}</span>
+          </div>
+        </div>
+      )}
 
+      {/* ─── Main content — uses different widths per section ─── */}
+      <div className="relative z-10 pt-12 pb-16">
 
-      <div className="relative z-10 max-w-4xl mx-auto px-6 pt-12 pb-16 flex flex-col gap-20">
-
-        {/* ─── Minimal Brand Mark ─── */}
-        <div className="flex items-center justify-center">
+        {/* ─── Brand Mark — centered (intentional emphasis) ─── */}
+        <div className="flex items-center justify-center mb-20">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 flex items-center justify-center relative rounded-md overflow-hidden">
               <Image src="/Crumbv2.png" alt="Crumb Logo" fill className="object-cover" />
             </div>
             <span className="font-heading font-semibold text-xl tracking-tight text-text-bright">Crumb.</span>
-            <span className="text-[10px] text-muted font-mono ml-1 px-2 py-0.5 rounded-full border border-border-ocean">beta</span>
+            <span className="text-[10px] text-muted font-mono ml-1 px-2 py-0.5 rounded-full bg-surface/40">beta</span>
           </div>
         </div>
 
-        {/* ─── Hero Section ─── */}
-        <section className="text-center flex flex-col items-center gap-8">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-border-ocean bg-surface text-xs text-text-bright font-medium font-mono">
+        {/* ─── Hero Section — LEFT-ALIGNED, offset 15% from left ─── */}
+        <section className="relative mb-24" style={{ paddingLeft: '15%', paddingRight: '10%' }}>
+          {/* Ghost watermark — full bleed, ignoring content column */}
+          <div className="absolute inset-0 flex items-center pointer-events-none select-none overflow-hidden" style={{ left: '-15%', right: '-10%' }}>
+            <span className="font-heading font-bold text-[220px] text-text-bright opacity-[0.015] tracking-tighter whitespace-nowrap ml-[5%]">MEMORY</span>
+          </div>
+
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-surface/60 text-xs text-text-bright font-medium font-mono mb-6">
             <span className="text-primary">✦</span> AI Memory Compression
           </div>
 
-          <h1 className="font-heading text-5xl md:text-6xl font-semibold tracking-tight leading-tight text-text-bright max-w-3xl">
+          <h1 className="font-heading text-5xl md:text-7xl font-semibold tracking-tight leading-[1.1] text-text-bright max-w-2xl mb-6">
             Never Lose{' '}
             <span style={{ background: 'linear-gradient(135deg, #06B6D4, #3B82F6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
               Context
@@ -104,176 +147,261 @@ export default function Home() {
             {' '}Again
           </h1>
 
-          <p className="text-muted text-base max-w-lg leading-relaxed">
+          <p className="text-muted text-base max-w-lg leading-relaxed mb-8">
             Compress any long AI conversation into a portable Crumb File.
             Drop it into any new chat and continue exactly where you left off.
           </p>
+
+          {/* Works with — left-aligned, not centered */}
+          <div className="flex items-center gap-5 text-xs text-muted font-mono flex-wrap">
+            <div className="flex items-center gap-2 px-3.5 py-2 rounded-full bg-surface/50 hover:bg-surface/70 transition-colors group">
+              <Image src="/ChatGPT.png" alt="ChatGPT" width={16} height={16} className="rounded-sm opacity-80 group-hover:opacity-100 transition-opacity" style={{ filter: 'invert(1)' }} />
+              ChatGPT
+            </div>
+            <div className="flex items-center gap-2 px-3.5 py-2 rounded-full bg-surface/50 hover:bg-surface/70 transition-colors group">
+              <Image src="/claude.png" alt="Claude" width={16} height={16} className="rounded-sm opacity-80 group-hover:opacity-100 transition-opacity" />
+              Claude
+            </div>
+            <div className="flex items-center gap-2 px-3.5 py-2 rounded-full bg-surface/50 hover:bg-surface/70 transition-colors group">
+              <Image src="/gemini.png" alt="Gemini" width={16} height={16} className="rounded-sm opacity-80 group-hover:opacity-100 transition-opacity" />
+              Gemini
+            </div>
+          </div>
         </section>
 
-        {/* ─── Works With Badges ─── */}
-        <div className="flex items-center justify-center gap-5 text-xs text-muted font-mono flex-wrap">
-          <div className="flex items-center gap-2 px-3.5 py-2 rounded-full border border-border-ocean/40 bg-surface/60 hover:border-[rgba(16,163,127,0.3)] transition-colors group">
-            <svg width="14" height="14" viewBox="0 0 41 41" fill="none" className="opacity-60 group-hover:opacity-100 transition-opacity"><path d="M37.53 16.08c1.01-2.83.27-6.01-1.88-8.16a6.93 6.93 0 00-7.75-1.5A6.97 6.97 0 0022.69 2a6.95 6.95 0 00-6.63 4.88A7.02 7.02 0 0010.93 10.24a6.99 6.99 0 00.87 8.17 7 7 0 001.88 8.16 6.93 6.93 0 007.75 1.5A6.97 6.97 0 0026.63 32.25V32c0-.08 0-.17.01-.25a6.95 6.95 0 006.62-4.88 7.02 7.02 0 005.14-3.36 6.99 6.99 0 00-.87-8.17v.74z" fill="#10A37F" /></svg>
-            ChatGPT
-          </div>
-          <div className="flex items-center gap-2 px-3.5 py-2 rounded-full border border-border-ocean/40 bg-surface/60 hover:border-[rgba(212,165,116,0.3)] transition-colors group">
-            <svg width="14" height="14" viewBox="0 0 24 24" className="opacity-60 group-hover:opacity-100 transition-opacity"><path d="M4.71 6.2L11.84 20.04h.32L19.29 6.2h-3.2l-4.08 8.9-4.1-8.9H4.71z" fill="#D4A574" /></svg>
-            Claude
-          </div>
-          <div className="flex items-center gap-2 px-3.5 py-2 rounded-full border border-border-ocean/40 bg-surface/60 hover:border-[rgba(66,133,244,0.3)] transition-colors group">
-            <svg width="14" height="14" viewBox="0 0 24 24" className="opacity-60 group-hover:opacity-100 transition-opacity"><path d="M12 2l2.4 7.2H22l-6 4.8 2.4 7.2L12 16.4l-6.4 4.8L8 14l-6-4.8h7.6L12 2z" fill="url(#gemBadge)" /><defs><linearGradient id="gemBadge" x1="2" y1="2" x2="22" y2="22"><stop stopColor="#4285F4" /><stop offset=".33" stopColor="#EA4335" /><stop offset=".66" stopColor="#FBBC05" /><stop offset="1" stopColor="#34A853" /></linearGradient></defs></svg>
-            Gemini
-          </div>
-        </div>
+        {/* ─── Compression Section — full bleed title, content indented ─── */}
+        <section id="compress" className="scroll-mt-20 relative mb-24 overflow-hidden">
+          {/* Layered depth — full viewport width */}
+          <div className="absolute inset-0" style={{
+            background: 'linear-gradient(180deg, transparent 0%, #061420 15%, #0A1E2E 50%, #061420 85%, transparent 100%)',
+          }} />
 
-        {/* ─── Compression Section (Full Width) ─── */}
-        <section id="compress" className="scroll-mt-20">
-          <div className="rounded-2xl border border-border-ocean bg-card p-6 flex flex-col gap-5 shadow-[0_0_40px_rgba(6,182,212,0.06)]">
+          {/* Ink bleed */}
+          <div className="absolute inset-0 pointer-events-none" style={{
+            background: 'radial-gradient(ellipse at 40% 60%, rgba(6,182,212,0.04) 0%, transparent 50%)',
+          }} />
 
-            {/* Card Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border-ocean/50">
-              <div className="flex items-center gap-3">
-                <div className="w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_var(--primary)]" />
-                <span className="font-heading text-sm font-medium text-text-bright">New Compression</span>
-              </div>
-              <div className="flex flex-wrap items-center gap-4">
+          {/* Ghost typography — bleeds past content boundary */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden">
+            <span className="font-heading font-bold text-[200px] text-text-bright opacity-[0.015] tracking-tighter whitespace-nowrap">COMPRESS</span>
+          </div>
 
-                {/* Depth Selector */}
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted font-mono">Depth:</span>
-                  <div className="flex bg-surface rounded-lg p-0.5 border border-border-ocean/50 font-mono">
-                    {(['snapshot', 'memory', 'full'] as const).map(d => (
-                      <button
-                        key={d}
-                        onClick={() => setCompressionDepth(d)}
-                        className={`px-3 py-1 text-xs rounded-md transition-all capitalize ${compressionDepth === d
-                          ? 'bg-primary/20 text-primary font-medium'
-                          : 'text-muted hover:text-text-main'
-                          }`}
-                      >
-                        {d}
-                      </button>
-                    ))}
+          <div className="relative py-12">
+            {/* Full-bleed section label */}
+            <div className="pl-[8%] pr-[5%] mb-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_8px_var(--primary)]" />
+                  <span className="font-heading text-sm font-medium text-text-bright">New Compression</span>
+                </div>
+                <div className="flex flex-wrap items-center gap-4">
+                  {/* Depth Selector */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted font-mono">Depth:</span>
+                    <div className="flex rounded-lg p-0.5 font-mono">
+                      {(['snapshot', 'memory', 'full'] as const).map(d => (
+                        <button
+                          key={d}
+                          onClick={() => setCompressionDepth(d)}
+                          className={`px-3 py-1 text-xs rounded-md transition-all capitalize ${compressionDepth === d
+                            ? 'bg-primary/15 text-primary font-medium'
+                            : 'text-muted hover:text-text-main'
+                            }`}
+                        >
+                          {d}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Node Selector */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted font-mono">Node:</span>
+                    <div className="flex rounded-lg p-0.5 font-mono">
+                      {[1, 2, 3].map(num => (
+                        <button
+                          key={num}
+                          onClick={() => setSelectedServer(num)}
+                          className={`px-3 py-1 text-xs rounded-md transition-all ${selectedServer === num
+                            ? 'bg-primary/15 text-primary font-medium'
+                            : 'text-muted hover:text-text-main'
+                            }`}
+                        >
+                          0{num}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
-
-                {/* Node Selector */}
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted font-mono">Node:</span>
-                  <div className="flex bg-surface rounded-lg p-0.5 border border-border-ocean/50 font-mono">
-                    {[1, 2, 3].map(num => (
-                      <button
-                        key={num}
-                        onClick={() => setSelectedServer(num)}
-                        className={`px-3 py-1 text-xs rounded-md transition-all ${selectedServer === num
-                          ? 'bg-primary/20 text-primary font-medium'
-                          : 'text-muted hover:text-text-main'
-                          }`}
-                      >
-                        0{num}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
               </div>
             </div>
 
-            {isLoading ? (
-              <CompressionVisualizer />
-            ) : (
-              <ConversationInput
-                value={conversation}
-                onChange={setConversation}
-                isLoading={isLoading}
-              />
-            )}
+            {/* Thin rule — full bleed */}
+            <div className="w-full h-px bg-gradient-to-r from-transparent via-primary/15 to-transparent" />
 
-            <button
-              onClick={handleCompress}
-              disabled={isLoading || !conversation.trim()}
-              className="relative w-full py-3.5 rounded-xl font-heading font-medium text-sm transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed overflow-hidden group text-[#040D12]"
-              style={{
-                background: 'linear-gradient(135deg, #06B6D4, #3B82F6)',
-                boxShadow: '0 0 24px rgba(6, 182, 212, 0.2)'
-              }}
-            >
-              <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-              <div className="relative flex items-center justify-center gap-2">
+            {/* Content indented — not full width, offset left */}
+            <div className="pl-[12%] pr-[10%] mt-8 flex flex-col gap-8">
+              <div>
                 {isLoading ? (
-                  <>
-                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                    </svg>
-                    Compressing...
-                  </>
+                  <CompressionVisualizer />
                 ) : (
-                  <>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-                    </svg>
-                    Compress into Crumb File
-                  </>
+                  <ConversationInput
+                    value={conversation}
+                    onChange={setConversation}
+                    isLoading={isLoading}
+                  />
                 )}
               </div>
-            </button>
 
-            {error && (
-              <div className="bg-red-500/5 border border-red-500/20 rounded-xl px-4 py-3 text-sm text-red-400 font-mono">
-                ⚠ {error}
+              {/* Pill button — left of center, not dead center */}
+              <div className="flex justify-start pl-[5%] pt-2 pb-4">
+                <button
+                  onClick={handleCompress}
+                  disabled={isLoading || !conversation.trim()}
+                  className="relative px-10 py-3.5 rounded-full font-heading font-medium text-sm transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed overflow-hidden group text-[#040D12]"
+                  style={{
+                    background: 'linear-gradient(135deg, #06B6D4, #3B82F6)',
+                    boxShadow: '0 0 24px rgba(6, 182, 212, 0.2)'
+                  }}
+                >
+                  <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className="relative flex items-center justify-center gap-2">
+                    {isLoading ? (
+                      <>
+                        <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                        </svg>
+                        Compressing...
+                      </>
+                    ) : (
+                      <>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                        </svg>
+                        Compress into Crumb File
+                      </>
+                    )}
+                  </div>
+                </button>
               </div>
-            )}
+
+              {error && (
+                <div className="border-l-[3px] border-red-500/40 pl-4 py-2 text-sm text-red-400 font-mono" style={{
+                  background: 'radial-gradient(ellipse at 0% 50%, rgba(239,68,68,0.04) 0%, transparent 60%)',
+                }}>
+                  ⚠ {error}
+                </div>
+              )}
+            </div>
           </div>
         </section>
 
-        {/* ─── Output ─── */}
+        {/* ─── Output — asymmetric, wider than normal content column ─── */}
         {crumbFile && (
-          <section>
+          <section className="mb-24 pl-[8%] pr-[5%]">
             <BrainFileOutput content={crumbFile} originalContent={conversation} confidenceData={confidenceData} />
           </section>
         )}
 
-        {/* ─── How It Works ─── */}
-        <section id="how" className="scroll-mt-20">
-          <div className="text-center mb-8">
-            <h2 className="font-heading text-2xl font-semibold text-text-bright">How It Works</h2>
-            <p className="text-sm text-muted font-mono mt-2">Three steps to never lose context</p>
+        {/* ─── How It Works — full bleed title, staggered steps ─── */}
+        <section id="how" className="scroll-mt-20 relative mb-16 overflow-hidden">
+          {/* Layered depth — full viewport width */}
+          <div className="absolute inset-0" style={{
+            background: 'linear-gradient(180deg, transparent 0%, #061420 20%, #0A1E2E 60%, transparent 100%)',
+          }} />
+
+          {/* Ghost typography — viewport edge */}
+          <div className="absolute top-8 right-0 pointer-events-none select-none overflow-hidden">
+            <span className="font-heading font-bold text-[180px] text-text-bright opacity-[0.015] tracking-tighter">TRAIL</span>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {[
-              {
-                step: '01', title: 'Paste Conversation', desc: 'Copy any long AI chat and paste it into the compression input',
-                icon: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-primary" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" /><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" /></svg>)
-              },
-              {
-                step: '02', title: 'Compress', desc: 'AI extracts the essential meaning, decisions, and technical context',
-                icon: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-primary" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>)
-              },
-              {
-                step: '03', title: 'Continue Anywhere', desc: 'Drop the Crumb File into any new AI chat to restore full context',
-                icon: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-primary" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 002 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0022 16z" /><polyline points="7.5 4.21 12 6.81 16.5 4.21" /><polyline points="7.5 19.79 7.5 14.6 3 12" /><polyline points="21 12 16.5 14.6 16.5 19.79" /><line x1="12" y1="22" x2="12" y2="12" /></svg>)
-              },
-            ].map((item) => (
-              <div key={item.step} className="rounded-xl border border-border-ocean/50 bg-surface p-5 flex flex-col gap-4 transition-colors hover:border-border-ocean group">
-                <div className="flex items-center justify-between">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center group-hover:bg-primary/15 transition-colors">
-                    {item.icon}
+
+          <div className="relative py-16">
+            {/* Full-bleed title — starts from far left */}
+            <div className="pl-[8%] mb-14">
+              <h2 className="font-heading text-3xl font-semibold text-text-bright">How It Works</h2>
+              <p className="text-sm text-muted font-mono mt-3 max-w-md">A trail of crumbs — three steps to never lose context</p>
+              <div className="w-24 h-px mt-4 bg-gradient-to-r from-primary/30 to-transparent" />
+            </div>
+
+            {/* Steps — staggered vertically AND horizontally */}
+            <div className="relative flex flex-col pl-[8%]">
+              {[
+                { step: '01', title: 'Paste Conversation', desc: 'Copy any long AI chat and paste it into the compression input', accentColor: '#06B6D4', glowColor: 'rgba(6,182,212,0.05)', verticalDrop: 0 },
+                { step: '02', title: 'Compress', desc: 'AI extracts the essential meaning, decisions, and technical context', accentColor: '#3B82F6', glowColor: 'rgba(59,130,246,0.05)', verticalDrop: 40 },
+                { step: '03', title: 'Continue Anywhere', desc: 'Drop the Crumb File into any new AI chat to restore full context', accentColor: '#10B981', glowColor: 'rgba(16,185,129,0.05)', verticalDrop: 80 },
+              ].map((item, idx) => (
+                <div
+                  key={item.step}
+                  className="relative"
+                  style={{
+                    paddingLeft: `${idx * 80}px`,
+                    marginTop: idx > 0 ? `${item.verticalDrop - (idx - 1) * 40}px` : '0',
+                  }}
+                >
+                  {/* Connecting line */}
+                  {idx < 2 && (
+                    <div
+                      className="absolute w-px bg-gradient-to-b to-transparent"
+                      style={{
+                        left: `${idx * 80 + 20}px`,
+                        top: '100%',
+                        height: `${60}px`,
+                        background: `linear-gradient(to bottom, ${item.accentColor}40, transparent)`,
+                      }}
+                    />
+                  )}
+
+                  <div className="relative py-6">
+                    {/* Ink bleed per step */}
+                    <div className="absolute inset-0 pointer-events-none" style={{
+                      background: `radial-gradient(ellipse at 10% 50%, ${item.glowColor} 0%, transparent 50%)`,
+                    }} />
+
+                    {/* Huge ghost number */}
+                    <span
+                      className="absolute top-0 left-0 font-heading font-bold text-[140px] leading-none select-none pointer-events-none -translate-y-6"
+                      style={{ color: item.accentColor, opacity: 0.04 }}
+                    >
+                      {item.step}
+                    </span>
+
+                    {/* Left accent border + content */}
+                    <div className="relative flex gap-5 pl-2">
+                      <div
+                        className="w-[3px] flex-shrink-0 rounded-full"
+                        style={{ backgroundColor: item.accentColor, opacity: 0.35 }}
+                      />
+                      <div>
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className="w-2 h-2 rounded-full shadow-[0_0_8px_currentColor]" style={{ backgroundColor: item.accentColor }} />
+                          <span className="text-[10px] font-mono uppercase tracking-[0.2em] font-semibold" style={{ color: item.accentColor }}>Step {item.step}</span>
+                        </div>
+                        <h3 className="font-heading text-xl font-medium text-text-bright mb-1.5">{item.title}</h3>
+                        <p className="text-sm text-muted leading-relaxed max-w-md">{item.desc}</p>
+                      </div>
+                    </div>
                   </div>
-                  <span className="text-xs text-muted font-mono">{item.step}</span>
+
+                  {/* Angled connector */}
+                  {idx < 2 && (
+                    <svg className="absolute pointer-events-none" style={{ left: `${20}px`, bottom: '-8px', width: '100px', height: '50px' }} viewBox="0 0 100 50" fill="none">
+                      <path d={`M 0 0 Q 25 50, 80 45`} stroke={`${item.accentColor}40`} strokeWidth="1" fill="none" />
+                      <circle cx="80" cy="45" r="2.5" fill={`${item.accentColor}60`} />
+                    </svg>
+                  )}
                 </div>
-                <div>
-                  <p className="font-heading text-sm font-medium text-text-bright mb-1">{item.title}</p>
-                  <p className="text-xs text-muted leading-relaxed">{item.desc}</p>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </section>
 
-        {/* ─── Footer ─── */}
-        <footer className="flex items-center justify-between text-xs text-muted font-mono pt-4 border-t border-border-ocean/20">
-          <div>Built with <span className="text-primary">✦</span> — Leave a trail. Never lose context.</div>
+        {/* ─── Footer — left aligned ─── */}
+        <footer className="flex items-center justify-between text-xs text-muted font-mono px-[8%] pt-4">
+          <div className="flex items-center gap-6">
+            <div>Built with <span className="text-primary">✦</span> — Leave a trail. Never lose context.</div>
+            {/* Full-width thin rule above */}
+          </div>
           <div className="relative w-20 h-5 opacity-50 hover:opacity-100 transition-opacity">
             <Image src="/Crumb.png" alt="Powered By Crumb" fill className="object-contain" />
           </div>
@@ -283,7 +411,7 @@ export default function Home() {
 
       {/* ─── Floating Bottom Dock ─── */}
       <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
-        <div className="flex items-center gap-1 px-2 py-2 rounded-2xl border border-border-ocean/50 bg-surface/90 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4),0_0_0_1px_rgba(6,182,212,0.05)]">
+        <div className="flex items-center gap-1 px-2 py-2 rounded-2xl bg-surface/90 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4),0_0_0_1px_rgba(6,182,212,0.08)]">
           <button
             onClick={scrollToCompress}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-mono transition-all hover:bg-primary/10 text-muted hover:text-primary"

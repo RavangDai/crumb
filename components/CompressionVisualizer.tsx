@@ -29,7 +29,7 @@ export default function CompressionVisualizer() {
     }, [])
 
     return (
-        <div className="relative w-full min-h-[300px] bg-background border border-border-ocean/50 rounded-xl overflow-hidden flex items-center justify-center p-4">
+        <div className="relative w-full min-h-[300px] overflow-hidden flex items-center justify-center p-4">
             {/* Background grid/fx */}
             <div className="absolute inset-0 opacity-10" style={{
                 backgroundImage: 'linear-gradient(rgba(6,182,212,0.2) 1px, transparent 1px), linear-gradient(90deg, rgba(6,182,212,0.2) 1px, transparent 1px)',

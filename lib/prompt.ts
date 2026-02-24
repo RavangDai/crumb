@@ -1,16 +1,16 @@
 export type CompressionDepth = 'snapshot' | 'memory' | 'full'
 
 export const getCompressionPrompt = (depth: CompressionDepth = 'memory') => {
-    let depthInstructions = ''
-    if (depth === 'snapshot') {
-        depthInstructions = 'EXTREME COMPRESSION REQUIRED (Snapshot Mode): Be brutally concise. Focus only on absolute bare-minimum essential facts. Aim for around ~500 tokens of output.'
-    } else if (depth === 'memory') {
-        depthInstructions = 'BALANCED COMPRESSION (Memory Mode): Capture key context, decisions, and current state efficiently. Aim for around ~1000 tokens of output.'
-    } else if (depth === 'full') {
-        depthInstructions = 'RICH COMPRESSION (Full Context Mode): Preserve nuances, code snippets, detailed constraints, and conversational flow. Aim for richly detailed information up to ~3000 tokens.'
-    }
+  let depthInstructions = ''
+  if (depth === 'snapshot') {
+    depthInstructions = 'EXTREME COMPRESSION REQUIRED (Snapshot Mode): Be brutally concise. Focus only on absolute bare-minimum essential facts. Aim for around ~500 tokens of output.'
+  } else if (depth === 'memory') {
+    depthInstructions = 'BALANCED COMPRESSION (Memory Mode): Capture key context, decisions, and current state efficiently. You MUST fill ALL 7 sections with meaningful content. For large conversations (1000+ words), produce proportionally detailed output — aim for ~1000-2000 tokens total. Never produce fewer than 5 bullet points across all sections combined.'
+  } else if (depth === 'full') {
+    depthInstructions = 'RICH COMPRESSION (Full Context Mode): Preserve nuances, code snippets, detailed constraints, and conversational flow. Aim for richly detailed information up to ~3000 tokens.'
+  }
 
-    return `You are an expert at extracting and compressing the essential meaning from AI conversations.
+  return `You are an expert at extracting and compressing the essential meaning from AI conversations.
 
 Analyze the conversation and create a structured "Crumb File" — a portable memory snapshot that allows any AI to instantly understand the full context and continue seamlessly.
 

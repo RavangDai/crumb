@@ -33,8 +33,10 @@ User: I want to build a SaaS app for project management
 AI: Great idea! Let's start by thinking about your target users...
 User: I want to focus on small remote teams
 AI: Perfect. Here's what I suggest...`}
-        className="w-full bg-background border border-border-ocean/50 rounded-xl p-4 text-sm text-text-bright placeholder-muted/50 resize-none focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition disabled:opacity-50 disabled:cursor-not-allowed font-mono leading-relaxed"
+        className="w-full bg-transparent border-0 rounded-none p-4 pb-5 text-sm text-text-bright placeholder-muted/50 resize-none focus:outline-none transition disabled:opacity-50 disabled:cursor-not-allowed font-mono leading-relaxed"
       />
+      {/* Gradient fade line instead of solid border */}
+      <div className="w-full h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
 
       {/* Progress bar */}
       <div className="h-0.5 w-full bg-surface rounded-full overflow-hidden">
