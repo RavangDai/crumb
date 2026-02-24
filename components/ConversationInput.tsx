@@ -12,7 +12,7 @@ export default function ConversationInput({ value, onChange, isLoading }: Props)
   const progress = Math.min((charCount / 50000) * 100, 100)
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-2" style={{ animation: 'fadeUp 0.8s ease-out 0.2s both' }}>
       <div className="flex justify-between items-center">
         <label className="text-xs font-medium text-zinc-400 uppercase tracking-widest">
           Conversation Input

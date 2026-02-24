@@ -128,32 +128,32 @@ export default function Home() {
           </div>
         </div>
 
-        {/* ─── Hero Section — LEFT-ALIGNED, offset 15% from left ─── */}
-        <section className="relative mb-24" style={{ paddingLeft: '15%', paddingRight: '10%' }}>
-          {/* Ghost watermark — full bleed, ignoring content column */}
-          <div className="absolute inset-0 flex items-center pointer-events-none select-none overflow-hidden" style={{ left: '-15%', right: '-10%' }}>
-            <span className="font-heading font-bold text-[220px] text-text-bright opacity-[0.015] tracking-tighter whitespace-nowrap ml-[5%]">MEMORY</span>
+        {/* ─── Hero Section — CENTERED ─── */}
+        <section className="relative mb-24 flex flex-col items-center text-center">
+          {/* Ghost watermark — centered */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden">
+            <span className="font-heading font-bold text-[180px] md:text-[220px] text-text-bright opacity-[0.015] tracking-tighter whitespace-nowrap">MEMORY</span>
           </div>
 
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-surface/60 text-xs text-text-bright font-medium font-mono mb-6">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-surface/60 text-xs text-text-bright font-medium font-mono mb-6" style={{ animation: 'fadeUp 0.8s ease-out 0.1s both' }}>
             <span className="text-primary">✦</span> AI Memory Compression
           </div>
 
-          <h1 className="font-heading text-5xl md:text-7xl font-semibold tracking-tight leading-[1.1] text-text-bright max-w-2xl mb-6">
-            Never Lose{' '}
+          <h1 className="font-heading text-5xl md:text-7xl font-semibold tracking-tight leading-[1.1] text-text-bright max-w-4xl mb-6 mx-auto" style={{ animation: 'fadeUp 0.8s ease-out 0.2s both' }}>
+            Never Lose <br className="hidden md:block" />
             <span style={{ background: 'linear-gradient(135deg, #06B6D4, #3B82F6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
               Context
             </span>
             {' '}Again
           </h1>
 
-          <p className="text-muted text-base max-w-lg leading-relaxed mb-8">
+          <p className="text-muted text-base max-w-lg leading-relaxed mb-8 mx-auto" style={{ animation: 'fadeUp 0.8s ease-out 0.3s both' }}>
             Compress any long AI conversation into a portable Crumb File.
             Drop it into any new chat and continue exactly where you left off.
           </p>
 
-          {/* Works with — left-aligned, not centered */}
-          <div className="flex items-center gap-5 text-xs text-muted font-mono flex-wrap">
+          {/* Works with — centered */}
+          <div className="flex items-center justify-center gap-5 text-xs text-muted font-mono flex-wrap" style={{ animation: 'fadeUp 0.8s ease-out 0.4s both' }}>
             <div className="flex items-center gap-2 px-3.5 py-2 rounded-full bg-surface/50 hover:bg-surface/70 transition-colors group">
               <Image src="/ChatGPT.png" alt="ChatGPT" width={16} height={16} className="rounded-sm opacity-80 group-hover:opacity-100 transition-opacity" style={{ filter: 'invert(1)' }} />
               ChatGPT
@@ -188,7 +188,7 @@ export default function Home() {
 
           <div className="relative py-12">
             {/* Full-bleed section label */}
-            <div className="pl-[8%] pr-[5%] mb-6">
+            <div className="pl-[8%] pr-[5%] mb-6" style={{ animation: 'fadeUp 0.8s ease-out 0.1s both' }}>
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                   <div className="w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_8px_var(--primary)]" />
@@ -240,7 +240,7 @@ export default function Home() {
             <div className="w-full h-px bg-gradient-to-r from-transparent via-primary/15 to-transparent" />
 
             {/* Content indented — not full width, offset left */}
-            <div className="pl-[12%] pr-[10%] mt-8 flex flex-col gap-8">
+            <div className="pl-[12%] pr-[10%] mt-8 flex flex-col gap-8" style={{ animation: 'fadeUp 0.8s ease-out 0.2s both' }}>
               <div>
                 {isLoading ? (
                   <CompressionVisualizer />
@@ -254,7 +254,7 @@ export default function Home() {
               </div>
 
               {/* Pill button — left of center, not dead center */}
-              <div className="flex justify-start pl-[5%] pt-2 pb-4">
+              <div className="flex justify-start pl-[5%] pt-2 pb-4" style={{ animation: 'fadeUp 0.8s ease-out 0.3s both' }}>
                 <button
                   onClick={handleCompress}
                   disabled={isLoading || !conversation.trim()}
@@ -264,7 +264,7 @@ export default function Home() {
                     boxShadow: '0 0 24px rgba(6, 182, 212, 0.2)'
                   }}
                 >
-                  <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className="absolute inset-0 bg-white/10 group-hover:opacity-100 transition-opacity" />
                   <div className="relative flex items-center justify-center gap-2">
                     {isLoading ? (
                       <>
@@ -319,9 +319,9 @@ export default function Home() {
           <div className="relative py-16">
             {/* Full-bleed title — starts from far left */}
             <div className="pl-[8%] mb-14">
-              <h2 className="font-heading text-3xl font-semibold text-text-bright">How It Works</h2>
-              <p className="text-sm text-muted font-mono mt-3 max-w-md">A trail of crumbs — three steps to never lose context</p>
-              <div className="w-24 h-px mt-4 bg-gradient-to-r from-primary/30 to-transparent" />
+              <h2 className="font-heading text-3xl font-semibold text-text-bright" style={{ animation: 'fadeUp 0.8s ease-out 0.1s both' }}>How It Works</h2>
+              <p className="text-sm text-muted font-mono mt-3 max-w-md" style={{ animation: 'fadeUp 0.8s ease-out 0.2s both' }}>A trail of crumbs — three steps to never lose context</p>
+              <div className="w-24 h-px mt-4 bg-gradient-to-r from-primary/30 to-transparent" style={{ animation: 'fadeUp 0.8s ease-out 0.3s both' }} />
             </div>
 
             {/* Steps — staggered vertically AND horizontally */}
@@ -337,6 +337,7 @@ export default function Home() {
                   style={{
                     paddingLeft: `${idx * 80}px`,
                     marginTop: idx > 0 ? `${item.verticalDrop - (idx - 1) * 40}px` : '0',
+                    animation: `fadeUp 0.8s ease-out ${0.4 + idx * 0.2}s both`,
                   }}
                 >
                   {/* Connecting line */}

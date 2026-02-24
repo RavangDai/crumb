@@ -144,7 +144,9 @@ export default function BrainFileOutput({ content, originalContent, confidenceDa
         <div
           className="relative flex flex-col sm:flex-row items-start gap-8 py-10 px-8 -mx-6"
           style={{
-            background: 'linear-gradient(180deg, transparent 0%, #061420 15%, #0A1E2E 50%, #061420 85%, transparent 100%)',
+            background: 'linear-gradient(180deg, transparent 0px, #061420 3rem, #061420 calc(100% - 3rem), transparent 100%)',
+            maskImage: 'linear-gradient(to right, transparent 0px, black 2rem, black calc(100% - 2rem), transparent 100%)',
+            WebkitMaskImage: 'linear-gradient(to right, transparent 0px, black 2rem, black calc(100% - 2rem), transparent 100%)',
           }}
         >
           {/* Ink bleed glow */}
@@ -208,99 +210,105 @@ export default function BrainFileOutput({ content, originalContent, confidenceDa
         </div>
       )}
 
-      {/* ─── Output header — newspaper column style ─── */}
-      <div className="flex items-center justify-between py-6">
-        <div className="flex items-center gap-3">
-          <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center text-xs text-primary font-heading font-bold">C.</div>
-          <div>
-            <p className="text-sm font-semibold text-text-bright font-heading">Crumb File Ready</p>
-            <p className="text-[11px] text-muted font-mono">{wordCount} words · Portable memory snapshot</p>
+      {/* ─── Header — cleanly separated from content ─── */}
+      <div className="flex flex-col gap-6 px-8 mb-8 relative z-10">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-white/5 pb-0">
+          <div className="flex items-center gap-4 pb-4">
+            <div className="w-10 h-10 rounded bg-primary/10 border border-primary/20 flex items-center justify-center">
+              <span className="font-heading font-bold text-primary">C.</span>
+            </div>
+            <div>
+              <h2 className="text-xl font-heading font-semibold text-text-bright tracking-tight">Crumb File Ready</h2>
+              <p className="text-xs font-mono text-muted/60 mt-1">{wordCount} words <span className="mx-2">·</span> Portable memory snapshot</p>
+            </div>
+          </div>
+
+          {/* Tabs - editorial style */}
+          <div className="flex items-center gap-6 pt-2">
+            {[
+              { id: 'cards', label: 'Document' },
+              { id: 'diff', label: 'Diff' },
+              { id: 'raw', label: 'Raw' },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setView(tab.id as any)}
+                className={`font-mono text-sm pb-4 relative transition-colors ${view === tab.id ? 'text-primary' : 'text-muted hover:text-text-bright'
+                  }`}
+              >
+                {tab.label}
+                {view === tab.id && (
+                  <span className="absolute bottom-[-1px] left-0 right-0 h-[2px] bg-primary rounded-t-full shadow-[0_-2px_8px_rgba(6,182,212,0.4)]" />
+                )}
+              </button>
+            ))}
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="flex text-xs font-mono">
-            <button
-              onClick={() => setView('cards')}
-              className={`px-3 py-1.5 transition border-b-2 ${view === 'cards' ? 'border-primary text-primary font-semibold' : 'border-transparent text-muted hover:text-text-main'}`}
-            >
-              Document
-            </button>
-            {originalContent && (
-              <button
-                onClick={() => setView('diff')}
-                className={`px-3 py-1.5 transition border-b-2 ${view === 'diff' ? 'border-primary text-primary font-semibold' : 'border-transparent text-muted hover:text-text-main'}`}
-              >
-                Diff
-              </button>
-            )}
-            <button
-              onClick={() => setView('raw')}
-              className={`px-3 py-1.5 transition border-b-2 ${view === 'raw' ? 'border-primary text-primary font-semibold' : 'border-transparent text-muted hover:text-text-main'}`}
-            >
-              Raw
-            </button>
-          </div>
-          <div className="w-px h-5 bg-border-ocean/20 mx-1" />
-          <button onClick={handleCopy} className="text-xs px-3 py-1.5 text-muted hover:text-primary transition font-mono">
-            {copied ? '✓ Copied' : '📋 Copy'}
+
+        <div className="flex items-center justify-end gap-2 -mt-4">
+          <button onClick={handleCopy} className="text-xs px-3 py-1.5 text-muted hover:text-primary transition font-mono flex items-center gap-1.5 rounded-md hover:bg-surface/50">
+            {copied ? <span className="text-primary">✓</span> : <span>📋</span>}
+            {copied ? 'Copied' : 'Copy'}
           </button>
-          <button onClick={handleDownload} className="text-xs px-3 py-1.5 text-muted hover:text-primary transition font-mono">
-            ⬇ .md
+          <div className="w-px h-3 bg-border-ocean/20 mx-1" />
+          <button onClick={handleDownload} className="text-xs px-3 py-1.5 text-muted hover:text-primary transition font-mono flex items-center gap-1.5 rounded-md hover:bg-surface/50">
+            <span>⬇</span>
+            .md
           </button>
         </div>
       </div>
 
-      {/* Full-width thin rule — newspaper style */}
-      <div className="w-full h-px bg-gradient-to-r from-transparent via-border-ocean to-transparent" />
-
       {/* ─── Document view — atmospheric design ─── */}
-      {view === 'cards' && (
-        <div className="flex flex-col -mx-6">
-          {SECTIONS.map((section, idx) => {
-            const sectionContent = extractSection(section.key)
-            if (sectionContent === 'No content extracted.') return null
+      {
+        view === 'cards' && (
+          <div className="flex flex-col -mx-6">
+            {SECTIONS.map((section, idx) => {
+              const sectionContent = extractSection(section.key)
+              if (sectionContent === 'No content extracted.') return null
 
-            return (
-              <div
-                key={section.key}
-                className="relative overflow-hidden"
-                style={{
-                  // Layered depth — fades in and out, no hard edges
-                  background: idx % 2 === 0
-                    ? 'linear-gradient(180deg, transparent 0%, #061420 20%, #061420 80%, transparent 100%)'
-                    : 'linear-gradient(180deg, transparent 0%, #0A1E2E 20%, #0A1E2E 80%, transparent 100%)',
-                }}
-              >
-                {/* Stained glass color wash — section-specific atmospheric tint */}
+              return (
                 <div
-                  className="absolute inset-0 pointer-events-none"
+                  key={section.key}
+                  className="relative overflow-hidden"
                   style={{
-                    background: `linear-gradient(135deg, ${section.accentColor} 0%, transparent 60%)`,
+                    // Layered depth — fades in and out exactly within the 3rem padding
+                    background: idx % 2 === 0
+                      ? 'linear-gradient(180deg, transparent 0px, #061420 3rem, #061420 calc(100% - 3rem), transparent 100%)'
+                      : 'linear-gradient(180deg, transparent 0px, #0A1E2E 3rem, #0A1E2E calc(100% - 3rem), transparent 100%)',
+                    maskImage: 'linear-gradient(to right, transparent 0px, black 2rem, black calc(100% - 2rem), transparent 100%)',
+                    WebkitMaskImage: 'linear-gradient(to right, transparent 0px, black 2rem, black calc(100% - 2rem), transparent 100%)',
+                    animation: `fadeUp 0.8s ease-out ${idx * 0.15}s both`,
                   }}
-                />
-
-                {/* Ink bleed radial glow — content feels lit from within */}
-                <div
-                  className="absolute inset-0 pointer-events-none"
-                  style={{
-                    background: `radial-gradient(ellipse at 20% 50%, ${section.accentGlow} 0%, transparent 60%)`,
-                  }}
-                />
-
-                {/* Ghost typography layer — massive faded section name */}
-                <span
-                  className="absolute top-1/2 -translate-y-1/2 right-6 font-heading font-bold text-[100px] leading-none select-none pointer-events-none whitespace-nowrap"
-                  style={{ color: section.accentBorder, opacity: 0.03 }}
                 >
-                  {section.ghostLabel}
-                </span>
+                  {/* Stained glass color wash — section-specific atmospheric tint */}
+                  <div
+                    className="absolute inset-0 pointer-events-none"
+                    style={{
+                      background: `linear-gradient(135deg, ${section.accentColor} 0%, transparent 60%)`,
+                    }}
+                  />
 
-                {/* Content with left accent border */}
-                <div className="relative py-8 px-8">
-                  <div className="flex gap-6">
+                  {/* Ink bleed radial glow — content feels lit from within */}
+                  <div
+                    className="absolute inset-0 pointer-events-none"
+                    style={{
+                      background: `radial-gradient(ellipse at 20% 50%, ${section.accentGlow} 0%, transparent 60%)`,
+                    }}
+                  />
+
+                  {/* Ghost typography layer — massive faded section name */}
+                  <span
+                    className="absolute top-1/2 -translate-y-1/2 right-6 font-heading font-bold text-[100px] leading-none select-none pointer-events-none whitespace-nowrap"
+                    style={{ color: section.accentBorder, opacity: 0.03 }}
+                  >
+                    {section.ghostLabel}
+                  </span>
+
+                  {/* Content with left accent border */}
+                  <div className="relative py-12 px-8 pl-12 flex">
                     {/* Left accent border — the only structural line */}
                     <div
-                      className="w-[3px] flex-shrink-0 rounded-full"
+                      className="absolute left-4 top-0 bottom-0 w-[3px] rounded-full"
                       style={{ backgroundColor: section.accentBorder, opacity: 0.4 }}
                     />
 
@@ -329,140 +337,137 @@ export default function BrainFileOutput({ content, originalContent, confidenceDa
                     </div>
                   </div>
                 </div>
-              </div>
-            )
-          })}
-        </div>
-      )}
+              )
+            })}
+          </div>
+        )
+      }
 
       {/* ─── Diff view — asymmetric 40/60 split ─── */}
-      {view === 'diff' && originalContent && (
-        <div className="flex flex-col gap-6 mt-6">
-          {/* Full-bleed title — left aligned */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h3 className="text-xl font-heading text-text-bright font-semibold">Semantic Compression Map</h3>
-              <p className="text-xs text-muted font-mono mt-1">See exactly what the AI decided to keep</p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {[
-                { label: 'GOAL', color: 'purple' },
-                { label: 'DECISION', color: 'emerald' },
-                { label: 'CODE', color: 'blue' },
-                { label: 'CONSTRAINT', color: 'orange' },
-              ].map(t => (
-                <span key={t.label} className={`px-2.5 py-1 text-${t.color}-400 text-[9px] font-bold tracking-widest flex items-center gap-1.5`}>
-                  <span className={`w-1.5 h-1.5 rounded-full bg-${t.color}-400`} /> {t.label}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          {/* Asymmetric split — 40% / 60%, shifted left for organic feel */}
-          <div className="relative flex flex-col md:flex-row h-[600px] overflow-hidden" style={{ marginLeft: '-3%', marginRight: '-5%' }}>
-            {/* Pinned margin label — ORIGINAL, sits outside content flow */}
-            <div className="hidden md:block absolute top-16 -left-1 z-10" style={{ writingMode: 'vertical-lr' }}>
-              <span className="text-[9px] font-mono text-muted/40 uppercase tracking-[0.3em] rotate-180" style={{ transform: 'rotate(180deg)' }}>Original Conversation</span>
-            </div>
-
-            {/* Left Pane — 40% width, ghost text */}
-            <div
-              className="md:w-[40%] flex flex-col relative opacity-50"
-              style={{
-                background: 'linear-gradient(90deg, transparent 0%, #061420 20%, #061420 80%, transparent 100%)',
-              }}
-            >
-              <div className="py-3 px-6 flex items-center gap-2 md:hidden">
-                <span className="w-1.5 h-1.5 rounded-sm bg-muted/50 transform rotate-45" />
-                <span className="text-[10px] font-mono text-muted uppercase tracking-widest">Original Conversation</span>
+      {
+        view === 'diff' && originalContent && (
+          <div className="flex flex-col gap-6 mt-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h3 className="text-xl font-heading text-text-bright font-semibold">Semantic Compression Map</h3>
+                <p className="text-xs text-muted font-mono mt-1">See exactly what the AI decided to keep</p>
               </div>
-              <div className="px-8 pr-6 overflow-y-auto font-mono text-[11px] leading-relaxed space-y-1 pt-3">
-                {renderOriginalText(originalContent, content)}
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { label: 'GOAL', color: 'purple' },
+                  { label: 'DECISION', color: 'emerald' },
+                  { label: 'CODE', color: 'blue' },
+                  { label: 'CONSTRAINT', color: 'orange' },
+                ].map(t => (
+                  <span key={t.label} className={`px-2.5 py-1 text-${t.color}-400 text-[9px] font-bold tracking-widest flex items-center gap-1.5`}>
+                    <span className={`w-1.5 h-1.5 rounded-full bg-${t.color}-400`} /> {t.label}
+                  </span>
+                ))}
               </div>
             </div>
 
-            {/* Pinned margin label — SURVIVED, sits outside content flow */}
-            <div className="hidden md:block absolute top-16 z-10" style={{ left: '40%', marginLeft: '-12px', writingMode: 'vertical-lr' }}>
-              <span className="text-[9px] font-mono text-primary/60 uppercase tracking-[0.3em] font-semibold" style={{ transform: 'rotate(180deg)' }}>What Survived</span>
-            </div>
-
-            {/* Right Pane — 60% width, vivid with ink bleed glow */}
-            <div
-              className="md:w-[60%] flex flex-col relative"
-              style={{
-                background: 'radial-gradient(ellipse at 25% 40%, rgba(6,182,212,0.04) 0%, transparent 60%)',
-              }}
-            >
-              {/* Whisper edge */}
-              <div className="absolute left-0 top-0 bottom-0 w-px bg-gradient-to-b from-primary/25 via-primary/10 to-transparent" />
-
-              <div className="py-3 pl-8 flex items-center gap-2 md:hidden">
-                <span className="w-1.5 h-1.5 rounded-sm bg-primary transform rotate-45 animate-pulse" />
-                <span className="text-[10px] font-mono text-primary uppercase tracking-widest font-semibold">What Survived</span>
+            <div className="relative flex flex-col md:flex-row h-[600px] overflow-hidden" style={{ marginLeft: '-3%', marginRight: '-5%' }}>
+              <div className="hidden md:block absolute top-16 -left-1 z-10" style={{ writingMode: 'vertical-lr' }}>
+                <span className="text-[9px] font-mono text-muted/40 uppercase tracking-[0.3em] rotate-180" style={{ transform: 'rotate(180deg)' }}>Original Conversation</span>
               </div>
-              <div className="pl-8 pr-6 overflow-y-auto h-full pt-3">
-                <div className="flex flex-col gap-5">
-                  {parseExtractedTags(content).map((item, i) => {
-                    let borderColor = '';
-                    let badgeClass = '';
-                    let dotClass = '';
-                    let glowColor = '';
 
-                    if (item.type === 'emerald') { borderColor = 'border-emerald-500/40'; badgeClass = 'text-emerald-400'; dotClass = 'bg-emerald-500'; glowColor = 'rgba(16,185,129,0.06)'; }
-                    if (item.type === 'purple') { borderColor = 'border-purple-500/40'; badgeClass = 'text-purple-400'; dotClass = 'bg-purple-400'; glowColor = 'rgba(168,85,247,0.06)'; }
-                    if (item.type === 'blue') { borderColor = 'border-blue-500/40'; badgeClass = 'text-blue-400'; dotClass = 'bg-blue-400'; glowColor = 'rgba(59,130,246,0.06)'; }
-                    if (item.type === 'orange') { borderColor = 'border-orange-500/40'; badgeClass = 'text-orange-400'; dotClass = 'bg-orange-400'; glowColor = 'rgba(245,158,11,0.06)'; }
+              <div
+                className="md:w-[40%] flex flex-col relative opacity-50"
+                style={{
+                  background: 'linear-gradient(90deg, transparent 0px, #061420 2rem, #061420 calc(100% - 2rem), transparent 100%)',
+                }}
+              >
+                <div className="py-3 px-6 flex items-center gap-2 md:hidden">
+                  <span className="w-1.5 h-1.5 rounded-sm bg-muted/50 transform rotate-45" />
+                  <span className="text-[10px] font-mono text-muted uppercase tracking-widest">Original Conversation</span>
+                </div>
+                <div className="px-8 pr-6 overflow-y-auto font-mono text-[11px] leading-relaxed space-y-1 pt-3">
+                  {renderOriginalText(originalContent, content)}
+                </div>
+              </div>
 
-                    return (
-                      <div
-                        key={i}
-                        className={`relative pl-5 border-l-[3px] ${borderColor} py-2`}
-                        style={{
-                          background: `radial-gradient(ellipse at 0% 50%, ${glowColor} 0%, transparent 70%)`,
-                        }}
-                      >
-                        <div className={`absolute left-[-6px] top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full ${dotClass} shadow-[0_0_8px_currentColor]`} />
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                          <span className={`text-[9px] font-bold tracking-widest uppercase ${badgeClass} flex-shrink-0`}>
-                            {item.tag}
-                          </span>
-                          <span className="text-[13px] font-mono text-text-bright leading-relaxed">
-                            {item.text}
-                          </span>
+              <div className="hidden md:block absolute top-16 z-10" style={{ left: '40%', marginLeft: '-12px', writingMode: 'vertical-lr' }}>
+                <span className="text-[9px] font-mono text-primary/60 uppercase tracking-[0.3em] font-semibold" style={{ transform: 'rotate(180deg)' }}>What Survived</span>
+              </div>
+
+              <div
+                className="md:w-[60%] flex flex-col relative"
+                style={{
+                  background: 'radial-gradient(ellipse at 25% 40%, rgba(6,182,212,0.04) 0%, transparent 60%)',
+                }}
+              >
+                <div className="absolute left-0 top-0 bottom-0 w-px bg-gradient-to-b from-primary/25 via-primary/10 to-transparent" />
+                <div className="py-3 pl-8 flex items-center gap-2 md:hidden">
+                  <span className="w-1.5 h-1.5 rounded-sm bg-primary transform rotate-45 animate-pulse" />
+                  <span className="text-[10px] font-mono text-primary uppercase tracking-widest font-semibold">What Survived</span>
+                </div>
+                <div className="pl-8 pr-6 overflow-y-auto h-full pt-3">
+                  <div className="flex flex-col gap-5">
+                    {parseExtractedTags(content).map((item, i) => {
+                      let borderColor = '';
+                      let badgeClass = '';
+                      let dotClass = '';
+                      let glowColor = '';
+
+                      if (item.type === 'emerald') { borderColor = 'border-emerald-500/40'; badgeClass = 'text-emerald-400'; dotClass = 'bg-emerald-500'; glowColor = 'rgba(16,185,129,0.06)'; }
+                      if (item.type === 'purple') { borderColor = 'border-purple-500/40'; badgeClass = 'text-purple-400'; dotClass = 'bg-purple-400'; glowColor = 'rgba(168,85,247,0.06)'; }
+                      if (item.type === 'blue') { borderColor = 'border-blue-500/40'; badgeClass = 'text-blue-400'; dotClass = 'bg-blue-400'; glowColor = 'rgba(59,130,246,0.06)'; }
+                      if (item.type === 'orange') { borderColor = 'border-orange-500/40'; badgeClass = 'text-orange-400'; dotClass = 'bg-orange-400'; glowColor = 'rgba(245,158,11,0.06)'; }
+
+                      return (
+                        <div
+                          key={i}
+                          className={`relative pl-5 border-l-[3px] ${borderColor} py-2`}
+                          style={{
+                            background: `radial-gradient(ellipse at 0% 50%, ${glowColor} 0%, transparent 70%)`,
+                          }}
+                        >
+                          <div className={`absolute left-[-6px] top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full ${dotClass} shadow-[0_0_8px_currentColor]`} />
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                            <span className={`text-[9px] font-bold tracking-widest uppercase ${badgeClass} flex-shrink-0`}>
+                              {item.tag}
+                            </span>
+                            <span className="text-[13px] font-mono text-text-bright leading-relaxed">
+                              {item.text}
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                    )
-                  })}
+                      )
+                    })}
 
-                  {parseExtractedTags(content).length === 0 && (
-                    <div className="text-muted text-xs font-mono italic mt-10">
-                      No tagged elements found... Check Document view.
-                    </div>
-                  )}
+                    {parseExtractedTags(content).length === 0 && (
+                      <div className="text-muted text-xs font-mono italic mt-10">
+                        No tagged elements found... Check Document view.
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* ─── Raw view — newspaper style ─── */}
-      {view === 'raw' && (
-        <div className="relative mt-6 -mx-6 py-8 px-8" style={{
-          background: 'linear-gradient(180deg, transparent 0%, #061420 15%, #0A1E2E 50%, #061420 85%, transparent 100%)',
-        }}>
-          {/* Ink bleed */}
-          <div className="absolute inset-0 pointer-events-none" style={{
-            background: 'radial-gradient(ellipse at 10% 30%, rgba(6,182,212,0.04) 0%, transparent 50%)',
-          }} />
-          <div className="flex gap-6 relative z-10">
-            <div className="w-[3px] flex-shrink-0 rounded-full bg-primary/30" />
-            <pre className="text-xs text-text-main whitespace-pre-wrap font-mono leading-relaxed max-h-96 overflow-y-auto">
-              {content}
-            </pre>
+      {
+        view === 'raw' && (
+          <div className="relative mt-6 -mx-6 py-12 px-8 animate-fade-in-up" style={{
+            background: 'linear-gradient(180deg, transparent 0px, #061420 3rem, #061420 calc(100% - 3rem), transparent 100%)',
+            maskImage: 'linear-gradient(to right, transparent 0px, black 2rem, black calc(100% - 2rem), transparent 100%)',
+            WebkitMaskImage: 'linear-gradient(to right, transparent 0px, black 2rem, black calc(100% - 2rem), transparent 100%)',
+          }}>
+            <div className="absolute inset-0 pointer-events-none" style={{
+              background: 'radial-gradient(ellipse at 10% 30%, rgba(6,182,212,0.04) 0%, transparent 50%)',
+            }} />
+            <div className="flex gap-6 relative z-10">
+              <div className="w-[3px] flex-shrink-0 rounded-full bg-primary/30" />
+              <pre className="text-xs text-text-main whitespace-pre-wrap font-mono leading-relaxed max-h-96 overflow-y-auto">
+                {content}
+              </pre>
+            </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* ─── Usage tip — thin rule separator ─── */}
       <div className="mt-6">
@@ -472,6 +477,6 @@ export default function BrainFileOutput({ content, originalContent, confidenceDa
         </p>
       </div>
 
-    </div>
+    </div >
   )
 }
