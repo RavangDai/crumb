@@ -79,22 +79,6 @@ export default function CompressionVisualizer() {
                 </div>
             </div>
 
-            {/* Required custom CSS for the stream animation */}
-            <style dangerouslySetInnerHTML={{
-                __html: `
-        @keyframes flowRight {
-          0% { left: 0%; transform: scale(1); opacity: 0; }
-          10% { opacity: 1; }
-          70% { left: 40%; transform: scale(0.5); opacity: 0.8; }
-          100% { left: 50%; transform: scale(0); opacity: 0; }
-        }
-        @keyframes flowLeft {
-          0% { right: 0%; transform: scale(1); opacity: 0; }
-          10% { opacity: 1; }
-          70% { right: 40%; transform: scale(0.5); opacity: 0.8; }
-          100% { right: 50%; transform: scale(0); opacity: 0; }
-        }
-      `}} />
         </div>
     )
 }

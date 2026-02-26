@@ -8,6 +8,18 @@ import CompressionVisualizer from '@/components/CompressionVisualizer'
 import WaveBackground from '@/components/WaveBackground'
 import { CompressionDepth } from '@/lib/prompt'
 
+interface ConfidenceData {
+  confidence: number
+  breakdown: {
+    goals_captured: number
+    decisions_preserved: number
+    technical_context: number
+    constraints_noted: number
+  }
+  sections_filled: number
+  key_topics_found: number
+}
+
 export default function Home() {
   const [conversation, setConversation] = useState('')
   const [crumbFile, setCrumbFile] = useState('')
@@ -15,7 +27,7 @@ export default function Home() {
   const [error, setError] = useState('')
   const [selectedServer, setSelectedServer] = useState<number>(1)
   const [compressionDepth, setCompressionDepth] = useState<CompressionDepth>('memory')
-  const [confidenceData, setConfidenceData] = useState<any>(null)
+  const [confidenceData, setConfidenceData] = useState<ConfidenceData | null>(null)
 
   const parseConfidence = (raw: string) => {
     try {
@@ -49,8 +61,8 @@ export default function Home() {
       const confidence = parseConfidence(data.crumbFile)
       setConfidenceData(confidence)
       setCrumbFile(stripConfidenceJson(data.crumbFile))
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong')
     } finally {
       setIsLoading(false)
     }
@@ -75,7 +87,7 @@ export default function Home() {
           <Image src="/Crumbv2.png" alt="" fill className="object-contain" />
         </div>
         {/* Sonar rings anchored to far right */}
-        <svg className="absolute top-[60%] right-[-40px] w-80 h-80 opacity-[0.04]" viewBox="0 0 320 320" fill="none">
+        <svg className="absolute top-[60%] right-[-40px] w-80 h-80" style={{ animation: 'sonarPulse 4s ease-in-out infinite' }} viewBox="0 0 320 320" fill="none">
           <circle cx="160" cy="160" r="60" stroke="#06B6D4" strokeWidth="0.5" />
           <circle cx="160" cy="160" r="100" stroke="#06B6D4" strokeWidth="0.5" />
           <circle cx="160" cy="160" r="140" stroke="#06B6D4" strokeWidth="0.3" />
@@ -135,13 +147,13 @@ export default function Home() {
             <span className="font-heading font-bold text-[180px] md:text-[220px] text-text-bright opacity-[0.015] tracking-tighter whitespace-nowrap">MEMORY</span>
           </div>
 
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-surface/60 text-xs text-text-bright font-medium font-mono mb-6" style={{ animation: 'fadeUp 0.8s ease-out 0.1s both' }}>
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-surface/60 text-xs text-text-bright font-medium font-mono mb-6 badge-shimmer" style={{ animation: 'fadeUp 0.8s ease-out 0.1s both' }}>
             <span className="text-primary">✦</span> AI Memory Compression
           </div>
 
           <h1 className="font-heading text-5xl md:text-7xl font-semibold tracking-tight leading-[1.1] text-text-bright max-w-4xl mb-6 mx-auto" style={{ animation: 'fadeUp 0.8s ease-out 0.2s both' }}>
             Never Lose <br className="hidden md:block" />
-            <span style={{ background: 'linear-gradient(135deg, #06B6D4, #3B82F6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+            <span style={{ background: 'linear-gradient(90deg, #06B6D4, #3B82F6, #10FDAC, #06B6D4)', backgroundSize: '300% 100%', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', animation: 'gradientFlow 5s ease infinite' }}>
               Context
             </span>
             {' '}Again
@@ -154,15 +166,15 @@ export default function Home() {
 
           {/* Works with — centered */}
           <div className="flex items-center justify-center gap-5 text-xs text-muted font-mono flex-wrap" style={{ animation: 'fadeUp 0.8s ease-out 0.4s both' }}>
-            <div className="flex items-center gap-2 px-3.5 py-2 rounded-full bg-surface/50 hover:bg-surface/70 transition-colors group">
+            <div className="flex items-center gap-2 px-3.5 py-2 rounded-full bg-surface/50 hover:bg-surface/80 hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(6,182,212,0.1)] transition-all duration-300 group">
               <Image src="/ChatGPT.png" alt="ChatGPT" width={16} height={16} className="rounded-sm opacity-80 group-hover:opacity-100 transition-opacity" style={{ filter: 'invert(1)' }} />
               ChatGPT
             </div>
-            <div className="flex items-center gap-2 px-3.5 py-2 rounded-full bg-surface/50 hover:bg-surface/70 transition-colors group">
+            <div className="flex items-center gap-2 px-3.5 py-2 rounded-full bg-surface/50 hover:bg-surface/80 hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(6,182,212,0.1)] transition-all duration-300 group">
               <Image src="/claude.png" alt="Claude" width={16} height={16} className="rounded-sm opacity-80 group-hover:opacity-100 transition-opacity" />
               Claude
             </div>
-            <div className="flex items-center gap-2 px-3.5 py-2 rounded-full bg-surface/50 hover:bg-surface/70 transition-colors group">
+            <div className="flex items-center gap-2 px-3.5 py-2 rounded-full bg-surface/50 hover:bg-surface/80 hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(6,182,212,0.1)] transition-all duration-300 group">
               <Image src="/gemini.png" alt="Gemini" width={16} height={16} className="rounded-sm opacity-80 group-hover:opacity-100 transition-opacity" />
               Gemini
             </div>
@@ -191,7 +203,7 @@ export default function Home() {
             <div className="pl-[8%] pr-[5%] mb-6" style={{ animation: 'fadeUp 0.8s ease-out 0.1s both' }}>
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_8px_var(--primary)]" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary animate-glow-breathe" />
                   <span className="font-heading text-sm font-medium text-text-bright">New Compression</span>
                 </div>
                 <div className="flex flex-wrap items-center gap-4">
@@ -258,13 +270,13 @@ export default function Home() {
                 <button
                   onClick={handleCompress}
                   disabled={isLoading || !conversation.trim()}
-                  className="relative px-10 py-3.5 rounded-full font-heading font-medium text-sm transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed overflow-hidden group text-[#040D12]"
+                  className="relative px-10 py-3.5 rounded-full font-heading font-medium text-sm transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed overflow-hidden group text-[#040D12] active:scale-[0.97] hover:shadow-[0_0_40px_rgba(6,182,212,0.45)]"
                   style={{
                     background: 'linear-gradient(135deg, #06B6D4, #3B82F6)',
                     boxShadow: '0 0 24px rgba(6, 182, 212, 0.2)'
                   }}
                 >
-                  <div className="absolute inset-0 bg-white/10 group-hover:opacity-100 transition-opacity" />
+                  <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-all duration-200" />
                   <div className="relative flex items-center justify-center gap-2">
                     {isLoading ? (
                       <>
@@ -412,7 +424,7 @@ export default function Home() {
 
       {/* ─── Floating Bottom Dock ─── */}
       <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
-        <div className="flex items-center gap-1 px-2 py-2 rounded-2xl bg-surface/90 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4),0_0_0_1px_rgba(6,182,212,0.08)]">
+        <div className="flex items-center gap-1 px-2 py-2 rounded-2xl bg-surface/90 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4),0_0_0_1px_rgba(6,182,212,0.08)]" style={{ animation: 'dockSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.5s both' }}>
           <button
             onClick={scrollToCompress}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-mono transition-all hover:bg-primary/10 text-muted hover:text-primary"
@@ -427,8 +439,9 @@ export default function Home() {
           <div className="w-px h-5 bg-border-ocean/30" />
 
           <button
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-mono transition-all hover:bg-primary/10 text-muted hover:text-primary"
-            title="History"
+            disabled
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-mono text-muted/40 cursor-not-allowed"
+            title="History — coming soon"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10" />
@@ -440,8 +453,9 @@ export default function Home() {
           <div className="w-px h-5 bg-border-ocean/30" />
 
           <button
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-mono transition-all hover:bg-primary/10 text-muted hover:text-primary"
-            title="Settings"
+            disabled
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-mono text-muted/40 cursor-not-allowed"
+            title="Settings — coming soon"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="3" />

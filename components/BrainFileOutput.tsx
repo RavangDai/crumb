@@ -142,7 +142,7 @@ export default function BrainFileOutput({ content, originalContent, confidenceDa
       {/* ─── Confidence Score — layered depth background ─── */}
       {confidenceData && (
         <div
-          className="relative flex flex-col sm:flex-row items-start gap-8 py-10 px-8 -mx-6"
+          className="relative flex flex-col sm:flex-row items-start gap-8 py-10 px-8 -mx-6 animate-scale-in"
           style={{
             background: 'linear-gradient(180deg, transparent 0px, #061420 3rem, #061420 calc(100% - 3rem), transparent 100%)',
             maskImage: 'linear-gradient(to right, transparent 0px, black 2rem, black calc(100% - 2rem), transparent 100%)',
@@ -190,17 +190,22 @@ export default function BrainFileOutput({ content, originalContent, confidenceDa
               </div>
             </div>
             {[
-              { label: 'Goals Captured', value: confidenceData.breakdown.goals_captured, color: '#A855F7' },
-              { label: 'Decisions Preserved', value: confidenceData.breakdown.decisions_preserved, color: '#10B981' },
-              { label: 'Technical Context', value: confidenceData.breakdown.technical_context, color: '#3B82F6' },
-              { label: 'Constraints Noted', value: confidenceData.breakdown.constraints_noted, color: '#F97316' },
-            ].map(item => (
+              { label: 'Goals Captured', value: confidenceData.breakdown.goals_captured, from: '#C084FC', to: '#A855F7' },
+              { label: 'Decisions Preserved', value: confidenceData.breakdown.decisions_preserved, from: '#34D399', to: '#10B981' },
+              { label: 'Technical Context', value: confidenceData.breakdown.technical_context, from: '#60A5FA', to: '#3B82F6' },
+              { label: 'Constraints Noted', value: confidenceData.breakdown.constraints_noted, from: '#FB923C', to: '#F97316' },
+            ].map((item, i) => (
               <div key={item.label} className="flex items-center gap-3">
                 <span className="text-[10px] text-muted font-mono w-[140px] flex-shrink-0">{item.label}</span>
                 <div className="flex-1 h-1 bg-border-ocean/20 rounded-full overflow-hidden">
                   <div
-                    className="h-full rounded-full transition-all duration-1000"
-                    style={{ width: `${item.value}%`, backgroundColor: item.color }}
+                    className="h-full rounded-full"
+                    style={{
+                      width: `${item.value}%`,
+                      background: `linear-gradient(to right, ${item.from}, ${item.to})`,
+                      transformOrigin: 'left center',
+                      animation: `barExpand 1.2s cubic-bezier(0.16, 1, 0.3, 1) ${i * 0.15 + 0.3}s both`,
+                    }}
                   />
                 </div>
                 <span className="text-[10px] font-mono text-text-bright w-8 text-right">{item.value}%</span>
@@ -232,13 +237,13 @@ export default function BrainFileOutput({ content, originalContent, confidenceDa
             ].map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setView(tab.id as any)}
+                onClick={() => setView(tab.id as 'cards' | 'diff' | 'raw')}
                 className={`font-mono text-sm pb-4 relative transition-colors ${view === tab.id ? 'text-primary' : 'text-muted hover:text-text-bright'
                   }`}
               >
                 {tab.label}
                 {view === tab.id && (
-                  <span className="absolute bottom-[-1px] left-0 right-0 h-[2px] bg-primary rounded-t-full shadow-[0_-2px_8px_rgba(6,182,212,0.4)]" />
+                  <span className="absolute bottom-[-1px] left-0 right-0 h-[2px] bg-primary rounded-t-full shadow-[0_-2px_8px_rgba(6,182,212,0.4)]" style={{ transformOrigin: 'left center', animation: 'tabPop 0.25s cubic-bezier(0.16, 1, 0.3, 1) both' }} />
                 )}
               </button>
             ))}
