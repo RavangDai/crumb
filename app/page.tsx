@@ -6,19 +6,12 @@ import ConversationInput from '@/components/ConversationInput'
 import BrainFileOutput from '@/components/BrainFileOutput'
 import CompressionVisualizer from '@/components/CompressionVisualizer'
 import WaveBackground from '@/components/WaveBackground'
+import VaultModal from '@/components/VaultModal'
 import { CompressionDepth } from '@/lib/prompt'
+import { ConfidenceData, VaultEntry } from '@/lib/types'
+import { saveToVault, extractVaultTitle } from '@/lib/vault'
 
-interface ConfidenceData {
-  confidence: number
-  breakdown: {
-    goals_captured: number
-    decisions_preserved: number
-    technical_context: number
-    constraints_noted: number
-  }
-  sections_filled: number
-  key_topics_found: number
-}
+const MIN_WORDS = 30
 
 export default function Home() {
   const [conversation, setConversation] = useState('')
@@ -29,12 +22,19 @@ export default function Home() {
   const [compressionDepth, setCompressionDepth] = useState<CompressionDepth>('memory')
   const [confidenceData, setConfidenceData] = useState<ConfidenceData | null>(null)
 
-  const parseConfidence = (raw: string) => {
+  // Vault
+  const [showVault, setShowVault] = useState(false)
+
+  // Rolling context
+  const [showUpdateInput, setShowUpdateInput] = useState(false)
+  const [newConversation, setNewConversation] = useState('')
+  const [isUpdating, setIsUpdating] = useState(false)
+  const [updateError, setUpdateError] = useState('')
+
+  const parseConfidence = (raw: string): ConfidenceData | null => {
     try {
       const jsonMatch = raw.match(/```json\s*([\s\S]*?)```/)
-      if (jsonMatch) {
-        return JSON.parse(jsonMatch[1])
-      }
+      if (jsonMatch) return JSON.parse(jsonMatch[1])
     } catch { /* ignore */ }
     return null
   }
@@ -43,12 +43,29 @@ export default function Home() {
     return raw.replace(/```json\s*[\s\S]*?```/, '').trim()
   }
 
+  const applyResult = (raw: string) => {
+    const confidence = parseConfidence(raw)
+    const stripped = stripConfidenceJson(raw)
+    setConfidenceData(confidence)
+    setCrumbFile(stripped)
+    return { confidence, stripped }
+  }
+
   const handleCompress = async () => {
     if (!conversation.trim()) return
+
+    const words = conversation.trim().split(/\s+/).filter(Boolean)
+    if (words.length < MIN_WORDS) {
+      setError(`Too short — paste a real AI conversation (at least ${MIN_WORDS} words). Short inputs get expanded, not compressed.`)
+      return
+    }
+
     setIsLoading(true)
     setError('')
     setCrumbFile('')
     setConfidenceData(null)
+    setShowUpdateInput(false)
+    setNewConversation('')
 
     try {
       const res = await fetch('/api/compress', {
@@ -58,9 +75,22 @@ export default function Home() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Something went wrong')
-      const confidence = parseConfidence(data.crumbFile)
-      setConfidenceData(confidence)
-      setCrumbFile(stripConfidenceJson(data.crumbFile))
+
+      const { confidence, stripped } = applyResult(data.crumbFile)
+
+      // Auto-save to vault
+      const originalWords = words.length
+      const crumbWords = stripped.trim().split(/\s+/).filter(Boolean).length
+      saveToVault({
+        title: extractVaultTitle(stripped),
+        content: stripped,
+        crumbWordCount: crumbWords,
+        confidence: confidence?.confidence ?? null,
+        confidenceData: confidence,
+        depth: compressionDepth,
+      })
+
+      scrollToOutput()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong')
     } finally {
@@ -68,11 +98,69 @@ export default function Home() {
     }
   }
 
+  const handleUpdateCrumb = async () => {
+    const words = newConversation.trim().split(/\s+/).filter(Boolean)
+    if (words.length < 10) {
+      setUpdateError('Add at least 10 words of new conversation to update the crumb.')
+      return
+    }
+
+    setIsUpdating(true)
+    setUpdateError('')
+
+    try {
+      const res = await fetch('/api/compress', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          conversation: newConversation,
+          server: selectedServer,
+          depth: compressionDepth,
+          existingCrumb: crumbFile,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Something went wrong')
+
+      const { confidence, stripped } = applyResult(data.crumbFile)
+
+      // Auto-save updated crumb to vault
+      const crumbWords = stripped.trim().split(/\s+/).filter(Boolean).length
+      saveToVault({
+        title: extractVaultTitle(stripped),
+        content: stripped,
+        crumbWordCount: crumbWords,
+        confidence: confidence?.confidence ?? null,
+        confidenceData: confidence,
+        depth: compressionDepth,
+      })
+
+      setNewConversation('')
+      setShowUpdateInput(false)
+    } catch (err) {
+      setUpdateError(err instanceof Error ? err.message : 'Something went wrong')
+    } finally {
+      setIsUpdating(false)
+    }
+  }
+
+  const handleLoadFromVault = (entry: VaultEntry) => {
+    setCrumbFile(entry.content)
+    setConfidenceData(entry.confidenceData)
+    setShowUpdateInput(false)
+    setNewConversation('')
+    setTimeout(scrollToOutput, 100)
+  }
+
   const wordCount = conversation.trim().split(/\s+/).filter(Boolean).length
   const charCount = conversation.length
 
   const scrollToCompress = () => {
     document.getElementById('compress')?.scrollIntoView({ behavior: 'smooth' })
+  }
+
+  const scrollToOutput = () => {
+    document.getElementById('output')?.scrollIntoView({ behavior: 'smooth' })
   }
 
   return (
@@ -136,7 +224,7 @@ export default function Home() {
               <Image src="/Crumbv2.png" alt="Crumb Logo" fill className="object-cover" />
             </div>
             <span className="font-heading font-semibold text-xl tracking-tight text-text-bright">Crumb.</span>
-            <span className="text-[10px] text-muted font-mono ml-1 px-2 py-0.5 rounded-full bg-surface/40">beta</span>
+            <span className="text-[10px] text-muted/50 font-mono ml-2">/ beta</span>
           </div>
         </div>
 
@@ -147,8 +235,10 @@ export default function Home() {
             <span className="font-heading font-bold text-[180px] md:text-[220px] text-text-bright opacity-[0.015] tracking-tighter whitespace-nowrap">MEMORY</span>
           </div>
 
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-surface/60 text-xs text-text-bright font-medium font-mono mb-6 badge-shimmer" style={{ animation: 'fadeUp 0.8s ease-out 0.1s both' }}>
-            <span className="text-primary">✦</span> AI Memory Compression
+          <div className="inline-flex items-center gap-3 mb-8" style={{ animation: 'fadeUp 0.8s ease-out 0.1s both' }}>
+            <span className="w-8 h-px bg-gradient-to-r from-transparent to-primary/50 inline-block" />
+            <span className="text-[10px] text-muted font-mono uppercase tracking-[0.25em]">AI Memory Compression</span>
+            <span className="w-8 h-px bg-gradient-to-l from-transparent to-primary/50 inline-block" />
           </div>
 
           <h1 className="font-heading text-5xl md:text-7xl font-semibold tracking-tight leading-[1.1] text-text-bright max-w-4xl mb-6 mx-auto" style={{ animation: 'fadeUp 0.8s ease-out 0.2s both' }}>
@@ -165,19 +255,19 @@ export default function Home() {
           </p>
 
           {/* Works with — centered */}
-          <div className="flex items-center justify-center gap-5 text-xs text-muted font-mono flex-wrap" style={{ animation: 'fadeUp 0.8s ease-out 0.4s both' }}>
-            <div className="flex items-center gap-2 px-3.5 py-2 rounded-full bg-surface/50 hover:bg-surface/80 hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(6,182,212,0.1)] transition-all duration-300 group">
-              <Image src="/ChatGPT.png" alt="ChatGPT" width={16} height={16} className="rounded-sm opacity-80 group-hover:opacity-100 transition-opacity" style={{ filter: 'invert(1)' }} />
-              ChatGPT
-            </div>
-            <div className="flex items-center gap-2 px-3.5 py-2 rounded-full bg-surface/50 hover:bg-surface/80 hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(6,182,212,0.1)] transition-all duration-300 group">
-              <Image src="/claude.png" alt="Claude" width={16} height={16} className="rounded-sm opacity-80 group-hover:opacity-100 transition-opacity" />
-              Claude
-            </div>
-            <div className="flex items-center gap-2 px-3.5 py-2 rounded-full bg-surface/50 hover:bg-surface/80 hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(6,182,212,0.1)] transition-all duration-300 group">
-              <Image src="/gemini.png" alt="Gemini" width={16} height={16} className="rounded-sm opacity-80 group-hover:opacity-100 transition-opacity" />
-              Gemini
-            </div>
+          <div className="flex items-center justify-center gap-6 flex-wrap" style={{ animation: 'fadeUp 0.8s ease-out 0.4s both' }}>
+            <span className="text-[10px] text-muted/40 font-mono uppercase tracking-widest">works with</span>
+            {[
+              { src: '/ChatGPT.png', alt: 'ChatGPT', invert: true },
+              { src: '/claude.png', alt: 'Claude', invert: false },
+              { src: '/gemini.png', alt: 'Gemini', invert: false },
+            ].map((item, i) => (
+              <div key={item.alt} className="flex items-center gap-1.5 text-xs text-muted/60 font-mono hover:text-text-bright transition-colors duration-300 cursor-default group">
+                {i > 0 && <span className="text-muted/20 mr-4">·</span>}
+                <Image src={item.src} alt={item.alt} width={14} height={14} className="opacity-50 group-hover:opacity-90 transition-opacity" style={item.invert ? { filter: 'invert(1)' } : {}} />
+                {item.alt}
+              </div>
+            ))}
           </div>
         </section>
 
@@ -210,17 +300,17 @@ export default function Home() {
                   {/* Depth Selector */}
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-muted font-mono">Depth:</span>
-                    <div className="flex rounded-lg p-0.5 font-mono">
+                    <div className="flex items-center font-mono">
                       {(['snapshot', 'memory', 'full'] as const).map(d => (
                         <button
                           key={d}
                           onClick={() => setCompressionDepth(d)}
-                          className={`px-3 py-1 text-xs rounded-md transition-all capitalize ${compressionDepth === d
-                            ? 'bg-primary/15 text-primary font-medium'
-                            : 'text-muted hover:text-text-main'
-                            }`}
+                          className={`px-3 py-1 text-xs transition-all capitalize relative ${compressionDepth === d ? 'text-primary' : 'text-muted hover:text-text-main'}`}
                         >
                           {d}
+                          {compressionDepth === d && (
+                            <span className="absolute bottom-0 left-2 right-2 h-px bg-primary/60" style={{ transformOrigin: 'left', animation: 'tabPop 0.2s ease-out both' }} />
+                          )}
                         </button>
                       ))}
                     </div>
@@ -229,17 +319,17 @@ export default function Home() {
                   {/* Node Selector */}
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-muted font-mono">Node:</span>
-                    <div className="flex rounded-lg p-0.5 font-mono">
+                    <div className="flex items-center font-mono">
                       {[1, 2, 3].map(num => (
                         <button
                           key={num}
                           onClick={() => setSelectedServer(num)}
-                          className={`px-3 py-1 text-xs rounded-md transition-all ${selectedServer === num
-                            ? 'bg-primary/15 text-primary font-medium'
-                            : 'text-muted hover:text-text-main'
-                            }`}
+                          className={`px-3 py-1 text-xs transition-all relative ${selectedServer === num ? 'text-primary' : 'text-muted hover:text-text-main'}`}
                         >
                           0{num}
+                          {selectedServer === num && (
+                            <span className="absolute bottom-0 left-2 right-2 h-px bg-primary/60" style={{ transformOrigin: 'left', animation: 'tabPop 0.2s ease-out both' }} />
+                          )}
                         </button>
                       ))}
                     </div>
@@ -311,8 +401,124 @@ export default function Home() {
 
         {/* ─── Output — asymmetric, wider than normal content column ─── */}
         {crumbFile && (
-          <section className="mb-24 pl-[8%] pr-[5%]">
+          <section id="output" className="mb-12 pl-[8%] pr-[5%]">
             <BrainFileOutput content={crumbFile} originalContent={conversation} confidenceData={confidenceData} />
+          </section>
+        )}
+
+        {/* ─── Continue Session — rolling context ─── */}
+        {crumbFile && (
+          <section className="mb-24 relative overflow-hidden">
+            {/* Atmospheric depth */}
+            <div className="absolute inset-0" style={{
+              background: 'linear-gradient(180deg, transparent 0%, rgba(16,253,172,0.015) 30%, #061420 60%, transparent 100%)',
+            }} />
+            <div className="absolute inset-0 pointer-events-none" style={{
+              background: 'radial-gradient(ellipse at 25% 60%, rgba(16,253,172,0.04) 0%, transparent 55%)',
+            }} />
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden">
+              <span className="font-heading font-bold text-[200px] text-text-bright opacity-[0.012] tracking-tighter whitespace-nowrap">UPDATE</span>
+            </div>
+
+            <div className="relative py-12">
+              <div className="w-full h-px bg-gradient-to-r from-transparent via-accent/15 to-transparent mb-8" />
+
+              <div className="pl-[8%] pr-[8%]">
+                {/* Section label */}
+                <div className="mb-8" style={{ animation: 'fadeUp 0.6s ease-out both' }}>
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-accent" style={{ boxShadow: '0 0 8px #10FDAC' }} />
+                    <span className="font-heading text-sm font-medium text-text-bright">Continue This Session</span>
+                  </div>
+                  <p className="text-xs text-muted font-mono pl-4">Have more conversation? Update your crumb file with new context.</p>
+                  <div className="w-16 h-px mt-3 bg-gradient-to-r from-accent/30 to-transparent" />
+                </div>
+
+                {/* Content with left accent border */}
+                <div className="relative flex gap-5">
+                  <div className="w-[3px] flex-shrink-0 rounded-full bg-accent/30" />
+                  <div className="flex-1">
+                    {!showUpdateInput ? (
+                      <button
+                        onClick={() => setShowUpdateInput(true)}
+                        className="flex items-center gap-2 text-sm font-mono text-accent/70 hover:text-accent transition-colors duration-200 group"
+                      >
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="opacity-60 group-hover:opacity-100 transition-opacity">
+                          <path d="M12 5v14M5 12l7-7 7 7" />
+                        </svg>
+                        Add new conversation
+                        <span className="h-px w-8 bg-accent/30 group-hover:w-16 transition-all duration-300 inline-block" />
+                      </button>
+                    ) : (
+                      <div className="flex flex-col gap-4">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-muted/60 font-mono uppercase tracking-widest">New Conversation</span>
+                          <button
+                            onClick={() => { setShowUpdateInput(false); setNewConversation(''); setUpdateError('') }}
+                            className="text-xs text-muted/40 hover:text-muted font-mono transition-colors"
+                          >
+                            cancel
+                          </button>
+                        </div>
+
+                        <textarea
+                          value={newConversation}
+                          onChange={e => setNewConversation(e.target.value)}
+                          disabled={isUpdating}
+                          rows={8}
+                          placeholder={`Paste the new conversation that happened after the last crumb...
+
+User: I decided to go with Postgres instead of SQLite
+AI: Good choice! Here's how to set it up...`}
+                          className="w-full bg-transparent border-0 rounded-none p-0 text-sm text-text-bright placeholder-muted/30 resize-none focus:outline-none transition disabled:opacity-50 font-mono leading-relaxed"
+                        />
+                        <div className="w-full h-px bg-gradient-to-r from-accent/20 via-accent/10 to-transparent" />
+
+                        {updateError && (
+                          <div className="border-l-[3px] border-red-500/40 pl-4 py-2 text-sm text-red-400 font-mono">
+                            ⚠ {updateError}
+                          </div>
+                        )}
+
+                        <div className="flex items-center gap-4">
+                          <button
+                            onClick={handleUpdateCrumb}
+                            disabled={isUpdating || !newConversation.trim()}
+                            className="relative flex items-center gap-2 px-8 py-3 rounded-full font-heading font-medium text-sm transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.97] overflow-hidden group text-[#040D12] hover:shadow-[0_0_32px_rgba(16,253,172,0.35)]"
+                            style={{ background: 'linear-gradient(135deg, #10FDAC, #06B6D4)', boxShadow: '0 0 20px rgba(16,253,172,0.15)' }}
+                          >
+                            <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-all duration-200" />
+                            <div className="relative flex items-center gap-2">
+                              {isUpdating ? (
+                                <>
+                                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                                  </svg>
+                                  Updating...
+                                </>
+                              ) : (
+                                <>
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
+                                  </svg>
+                                  Update Crumb File
+                                </>
+                              )}
+                            </div>
+                          </button>
+                          <span className="text-xs text-muted/40 font-mono">
+                            {newConversation.trim().split(/\s+/).filter(Boolean).length} words
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="w-full h-px bg-gradient-to-r from-transparent via-accent/08 to-transparent mt-10" />
+            </div>
           </section>
         )}
 
@@ -409,14 +615,63 @@ export default function Home() {
           </div>
         </section>
 
-        {/* ─── Footer — left aligned ─── */}
-        <footer className="flex items-center justify-between text-xs text-muted font-mono px-[8%] pt-4">
-          <div className="flex items-center gap-6">
-            <div>Built with <span className="text-primary">✦</span> — Leave a trail. Never lose context.</div>
-            {/* Full-width thin rule above */}
+        {/* ─── Footer ─── */}
+        <footer className="relative pt-16 pb-10 px-[8%] overflow-hidden" style={{ background: 'linear-gradient(180deg, transparent 0%, #061420 20%, #0A1E2E 60%, transparent 100%)' }}>
+          {/* Radial glow */}
+          <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at 10% 60%, rgba(6,182,212,0.04) 0%, transparent 50%)' }} />
+          {/* Ghost watermark */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
+            <span className="font-heading font-black text-[120px] leading-none opacity-[0.015] text-white">CRUMB</span>
           </div>
-          <div className="relative w-20 h-5 opacity-50 hover:opacity-100 transition-opacity">
-            <Image src="/Crumb.png" alt="Powered By Crumb" fill className="object-contain" />
+          {/* Top rule */}
+          <div className="relative mb-12 h-px" style={{ background: 'linear-gradient(90deg, transparent 0%, rgba(6,182,212,0.2) 30%, rgba(6,182,212,0.2) 70%, transparent 100%)' }} />
+
+          {/* 3-column grid */}
+          <div className="relative grid grid-cols-1 md:grid-cols-3 gap-12">
+
+            {/* Col 1 — Brand */}
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center gap-2">
+                <div className="relative w-6 h-6">
+                  <Image src="/Crumb.png" alt="Crumb" fill className="object-contain" />
+                </div>
+                <span className="font-heading font-bold text-text-bright text-lg">Crumb.</span>
+              </div>
+              <p className="font-heading text-sm text-text-bright/80 leading-snug">Leave a trail. Never lose context.</p>
+              <p className="font-mono text-[11px] text-muted leading-relaxed">AI memory compression for the context-aware era.</p>
+            </div>
+
+            {/* Col 2 — Product */}
+            <div className="flex flex-col gap-4">
+              <span className="font-mono text-[10px] uppercase tracking-widest text-muted/60">Product</span>
+              <nav className="flex flex-col gap-2.5">
+                <a href="#compress" className="font-mono text-xs text-muted hover:text-primary transition-colors w-fit">Compress</a>
+                <a href="#how" className="font-mono text-xs text-muted hover:text-primary transition-colors w-fit">How It Works</a>
+                <button onClick={() => setShowVault(true)} className="font-mono text-xs text-muted hover:text-primary transition-colors text-left w-fit">History</button>
+              </nav>
+            </div>
+
+            {/* Col 3 — Built by */}
+            <div className="flex flex-col gap-4">
+              <span className="font-mono text-[10px] uppercase tracking-widest text-muted/60">Built By</span>
+              <div className="flex flex-col gap-1.5">
+                <div className="flex items-center gap-2">
+                  <span className="text-primary text-xs">✦</span>
+                  <span className="font-heading font-semibold text-text-bright text-base">Bibek Pathak</span>
+                </div>
+                <p className="font-mono text-[11px] text-muted">Powered by Gemini 2.5 Flash</p>
+              </div>
+            </div>
+
+          </div>
+
+          {/* Bottom strip */}
+          <div className="relative mt-12">
+            <div className="mb-4 h-px" style={{ background: 'linear-gradient(90deg, transparent 0%, rgba(6,182,212,0.12) 30%, rgba(6,182,212,0.12) 70%, transparent 100%)' }} />
+            <div className="flex items-center justify-between">
+              <span className="font-mono text-[10px] text-muted">© 2025 Crumb</span>
+              <span className="font-mono text-[10px] text-muted">Beta · All rights reserved</span>
+            </div>
           </div>
         </footer>
 
@@ -424,7 +679,7 @@ export default function Home() {
 
       {/* ─── Floating Bottom Dock ─── */}
       <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
-        <div className="flex items-center gap-1 px-2 py-2 rounded-2xl bg-surface/90 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4),0_0_0_1px_rgba(6,182,212,0.08)]" style={{ animation: 'dockSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.5s both' }}>
+        <div className="flex items-center gap-1 px-2 py-2" style={{ animation: 'dockSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.5s both', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', background: 'rgba(4, 13, 18, 0.45)', borderRadius: '20px', border: '1px solid rgba(6, 182, 212, 0.06)' }}>
           <button
             onClick={scrollToCompress}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-mono transition-all hover:bg-primary/10 text-muted hover:text-primary"
@@ -439,9 +694,9 @@ export default function Home() {
           <div className="w-px h-5 bg-border-ocean/30" />
 
           <button
-            disabled
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-mono text-muted/40 cursor-not-allowed"
-            title="History — coming soon"
+            onClick={() => setShowVault(true)}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-mono transition-all hover:bg-primary/10 text-muted hover:text-primary"
+            title="History"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10" />
@@ -465,6 +720,14 @@ export default function Home() {
           </button>
         </div>
       </div>
+
+      {/* ─── Vault Modal ─── */}
+      {showVault && (
+        <VaultModal
+          onClose={() => setShowVault(false)}
+          onLoad={handleLoadFromVault}
+        />
+      )}
 
     </main>
   )

@@ -1,21 +1,12 @@
 'use client'
 
 import { useState } from 'react'
+import { ConfidenceData } from '@/lib/types'
 
 interface Props {
   content: string
   originalContent?: string
-  confidenceData?: {
-    confidence: number
-    breakdown: {
-      goals_captured: number
-      decisions_preserved: number
-      technical_context: number
-      constraints_noted: number
-    }
-    sections_filled: number
-    key_topics_found: number
-  } | null
+  confidenceData?: ConfidenceData | null
 }
 
 const SECTIONS = [
@@ -218,10 +209,9 @@ export default function BrainFileOutput({ content, originalContent, confidenceDa
       {/* ─── Header — cleanly separated from content ─── */}
       <div className="flex flex-col gap-6 px-8 mb-8 relative z-10">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-white/5 pb-0">
-          <div className="flex items-center gap-4 pb-4">
-            <div className="w-10 h-10 rounded bg-primary/10 border border-primary/20 flex items-center justify-center">
-              <span className="font-heading font-bold text-primary">C.</span>
-            </div>
+          <div className="flex items-center gap-3 pb-4">
+            <span className="font-heading font-bold text-primary text-lg">C.</span>
+            <div className="w-px h-5 bg-primary/20" />
             <div>
               <h2 className="text-xl font-heading font-semibold text-text-bright tracking-tight">Crumb File Ready</h2>
               <p className="text-xs font-mono text-muted/60 mt-1">{wordCount} words <span className="mx-2">·</span> Portable memory snapshot</p>
@@ -251,13 +241,13 @@ export default function BrainFileOutput({ content, originalContent, confidenceDa
         </div>
 
         <div className="flex items-center justify-end gap-2 -mt-4">
-          <button onClick={handleCopy} className="text-xs px-3 py-1.5 text-muted hover:text-primary transition font-mono flex items-center gap-1.5 rounded-md hover:bg-surface/50">
-            {copied ? <span className="text-primary">✓</span> : <span>📋</span>}
+          <button onClick={handleCopy} className="text-xs px-2 py-1 text-muted hover:text-primary transition-colors duration-200 font-mono flex items-center gap-1.5">
+            {copied ? <span className="text-primary">✓</span> : <span className="opacity-60">📋</span>}
             {copied ? 'Copied' : 'Copy'}
           </button>
-          <div className="w-px h-3 bg-border-ocean/20 mx-1" />
-          <button onClick={handleDownload} className="text-xs px-3 py-1.5 text-muted hover:text-primary transition font-mono flex items-center gap-1.5 rounded-md hover:bg-surface/50">
-            <span>⬇</span>
+          <span className="text-muted/20 font-mono">·</span>
+          <button onClick={handleDownload} className="text-xs px-2 py-1 text-muted hover:text-primary transition-colors duration-200 font-mono flex items-center gap-1.5">
+            <span className="opacity-60">⬇</span>
             .md
           </button>
         </div>

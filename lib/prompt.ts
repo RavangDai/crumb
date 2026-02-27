@@ -1,5 +1,27 @@
 export type CompressionDepth = 'snapshot' | 'memory' | 'full'
 
+export function getUpdatePrompt(existingCrumb: string, newConversation: string): string {
+  return `You are updating an existing Crumb context file with a new conversation that happened after it was created.
+
+RULES:
+- Preserve all still-relevant information from the existing crumb
+- Update CURRENT STATE and NEXT STEP to reflect the latest conversation
+- Add new entries to DECISIONS MADE from the new conversation using [Decision] tags
+- Resolve any OPEN QUESTIONS that were answered; add new ones that came up
+- Append to DEAD ENDS if new failures were encountered (never remove existing dead ends)
+- Only change MISSION if the core goal fundamentally shifted
+- Remove outdated bullet points from CURRENT STATE that no longer apply
+- Use [Goal], [Decision], [Code], [Constraint] tags throughout
+
+--- EXISTING CRUMB FILE ---
+${existingCrumb}
+
+--- NEW CONVERSATION TO INTEGRATE ---
+${newConversation}
+
+Now output the fully updated Crumb File using the exact same 7-section structure and confidence JSON block. The updated crumb should feel like a single coherent document, not a concatenation.`
+}
+
 export const getCompressionPrompt = (depth: CompressionDepth = 'memory') => {
   let depthInstructions = ''
   if (depth === 'snapshot') {
