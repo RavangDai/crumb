@@ -18,8 +18,8 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Crumb",
-  description: "AI Memory Compression",
+  title: "CrumbCraft",
+  description: "AI Memory Compression & Prompt Crafting",
   icons: {
     icon: '/Crumb.png',
   },

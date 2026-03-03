@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import { ConfidenceData } from '@/lib/types'
 
 interface Props {
@@ -210,7 +211,9 @@ export default function BrainFileOutput({ content, originalContent, confidenceDa
       <div className="flex flex-col gap-6 px-8 mb-8 relative z-10">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-white/5 pb-0">
           <div className="flex items-center gap-3 pb-4">
-            <span className="font-heading font-bold text-primary text-lg">C.</span>
+            <div className="relative w-8 h-8">
+              <Image src="/Crumbv2.png" alt="Crumb" fill className="object-contain" />
+            </div>
             <div className="w-px h-5 bg-primary/20" />
             <div>
               <h2 className="text-xl font-heading font-semibold text-text-bright tracking-tight">Crumb File Ready</h2>

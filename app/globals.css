@@ -181,3 +181,39 @@ body {
 .animate-scale-in {
   animation: scaleIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
+
+/* ─── Craft page animations ─── */
+
+/* Entry fade for Craft page sections */
+@keyframes forestFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Builder block stagger entrance */
+@keyframes blockFillIn {
+  0% {
+    opacity: 0;
+    max-height: 0;
+    transform: translateY(-4px);
+  }
+  100% {
+    opacity: 1;
+    max-height: 200px;
+    transform: translateY(0);
+  }
+}
+
+/* Letter dissolve for AI loading state */
+@keyframes dissolveReform {
+  0% { opacity: 1; filter: blur(0px); }
+  40% { opacity: 0; filter: blur(6px); transform: scale(0.98); }
+  60% { opacity: 0; filter: blur(6px); transform: scale(1.01); }
+  100% { opacity: 1; filter: blur(0px); transform: scale(1); }
+}
