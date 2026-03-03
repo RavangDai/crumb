@@ -255,13 +255,13 @@ function saveHistory(blocks: Block[], assembled: string, category: string): Prom
 
 function PentagonDNA({ score }: { score: DNAScore }) {
   const axes = [
-    { label: 'Clarity',     value: score.clarity },
-    { label: 'Specific',    value: score.specificity },
-    { label: 'Structure',   value: score.structure },
-    { label: 'Context',     value: score.context },
-    { label: 'Guardrails',  value: score.guardrails },
+    { label: 'Clarity',    value: score.clarity },
+    { label: 'Specific',   value: score.specificity },
+    { label: 'Structure',  value: score.structure },
+    { label: 'Context',    value: score.context },
+    { label: 'Guardrails', value: score.guardrails },
   ]
-  const cx = 105, cy = 105, R = 72
+  const cx = 130, cy = 130, R = 90
   const pt = (i: number, r: number) => ({
     x: cx + r * Math.cos(-Math.PI / 2 + (i * 2 * Math.PI) / 5),
     y: cy + r * Math.sin(-Math.PI / 2 + (i * 2 * Math.PI) / 5),
@@ -274,8 +274,8 @@ function PentagonDNA({ score }: { score: DNAScore }) {
   const overall = Math.round(axes.reduce((s, a) => s + a.value, 0) / axes.length)
 
   return (
-    <div className="flex flex-col items-center">
-      <svg width="210" height="210" viewBox="0 0 210 210">
+    <div className="flex flex-col items-center gap-5">
+      <svg width="260" height="260" viewBox="0 0 260 260">
         {rings.map(r => (
           <path key={r} d={toPath(axes.map((_, i) => pt(i, R * r)))}
             fill="none" stroke="rgba(45,158,107,0.1)" strokeWidth="1" />
@@ -284,16 +284,16 @@ function PentagonDNA({ score }: { score: DNAScore }) {
           <line key={i} x1={cx} y1={cy} x2={p.x.toFixed(1)} y2={p.y.toFixed(1)}
             stroke="rgba(45,158,107,0.08)" strokeWidth="1" />
         ))}
-        <path d={toPath(outer)} fill="none" stroke="rgba(45,158,107,0.18)" strokeWidth="1" />
+        <path d={toPath(outer)} fill="none" stroke="rgba(45,158,107,0.2)" strokeWidth="1" />
         <motion.path
           d={toPath(data)}
           fill="rgba(45,158,107,0.1)"
-          stroke="#2D9E6B" strokeWidth="1.5"
+          stroke="#2D9E6B" strokeWidth="2"
           initial={{ opacity: 0 }} animate={{ opacity: 1 }}
           transition={{ duration: 0.4 }}
         />
         {data.map((p, i) => (
-          <motion.circle key={i} cx={p.x.toFixed(1)} cy={p.y.toFixed(1)} r="3.5"
+          <motion.circle key={i} cx={p.x.toFixed(1)} cy={p.y.toFixed(1)} r="4.5"
             fill={axes[i].value > 65 ? '#5DFFA8' : axes[i].value > 35 ? '#2D9E6B' : '#C47A5A'}
             initial={{ scale: 0 }} animate={{ scale: 1 }}
             transition={{ delay: i * 0.07, type: 'spring', stiffness: 300 }}
@@ -301,33 +301,37 @@ function PentagonDNA({ score }: { score: DNAScore }) {
         ))}
         {outer.map((p, i) => {
           const angle = -Math.PI / 2 + (i * 2 * Math.PI) / 5
-          const lx = cx + (R + 20) * Math.cos(angle)
-          const ly = cy + (R + 20) * Math.sin(angle)
+          const lx = cx + (R + 24) * Math.cos(angle)
+          const ly = cy + (R + 24) * Math.sin(angle)
           return (
             <text key={i} x={lx.toFixed(1)} y={ly.toFixed(1)}
               textAnchor="middle" dominantBaseline="middle"
-              fontSize="8.5" fill={axes[i].value > 65 ? 'rgba(93,255,168,0.75)' : 'rgba(58,90,69,0.6)'}
+              fontSize="11" fill={axes[i].value > 65 ? 'rgba(93,255,168,0.8)' : 'rgba(141,184,154,0.65)'}
               fontFamily="var(--font-jetbrains-mono)">
               {axes[i].label}
             </text>
           )
         })}
-        <text x={cx} y={cy - 7} textAnchor="middle" fontSize="21" fontWeight="700"
+        <text x={cx} y={cy - 9} textAnchor="middle" fontSize="28" fontWeight="700"
           fill="#D4EDE0" fontFamily="var(--font-sora)">{overall}</text>
-        <text x={cx} y={cy + 11} textAnchor="middle" fontSize="7.5"
-          fill="rgba(58,90,69,0.5)" fontFamily="var(--font-jetbrains-mono)" letterSpacing="0.12em">SCORE</text>
+        <text x={cx} y={cy + 14} textAnchor="middle" fontSize="9"
+          fill="rgba(58,90,69,0.5)" fontFamily="var(--font-jetbrains-mono)" letterSpacing="0.15em">SCORE</text>
       </svg>
 
-      <div className="w-full grid grid-cols-5 gap-1.5 px-2">
+      {/* Per-axis breakdown */}
+      <div className="w-full flex flex-col gap-2.5 px-1">
         {axes.map(ax => (
-          <div key={ax.label} className="flex flex-col items-center gap-1">
-            <div className="w-full h-[3px] rounded-full overflow-hidden" style={{ background: 'rgba(45,158,107,0.1)' }}>
+          <div key={ax.label} className="flex items-center gap-3">
+            <span style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '11px', color: 'rgba(141,184,154,0.6)', width: '68px', flexShrink: 0 }}>
+              {ax.label}
+            </span>
+            <div className="flex-1 h-[3px] rounded-full overflow-hidden" style={{ background: 'rgba(45,158,107,0.1)' }}>
               <motion.div className="h-full rounded-full"
                 style={{ background: ax.value > 65 ? '#5DFFA8' : ax.value > 35 ? '#2D9E6B' : '#C47A5A' }}
                 initial={{ width: 0 }} animate={{ width: `${ax.value}%` }}
                 transition={{ duration: 0.6, delay: 0.2 }} />
             </div>
-            <span style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '8px', color: 'rgba(58,90,69,0.55)' }}>
+            <span style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '11px', color: 'rgba(58,90,69,0.6)', width: '28px', textAlign: 'right', flexShrink: 0 }}>
               {ax.value}
             </span>
           </div>
@@ -401,28 +405,28 @@ function BlockCard({ block, onChange, onDelete }: {
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.97 }}
         transition={{ type: 'spring', damping: 28, stiffness: 220 }}
-        className="group relative mb-[2px]"
+        className="group relative mb-2"
         style={{ background: meta.bg, borderLeft: `2px solid ${meta.color}` }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-2"
-          style={{ borderBottom: '1px solid rgba(45,158,107,0.06)' }}>
-          <span style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '9.5px', color: meta.color, letterSpacing: '0.18em' }}>
+        <div className="flex items-center justify-between px-5 py-3"
+          style={{ borderBottom: '1px solid rgba(45,158,107,0.07)' }}>
+          <span style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '11px', color: meta.color, letterSpacing: '0.15em' }}>
             {meta.icon} {meta.label}
           </span>
-          <div className="flex items-center gap-2.5 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
             <div onPointerDown={e => controls.start(e)}
-              className="cursor-grab active:cursor-grabbing touch-none text-xs"
-              style={{ color: 'rgba(58,90,69,0.35)' }} title="Drag to reorder">
+              className="cursor-grab active:cursor-grabbing touch-none"
+              style={{ color: 'rgba(58,90,69,0.4)', fontSize: '14px' }} title="Drag to reorder">
               ⠿
             </div>
             <button onClick={onDelete} className="transition-opacity hover:opacity-70"
-              style={{ color: 'rgba(196,122,90,0.55)', fontSize: '11px' }}>✕</button>
+              style={{ color: 'rgba(196,122,90,0.6)', fontSize: '13px' }}>✕</button>
           </div>
         </div>
 
         {/* Body */}
-        <div className="px-4 py-3">
+        <div className="px-5 py-4">
           {block.type === 'technique' ? (
             <div className="flex flex-col gap-2.5">
               <div className="flex flex-wrap gap-1.5">
@@ -521,6 +525,13 @@ export default function CraftPage() {
   const [sidebarOpen, setSidebarOpen]       = useState(false)
   const [history, setHistory]               = useState<PromptEntry[]>([])
   const [copied, setCopied]                 = useState(false)
+  const [copiedImproved, setCopiedImproved] = useState(false)
+
+  // AI Improve
+  const [isImproving, setIsImproving]       = useState(false)
+  const [improvedPrompt, setImprovedPrompt] = useState('')
+  const [improveChanges, setImproveChanges] = useState<string[]>([])
+  const [improveError, setImproveError]     = useState('')
 
   const builderRef  = useRef<HTMLDivElement>(null)
   const addMenuRef  = useRef<HTMLDivElement>(null)
@@ -537,7 +548,13 @@ export default function CraftPage() {
     return () => document.removeEventListener('mousedown', handler)
   }, [showAddMenu])
 
-  const assembled  = useMemo(() => assembleFromBlocks(blocks), [blocks])
+  const assembled  = useMemo(() => {
+    // Clear any previous AI improvement when blocks change
+    setImprovedPrompt('')
+    setImproveChanges([])
+    setImproveError('')
+    return assembleFromBlocks(blocks)
+  }, [blocks])
   const warnings   = useMemo(() => runLinter(blocks), [blocks])
   const dna        = useMemo(() => scoreDNA(blocks), [blocks])
   const hasContent = assembled.trim().length > 0
@@ -577,6 +594,36 @@ export default function CraftPage() {
     const a    = document.createElement('a')
     a.href = url; a.download = `craft-${Date.now()}.txt`; a.click()
     URL.revokeObjectURL(url)
+  }
+
+  const handleImprove = async () => {
+    if (!assembled || isImproving) return
+    setIsImproving(true)
+    setImprovedPrompt('')
+    setImproveChanges([])
+    setImproveError('')
+    try {
+      const res = await fetch('/api/improve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: assembled }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Something went wrong')
+      setImprovedPrompt(data.improved)
+      setImproveChanges(data.changes)
+    } catch (err) {
+      setImproveError(err instanceof Error ? err.message : 'Something went wrong')
+    } finally {
+      setIsImproving(false)
+    }
+  }
+
+  const handleCopyImproved = () => {
+    if (!improvedPrompt) return
+    navigator.clipboard.writeText(improvedPrompt)
+    setCopiedImproved(true)
+    setTimeout(() => setCopiedImproved(false), 2200)
   }
 
   const loadFromCrumb = () => {
@@ -651,41 +698,41 @@ export default function CraftPage() {
         </Link>
       </nav>
 
-      <div className="relative z-10 px-8 md:px-14 pt-3">
+      <div className="relative z-10 px-8 md:px-16 pt-4">
 
         {/* ─── Hero ─── */}
-        <motion.section className="mb-10"
+        <motion.section className="mb-12"
           initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
           transition={{ type: 'spring', damping: 25, stiffness: 120, delay: 0.1 }}>
-          <p className="mb-2.5 text-[11px] tracking-[0.22em]"
+          <p className="mb-3 text-xs tracking-[0.22em]"
             style={{ fontFamily: 'var(--font-jetbrains-mono)', color: '#2D9E6B' }}>
             // compose · analyze · iterate
           </p>
           <h1 className="font-heading font-semibold leading-tight tracking-tight"
-            style={{ fontSize: 'clamp(1.7rem, 3.5vw, 2.6rem)' }}>
+            style={{ fontSize: 'clamp(1.8rem, 3.8vw, 2.8rem)' }}>
             <span style={{ color: '#D4EDE0' }}>Prompt</span>{' '}
             <span style={{ color: '#2D9E6B' }}>Workshop</span>
           </h1>
-          <p className="mt-2 text-sm" style={{ color: 'rgba(58,90,69,0.6)', maxWidth: '420px' }}>
+          <p className="mt-3 text-base leading-relaxed" style={{ color: 'rgba(141,184,154,0.55)', maxWidth: '460px' }}>
             Build with technique blocks. Score with live DNA. Copy what actually works.
           </p>
         </motion.section>
 
         {/* ─── Template Strip ─── */}
-        <section className="mb-10 -mx-8 md:-mx-14 px-8 md:px-14 overflow-x-auto">
-          <div className="flex items-center gap-1.5 pb-1" style={{ minWidth: 'max-content' }}>
-            <span className="flex-shrink-0 text-[9px] mr-2"
+        <section className="mb-12 -mx-8 md:-mx-16 px-8 md:px-16 overflow-x-auto">
+          <div className="flex items-center gap-2 pb-1" style={{ minWidth: 'max-content' }}>
+            <span className="flex-shrink-0 text-[10px] mr-3"
               style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(58,90,69,0.38)', letterSpacing: '0.18em' }}>
               TEMPLATES
             </span>
             {CATEGORIES.map(cat => (
               <button key={cat.id} onClick={() => loadTemplate(cat.id)}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] flex-shrink-0 transition-all duration-200"
+                className="flex items-center gap-2 px-4 py-2 text-xs flex-shrink-0 transition-all duration-200"
                 style={{
                   fontFamily: 'var(--font-jetbrains-mono)', borderRadius: '2px',
                   ...(activeCategory === cat.id
                     ? { color: '#080D08', background: '#2D9E6B', border: '1px solid #2D9E6B' }
-                    : { color: 'rgba(58,90,69,0.7)', background: 'rgba(45,158,107,0.04)', border: '1px solid rgba(45,158,107,0.14)' }
+                    : { color: 'rgba(141,184,154,0.65)', background: 'rgba(45,158,107,0.04)', border: '1px solid rgba(45,158,107,0.14)' }
                   ),
                 }}>
                 <span>{cat.icon}</span>
@@ -695,20 +742,20 @@ export default function CraftPage() {
           </div>
         </section>
 
-        {/* ─── Main Split ─── */}
-        <div className="flex flex-col lg:flex-row gap-8 lg:gap-10" ref={builderRef}>
+        {/* ─── Main Split: Blocks left · DNA+Linter right ─── */}
+        <div className="flex flex-col lg:flex-row gap-10 lg:gap-14" ref={builderRef}>
 
-          {/* LEFT: Block Composer ── 55% */}
-          <div className="lg:w-[55%]">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-1 h-3.5 rounded-full" style={{ background: '#2D9E6B', opacity: 0.4 }} />
-              <span className="text-[9.5px] uppercase tracking-widest"
-                style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(58,90,69,0.5)' }}>
+          {/* LEFT: Block Composer ── 58% */}
+          <div className="lg:w-[58%]">
+            <div className="flex items-center gap-2.5 mb-5">
+              <div className="w-1 h-4 rounded-full" style={{ background: '#2D9E6B', opacity: 0.4 }} />
+              <span className="text-[11px] uppercase tracking-widest"
+                style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.55)' }}>
                 Blocks
               </span>
-              <span className="text-[9px] ml-1"
+              <span className="text-[10px] ml-1"
                 style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(58,90,69,0.3)' }}>
-                drag to reorder
+                · drag ⠿ to reorder
               </span>
             </div>
 
@@ -723,39 +770,39 @@ export default function CraftPage() {
             </Reorder.Group>
 
             {/* Add Block + Load from Crumb */}
-            <div className="relative flex items-center gap-3 mt-1 py-3" ref={addMenuRef}>
+            <div className="relative flex items-center gap-4 mt-3 py-4" ref={addMenuRef}>
               <AnimatePresence>
                 {showAddMenu && (
                   <AddBlockMenu onAdd={addBlock} onClose={() => setShowAddMenu(false)} />
                 )}
               </AnimatePresence>
               <button onClick={() => setShowAddMenu(v => !v)}
-                className="flex items-center gap-1.5 text-[11px] px-3 py-1.5 transition-all"
+                className="flex items-center gap-2 text-xs px-4 py-2 transition-all"
                 style={{
                   fontFamily: 'var(--font-jetbrains-mono)', borderRadius: '2px',
-                  color: showAddMenu ? '#2D9E6B' : 'rgba(58,90,69,0.55)',
-                  border: `1px solid ${showAddMenu ? 'rgba(45,158,107,0.3)' : 'rgba(45,158,107,0.12)'}`,
+                  color: showAddMenu ? '#2D9E6B' : 'rgba(141,184,154,0.55)',
+                  border: `1px solid ${showAddMenu ? 'rgba(45,158,107,0.3)' : 'rgba(45,158,107,0.14)'}`,
                   background: showAddMenu ? 'rgba(45,158,107,0.06)' : 'transparent',
                 }}>
-                + Add Block <span style={{ opacity: 0.45, fontSize: '8px' }}>▼</span>
+                + Add Block <span style={{ opacity: 0.4, fontSize: '9px' }}>▼</span>
               </button>
               <button onClick={loadFromCrumb}
-                className="flex items-center gap-1 text-[11px] transition-opacity hover:opacity-75"
-                style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(45,158,107,0.55)' }}>
+                className="flex items-center gap-1.5 text-xs transition-opacity hover:opacity-75"
+                style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(45,158,107,0.5)' }}>
                 ⚡ Load from Crumb
               </button>
             </div>
           </div>
 
-          {/* RIGHT: DNA + Linter + Preview ── 45% */}
-          <div className="lg:w-[45%] flex flex-col gap-4">
+          {/* RIGHT: DNA + Linter ── 42% */}
+          <div className="lg:w-[42%] flex flex-col gap-6">
 
             {/* Prompt DNA */}
-            <div className="p-5" style={{ background: 'rgba(13,21,13,0.55)', border: '1px solid rgba(45,158,107,0.1)' }}>
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-1 h-3.5 rounded-full" style={{ background: '#2D9E6B', opacity: 0.45 }} />
-                <span className="text-[9.5px] uppercase tracking-widest"
-                  style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(58,90,69,0.55)' }}>
+            <div className="p-7" style={{ background: 'rgba(13,21,13,0.55)', border: '1px solid rgba(45,158,107,0.1)' }}>
+              <div className="flex items-center gap-2.5 mb-6">
+                <div className="w-1 h-4 rounded-full" style={{ background: '#2D9E6B', opacity: 0.45 }} />
+                <span className="text-[11px] uppercase tracking-widest"
+                  style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.55)' }}>
                   Prompt DNA
                 </span>
               </div>
@@ -763,38 +810,38 @@ export default function CraftPage() {
             </div>
 
             {/* Linter */}
-            <div className="p-5" style={{ background: 'rgba(13,21,13,0.45)', border: '1px solid rgba(45,158,107,0.1)' }}>
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-1 h-3.5 rounded-full" style={{ background: '#C47A5A', opacity: 0.45 }} />
-                  <span className="text-[9.5px] uppercase tracking-widest"
-                    style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(58,90,69,0.55)' }}>
+            <div className="p-7" style={{ background: 'rgba(13,21,13,0.45)', border: '1px solid rgba(45,158,107,0.1)' }}>
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-1 h-4 rounded-full" style={{ background: '#C47A5A', opacity: 0.45 }} />
+                  <span className="text-[11px] uppercase tracking-widest"
+                    style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.55)' }}>
                     Linter
                   </span>
                 </div>
                 {warnings.length === 0 && hasContent && (
-                  <span className="text-[10px]" style={{ fontFamily: 'var(--font-jetbrains-mono)', color: '#5DFFA8' }}>
+                  <span className="text-xs" style={{ fontFamily: 'var(--font-jetbrains-mono)', color: '#5DFFA8' }}>
                     ✓ clean
                   </span>
                 )}
               </div>
               {warnings.length === 0 ? (
-                <p className="text-[11px]"
-                  style={{ fontFamily: 'var(--font-jetbrains-mono)', color: hasContent ? 'rgba(93,255,168,0.45)' : 'rgba(58,90,69,0.3)' }}>
-                  {hasContent ? 'No issues detected.' : 'Fill in blocks to see analysis.'}
+                <p className="text-sm leading-relaxed"
+                  style={{ color: hasContent ? 'rgba(93,255,168,0.4)' : 'rgba(141,184,154,0.3)' }}>
+                  {hasContent ? 'No issues detected.' : 'Fill in blocks to see live analysis.'}
                 </p>
               ) : (
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-3.5">
                   <AnimatePresence>
                     {warnings.map(w => (
                       <motion.div key={w.id}
                         initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -6 }}
-                        className="flex items-start gap-2">
-                        <span style={{ color: sevColor[w.severity], fontSize: '11px', flexShrink: 0, marginTop: '1px' }}>
+                        className="flex items-start gap-3">
+                        <span style={{ color: sevColor[w.severity], fontSize: '13px', flexShrink: 0, marginTop: '2px' }}>
                           {sevIcon[w.severity]}
                         </span>
-                        <span className="text-[11px] leading-snug"
-                          style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(212,237,224,0.6)' }}>
+                        <span className="text-sm leading-relaxed"
+                          style={{ color: 'rgba(212,237,224,0.65)' }}>
                           {w.message}
                         </span>
                       </motion.div>
@@ -804,67 +851,184 @@ export default function CraftPage() {
               )}
             </div>
 
-            {/* Assembled Preview */}
-            <div className="p-5" style={{ background: 'rgba(13,21,13,0.55)', border: '1px solid rgba(45,158,107,0.1)' }}>
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-1 h-3.5 rounded-full" style={{ background: '#7A8DC4', opacity: 0.45 }} />
-                  <span className="text-[9.5px] uppercase tracking-widest"
-                    style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(58,90,69,0.55)' }}>
-                    Assembled
-                  </span>
-                </div>
-                <span className="text-[10px]"
-                  style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(58,90,69,0.38)' }}>
-                  {tokenCount} tok · {assembled.length} ch
-                </span>
-              </div>
-
-              <div className="c-scroll overflow-y-auto mb-4" style={{ maxHeight: '260px', minHeight: '80px' }}>
-                {hasContent ? (
-                  <div className="flex flex-col gap-1">
-                    {assembled.split('\n').filter(Boolean).map((line, i) => {
-                      const isLabel = /^(You are|Context:|Format your|Constraints:|Example:|Think step|Before respond|After your|Rate your|Consider at)/.test(line)
-                      return (
-                        <p key={i} className="text-[12px] leading-relaxed"
-                          style={{ fontFamily: 'var(--font-jetbrains-mono)', color: isLabel ? 'rgba(45,158,107,0.7)' : '#D4EDE0' }}>
-                          {line}
-                        </p>
-                      )
-                    })}
-                  </div>
-                ) : (
-                  <p className="text-[11px]"
-                    style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(58,90,69,0.32)' }}>
-                    Fill in blocks above to assemble your prompt...
-                  </p>
-                )}
-              </div>
-
-              <div className="flex items-center gap-2 pt-3" style={{ borderTop: '1px solid rgba(45,158,107,0.07)' }}>
-                <button onClick={handleCopy} disabled={!hasContent}
-                  className="flex items-center gap-1.5 text-[11px] px-4 py-2 transition-all disabled:opacity-25"
-                  style={{
-                    fontFamily: 'var(--font-jetbrains-mono)', borderRadius: '2px',
-                    color: copied ? '#5DFFA8' : '#D4EDE0',
-                    background: copied ? 'rgba(93,255,168,0.07)' : 'rgba(45,158,107,0.1)',
-                    border: `1px solid ${copied ? 'rgba(93,255,168,0.28)' : 'rgba(45,158,107,0.2)'}`,
-                  }}>
-                  {copied ? '✓ Copied' : 'Copy Prompt'}
-                </button>
-                <button onClick={handleExport} disabled={!hasContent}
-                  className="text-[11px] px-3 py-2 transition-all disabled:opacity-25"
-                  style={{
-                    fontFamily: 'var(--font-jetbrains-mono)', borderRadius: '2px',
-                    color: 'rgba(58,90,69,0.65)', border: '1px solid rgba(45,158,107,0.12)', background: 'transparent',
-                  }}>
-                  Export .txt
-                </button>
-              </div>
-            </div>
-
           </div>
         </div>
+
+        {/* ─── Assembled Prompt ── full width below the split ─── */}
+        <div className="mt-10 p-7" style={{ background: 'rgba(13,21,13,0.55)', border: '1px solid rgba(45,158,107,0.1)' }}>
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2.5">
+              <div className="w-1 h-4 rounded-full" style={{ background: '#7A8DC4', opacity: 0.45 }} />
+              <span className="text-[11px] uppercase tracking-widest"
+                style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.55)' }}>
+                Assembled Prompt
+              </span>
+            </div>
+            <span className="text-xs"
+              style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(58,90,69,0.4)' }}>
+              {tokenCount} tokens · {assembled.length} characters
+            </span>
+          </div>
+
+          <div className="c-scroll overflow-y-auto mb-6" style={{ maxHeight: '320px', minHeight: '100px' }}>
+            {hasContent ? (
+              <div className="flex flex-col gap-2">
+                {assembled.split('\n').filter(Boolean).map((line, i) => {
+                  const isLabel = /^(You are|Context:|Format your|Constraints:|Example:|Think step|Before respond|After your|Rate your|Consider at)/.test(line)
+                  return (
+                    <p key={i} className="text-sm leading-relaxed"
+                      style={{
+                        fontFamily: 'var(--font-jetbrains-mono)',
+                        color: isLabel ? 'rgba(45,158,107,0.75)' : '#D4EDE0',
+                      }}>
+                      {line}
+                    </p>
+                  )
+                })}
+              </div>
+            ) : (
+              <p className="text-sm" style={{ color: 'rgba(141,184,154,0.3)' }}>
+                Fill in blocks above to assemble your prompt...
+              </p>
+            )}
+          </div>
+
+          <div className="flex items-center gap-3 pt-5" style={{ borderTop: '1px solid rgba(45,158,107,0.08)' }}>
+            <button onClick={handleCopy} disabled={!hasContent}
+              className="flex items-center gap-2 text-sm px-6 py-2.5 transition-all disabled:opacity-25"
+              style={{
+                fontFamily: 'var(--font-jetbrains-mono)', borderRadius: '2px',
+                color: copied ? '#5DFFA8' : '#D4EDE0',
+                background: copied ? 'rgba(93,255,168,0.07)' : 'rgba(45,158,107,0.1)',
+                border: `1px solid ${copied ? 'rgba(93,255,168,0.28)' : 'rgba(45,158,107,0.2)'}`,
+              }}>
+              {copied ? '✓ Copied' : 'Copy Prompt'}
+            </button>
+            <button onClick={handleExport} disabled={!hasContent}
+              className="text-sm px-4 py-2.5 transition-all disabled:opacity-25"
+              style={{
+                fontFamily: 'var(--font-jetbrains-mono)', borderRadius: '2px',
+                color: 'rgba(141,184,154,0.6)', border: '1px solid rgba(45,158,107,0.14)', background: 'transparent',
+              }}>
+              Export .txt
+            </button>
+            <button onClick={handleImprove} disabled={!hasContent || isImproving}
+              className="flex items-center gap-2 text-sm px-6 py-2.5 transition-all disabled:opacity-30 ml-auto"
+              style={{
+                fontFamily: 'var(--font-jetbrains-mono)', borderRadius: '2px',
+                color: '#080D08',
+                background: isImproving ? 'rgba(93,255,168,0.6)' : '#5DFFA8',
+                border: '1px solid #5DFFA8',
+              }}>
+              {isImproving ? (
+                <>
+                  <svg className="animate-spin h-3.5 w-3.5" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                  </svg>
+                  Improving...
+                </>
+              ) : '⚡ Improve with AI'}
+            </button>
+          </div>
+
+          {/* ── Improve error ── */}
+          {improveError && (
+            <div className="mt-4 flex items-start gap-2.5 px-1">
+              <span style={{ color: '#C47A5A', fontSize: '13px', flexShrink: 0 }}>⊘</span>
+              <p className="text-sm" style={{ color: 'rgba(196,122,90,0.8)' }}>{improveError}</p>
+            </div>
+          )}
+        </div>
+
+        {/* ─── Improved Prompt result ─── */}
+        <AnimatePresence>
+          {improvedPrompt && (
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 8 }}
+              transition={{ type: 'spring', damping: 28, stiffness: 200 }}
+              className="mt-4 p-7"
+              style={{ background: 'rgba(8,20,12,0.7)', border: '1px solid rgba(93,255,168,0.18)' }}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-1 h-4 rounded-full" style={{ background: '#5DFFA8', opacity: 0.7 }} />
+                  <span className="text-[11px] uppercase tracking-widest"
+                    style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(93,255,168,0.6)' }}>
+                    AI Improved
+                  </span>
+                </div>
+                <button onClick={() => { setImprovedPrompt(''); setImproveChanges([]) }}
+                  className="text-xs transition-opacity hover:opacity-60"
+                  style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.4)' }}>
+                  dismiss
+                </button>
+              </div>
+
+              {/* What changed */}
+              {improveChanges.length > 0 && (
+                <div className="mb-6 flex flex-col gap-2.5">
+                  {improveChanges.map((change, i) => (
+                    <div key={i} className="flex items-start gap-3">
+                      <span style={{ color: '#5DFFA8', fontSize: '12px', flexShrink: 0, marginTop: '3px', opacity: 0.7 }}>
+                        {i + 1}.
+                      </span>
+                      <p className="text-sm leading-relaxed" style={{ color: 'rgba(212,237,224,0.65)' }}>
+                        {change}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="h-px mb-6" style={{ background: 'rgba(93,255,168,0.08)' }} />
+
+              {/* Improved prompt text */}
+              <div className="c-scroll overflow-y-auto mb-6" style={{ maxHeight: '320px' }}>
+                <div className="flex flex-col gap-2">
+                  {improvedPrompt.split('\n').filter(Boolean).map((line, i) => {
+                    const isLabel = /^(You are|Context:|Format your|Constraints:|Example:|Think step|Before respond|After your|Rate your|Consider at)/.test(line)
+                    return (
+                      <p key={i} className="text-sm leading-relaxed"
+                        style={{
+                          fontFamily: 'var(--font-jetbrains-mono)',
+                          color: isLabel ? 'rgba(93,255,168,0.65)' : '#D4EDE0',
+                        }}>
+                        {line}
+                      </p>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center gap-3 pt-5" style={{ borderTop: '1px solid rgba(93,255,168,0.08)' }}>
+                <button onClick={handleCopyImproved}
+                  className="flex items-center gap-2 text-sm px-6 py-2.5 transition-all"
+                  style={{
+                    fontFamily: 'var(--font-jetbrains-mono)', borderRadius: '2px',
+                    color: copiedImproved ? '#5DFFA8' : '#080D08',
+                    background: copiedImproved ? 'rgba(93,255,168,0.15)' : '#5DFFA8',
+                    border: `1px solid ${copiedImproved ? 'rgba(93,255,168,0.4)' : '#5DFFA8'}`,
+                  }}>
+                  {copiedImproved ? '✓ Copied' : 'Copy Improved'}
+                </button>
+                <button onClick={handleImprove} disabled={isImproving}
+                  className="text-sm px-4 py-2.5 transition-all disabled:opacity-30"
+                  style={{
+                    fontFamily: 'var(--font-jetbrains-mono)', borderRadius: '2px',
+                    color: 'rgba(93,255,168,0.55)', border: '1px solid rgba(93,255,168,0.18)', background: 'transparent',
+                  }}>
+                  Regenerate
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
       </div>
 
       {/* ─── History Trigger ─── */}
