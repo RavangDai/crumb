@@ -315,14 +315,14 @@ function PentagonDNA({ score }: { score: DNAScore }) {
         <text x={cx} y={cy - 9} textAnchor="middle" fontSize="28" fontWeight="700"
           fill="#D4EDE0" fontFamily="var(--font-sora)">{overall}</text>
         <text x={cx} y={cy + 14} textAnchor="middle" fontSize="9"
-          fill="rgba(58,90,69,0.5)" fontFamily="var(--font-jetbrains-mono)" letterSpacing="0.15em">SCORE</text>
+          fill="rgba(141,184,154,0.5)" fontFamily="var(--font-jetbrains-mono)" letterSpacing="0.15em">SCORE</text>
       </svg>
 
       {/* Per-axis breakdown */}
       <div className="w-full flex flex-col gap-2.5 px-1">
         {axes.map(ax => (
           <div key={ax.label} className="flex items-center gap-3">
-            <span style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '11px', color: 'rgba(141,184,154,0.6)', width: '68px', flexShrink: 0 }}>
+            <span style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '11px', color: 'rgba(141,184,154,0.75)', width: '68px', flexShrink: 0 }}>
               {ax.label}
             </span>
             <div className="flex-1 h-[3px] rounded-full overflow-hidden" style={{ background: 'rgba(45,158,107,0.1)' }}>
@@ -331,7 +331,7 @@ function PentagonDNA({ score }: { score: DNAScore }) {
                 initial={{ width: 0 }} animate={{ width: `${ax.value}%` }}
                 transition={{ duration: 0.6, delay: 0.2 }} />
             </div>
-            <span style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '11px', color: 'rgba(58,90,69,0.6)', width: '28px', textAlign: 'right', flexShrink: 0 }}>
+            <span style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '11px', color: 'rgba(141,184,154,0.6)', width: '28px', textAlign: 'right', flexShrink: 0 }}>
               {ax.value}
             </span>
           </div>
@@ -353,7 +353,9 @@ const BLOCK_MENU: { type: BlockType; desc: string }[] = [
   { type: 'format',     desc: 'Output structure' },
 ]
 
-function AddBlockMenu({ onAdd, onClose }: { onAdd: (t: BlockType) => void; onClose: () => void }) {
+function AddBlockMenu({ onAdd, onClose, usedTypes }: { onAdd: (t: BlockType) => void; onClose: () => void; usedTypes: BlockType[] }) {
+  const available = BLOCK_MENU.filter(item => !usedTypes.includes(item.type))
+  if (available.length === 0) return null
   return (
     <motion.div
       initial={{ opacity: 0, y: 6, scale: 0.97 }}
@@ -363,7 +365,7 @@ function AddBlockMenu({ onAdd, onClose }: { onAdd: (t: BlockType) => void; onClo
       className="absolute bottom-full mb-2 left-0 z-50 w-56 overflow-hidden"
       style={{ background: 'rgba(10,18,10,0.98)', border: '1px solid rgba(45,158,107,0.22)', borderRadius: '3px', backdropFilter: 'blur(20px)' }}
     >
-      {BLOCK_MENU.map(item => (
+      {available.map(item => (
         <button
           key={item.type}
           onClick={() => { onAdd(item.type); onClose() }}
@@ -377,7 +379,7 @@ function AddBlockMenu({ onAdd, onClose }: { onAdd: (t: BlockType) => void; onClo
             <div style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '10px', color: BLOCK_META[item.type].color, letterSpacing: '0.1em' }}>
               {BLOCK_META[item.type].label}
             </div>
-            <div style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '9px', color: 'rgba(58,90,69,0.45)' }}>
+            <div style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '10px', color: 'rgba(141,184,154,0.45)' }}>
               {item.desc}
             </div>
           </div>
@@ -406,15 +408,15 @@ function BlockCard({ block, onChange, onDelete }: {
         exit={{ opacity: 0, scale: 0.97 }}
         transition={{ type: 'spring', damping: 28, stiffness: 220 }}
         className="group relative mb-2"
-        style={{ background: meta.bg, borderLeft: `2px solid ${meta.color}` }}
+        style={{ background: meta.bg, border: `1px solid rgba(45,158,107,0.1)`, borderLeft: `2px solid ${meta.color}`, borderRadius: '3px' }}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-3"
-          style={{ borderBottom: '1px solid rgba(45,158,107,0.07)' }}>
+          style={{ borderBottom: '1px solid rgba(45,158,107,0.1)' }}>
           <span style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '11px', color: meta.color, letterSpacing: '0.15em' }}>
             {meta.icon} {meta.label}
           </span>
-          <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="flex items-center gap-3 opacity-30 group-hover:opacity-100 transition-opacity">
             <div onPointerDown={e => controls.start(e)}
               className="cursor-grab active:cursor-grabbing touch-none"
               style={{ color: 'rgba(58,90,69,0.4)', fontSize: '14px' }} title="Drag to reorder">
@@ -445,20 +447,20 @@ function BlockCard({ block, onChange, onDelete }: {
                 ))}
               </div>
               {block.techniqueId && (
-                <p style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '10.5px', color: 'rgba(168,212,186,0.5)', fontStyle: 'italic' }}>
-                  → {TECHNIQUES[block.techniqueId].content}
-                </p>
-              )}
-              {block.techniqueId && (
-                <p style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '9px', color: 'rgba(168,212,186,0.35)' }}>
-                  {TECHNIQUES[block.techniqueId].description}
-                </p>
+                <div className="flex flex-col gap-1.5 pt-1">
+                  <p style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '11px', color: 'rgba(168,212,186,0.7)' }}>
+                    → {TECHNIQUES[block.techniqueId].content}
+                  </p>
+                  <p style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '10px', color: 'rgba(168,212,186,0.45)' }}>
+                    {TECHNIQUES[block.techniqueId].description}
+                  </p>
+                </div>
               )}
             </div>
           ) : block.type === 'example' ? (
             <div className="flex flex-col gap-2">
               <div>
-                <div className="text-[9px] mb-1" style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(196,164,90,0.45)', letterSpacing: '0.12em' }}>INPUT</div>
+                <div className="text-[10px] mb-1" style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(196,164,90,0.6)', letterSpacing: '0.12em' }}>INPUT</div>
                 <textarea className="w-full bg-transparent text-sm leading-relaxed resize-none focus:outline-none"
                   style={{ fontFamily: 'var(--font-dm-sans)', color: '#D4EDE0' }}
                   rows={2} placeholder="Example input..."
@@ -467,7 +469,7 @@ function BlockCard({ block, onChange, onDelete }: {
               </div>
               <div className="h-px" style={{ background: 'rgba(196,164,90,0.08)' }} />
               <div>
-                <div className="text-[9px] mb-1" style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(196,164,90,0.45)', letterSpacing: '0.12em' }}>EXPECTED OUTPUT</div>
+                <div className="text-[10px] mb-1" style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(196,164,90,0.6)', letterSpacing: '0.12em' }}>EXPECTED OUTPUT</div>
                 <textarea className="w-full bg-transparent text-sm leading-relaxed resize-none focus:outline-none"
                   style={{ fontFamily: 'var(--font-dm-sans)', color: '#D4EDE0' }}
                   rows={2} placeholder="What the ideal response looks like..."
@@ -492,6 +494,7 @@ function BlockCard({ block, onChange, onDelete }: {
                   </button>
                 ))}
               </div>
+              <div className="h-px" style={{ background: 'rgba(122,141,196,0.1)' }} />
               <input className="w-full bg-transparent text-sm focus:outline-none"
                 style={{ fontFamily: 'var(--font-dm-sans)', color: '#D4EDE0' }}
                 placeholder="Or describe a custom format..."
@@ -512,6 +515,8 @@ function BlockCard({ block, onChange, onDelete }: {
     </Reorder.Item>
   )
 }
+
+const IMPROVE_STAGES = ['Reading prompt…', 'Analysing structure…', 'Engineering…', 'Refining…']
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
@@ -538,6 +543,7 @@ export default function CraftPage() {
   const addMenuRef  = useRef<HTMLDivElement>(null)
 
   useEffect(() => { setHistory(getHistory()) }, [])
+  const vaultHasEntries = typeof window !== 'undefined' && getVault().length > 0
 
   // close add-menu on outside click
   useEffect(() => {
@@ -549,13 +555,14 @@ export default function CraftPage() {
     return () => document.removeEventListener('mousedown', handler)
   }, [showAddMenu])
 
-  const assembled  = useMemo(() => {
-    // Clear any previous AI improvement when blocks change
+  const assembled  = useMemo(() => assembleFromBlocks(blocks), [blocks])
+
+  // Clear AI improvement whenever the prompt changes
+  useEffect(() => {
     setImprovedPrompt('')
     setImproveChanges([])
     setImproveError('')
-    return assembleFromBlocks(blocks)
-  }, [blocks])
+  }, [assembled])
   const warnings   = useMemo(() => runLinter(blocks), [blocks])
   const dna        = useMemo(() => scoreDNA(blocks), [blocks])
   const hasContent = assembled.trim().length > 0
@@ -596,8 +603,6 @@ export default function CraftPage() {
     a.href = url; a.download = `craft-${Date.now()}.txt`; a.click()
     URL.revokeObjectURL(url)
   }
-
-  const IMPROVE_STAGES = ['Reading prompt…', 'Analysing structure…', 'Engineering…', 'Refining…']
 
   useEffect(() => {
     if (!isImproving) { setImproveStage(0); return }
@@ -669,6 +674,7 @@ export default function CraftPage() {
         .c-scroll { scrollbar-color: rgba(45,158,107,0.15) transparent; scrollbar-width: thin; }
         .c-scroll::-webkit-scrollbar { width: 4px; }
         .c-scroll::-webkit-scrollbar-thumb { background: rgba(45,158,107,0.15); border-radius: 2px; }
+        textarea::placeholder, input::placeholder { color: rgba(141,184,154,0.3); }
       `}</style>
 
       {/* Background */}
@@ -680,35 +686,40 @@ export default function CraftPage() {
       </div>
 
       {/* ─── Nav ─── */}
-      <nav className="relative z-20 flex justify-between items-center px-8 md:px-14 pt-8 pb-4">
+      <nav className="fixed top-0 left-0 right-0 z-50 flex justify-between items-center px-8 md:px-14 py-4"
+        style={{
+          backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+          background: 'rgba(8,13,8,0.6)',
+          borderBottom: '1px solid rgba(45,158,107,0.08)',
+        }}>
         <div className="flex items-center gap-2.5">
           <div className="w-6 h-6 relative">
             <Image src="/Craftv2.png" alt="Craft" fill className="object-contain" />
           </div>
           <div className="flex items-center gap-2" style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '13px' }}>
-            <TransitionLink href="/" type="home" style={{ color: 'rgba(58,90,69,0.55)' }} className="hover:opacity-75 transition-opacity">
+            <TransitionLink href="/" type="home" style={{ color: 'rgba(141,184,154,0.55)' }} className="hover:opacity-75 transition-opacity">
               CrumbCraft.
             </TransitionLink>
-            <span style={{ color: 'rgba(58,90,69,0.25)' }}>/</span>
+            <span style={{ color: 'rgba(141,184,154,0.25)' }}>/</span>
             <span style={{ color: '#D4EDE0', fontWeight: 600 }}>Craft</span>
           </div>
         </div>
         <TransitionLink href="/crumb"
           type="crumb"
           className="flex items-center gap-1.5 transition-opacity duration-200 hover:opacity-90"
-          style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '12px', color: 'rgba(58,90,69,0.45)' }}>
-          <div className="w-4 h-4 relative opacity-50">
+          style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '12px', color: 'rgba(141,184,154,0.5)' }}>
+          <div className="w-4 h-4 relative opacity-60">
             <Image src="/Crumbv2.png" alt="Crumb" fill className="object-contain"
               style={{ filter: 'hue-rotate(100deg) saturate(0.35)' }} />
           </div>
           <span>/ Crumb</span>
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.5 }}>
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.6 }}>
             <path d="M5 12h14M12 5l7 7-7 7" />
           </svg>
         </TransitionLink>
       </nav>
 
-      <div className="relative z-10 px-8 md:px-16 pt-4">
+      <div className="relative z-10 px-8 md:px-16 pt-24">
 
         {/* ─── Hero ─── */}
         <motion.section className="mb-12"
@@ -783,9 +794,10 @@ export default function CraftPage() {
             <div className="relative flex items-center gap-4 mt-3 py-4" ref={addMenuRef}>
               <AnimatePresence>
                 {showAddMenu && (
-                  <AddBlockMenu onAdd={addBlock} onClose={() => setShowAddMenu(false)} />
+                  <AddBlockMenu onAdd={addBlock} onClose={() => setShowAddMenu(false)} usedTypes={blocks.map(b => b.type)} />
                 )}
               </AnimatePresence>
+              {blocks.length < BLOCK_MENU.length && (
               <button onClick={() => setShowAddMenu(v => !v)}
                 className="flex items-center gap-2 text-xs px-4 py-2 transition-all"
                 style={{
@@ -796,8 +808,9 @@ export default function CraftPage() {
                 }}>
                 + Add Block <span style={{ opacity: 0.4, fontSize: '9px' }}>▼</span>
               </button>
-              <button onClick={loadFromCrumb}
-                className="flex items-center gap-1.5 text-xs transition-opacity hover:opacity-75"
+              )}
+              <button onClick={loadFromCrumb} disabled={!vaultHasEntries}
+                className="flex items-center gap-1.5 text-xs transition-opacity hover:opacity-75 disabled:opacity-25 disabled:cursor-not-allowed"
                 style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(45,158,107,0.5)' }}>
                 ⚡ Load from Crumb
               </button>
@@ -930,21 +943,22 @@ export default function CraftPage() {
               </span>
             </div>
             <span className="text-xs"
-              style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(58,90,69,0.4)' }}>
+              style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.45)' }}>
               {tokenCount} tokens · {assembled.length} characters
             </span>
           </div>
 
           <div className="c-scroll overflow-y-auto mb-6" style={{ maxHeight: '320px', minHeight: '100px' }}>
             {hasContent ? (
-              <div className="flex flex-col gap-2">
-                {assembled.split('\n').filter(Boolean).map((line, i) => {
+              <div className="flex flex-col gap-1">
+                {assembled.split('\n').map((line, i) => {
+                  if (!line.trim()) return <div key={i} className="h-2" />
                   const isLabel = /^(You are|Context:|Format your|Constraints:|Example:|Think step|Before respond|After your|Rate your|Consider at)/.test(line)
                   return (
                     <p key={i} className="text-sm leading-relaxed"
                       style={{
                         fontFamily: 'var(--font-jetbrains-mono)',
-                        color: isLabel ? 'rgba(45,158,107,0.75)' : '#D4EDE0',
+                        color: isLabel ? 'rgba(93,255,168,0.7)' : '#D4EDE0',
                       }}>
                       {line}
                     </p>
@@ -1108,14 +1122,15 @@ export default function CraftPage() {
 
               {/* Improved prompt text */}
               <div className="c-scroll overflow-y-auto mb-6" style={{ maxHeight: '320px' }}>
-                <div className="flex flex-col gap-2">
-                  {improvedPrompt.split('\n').filter(Boolean).map((line, i) => {
+                <div className="flex flex-col gap-1">
+                  {improvedPrompt.split('\n').map((line, i) => {
+                    if (!line.trim()) return <div key={i} className="h-2" />
                     const isLabel = /^(You are|Context:|Format your|Constraints:|Example:|Think step|Before respond|After your|Rate your|Consider at)/.test(line)
                     return (
                       <p key={i} className="text-sm leading-relaxed"
                         style={{
                           fontFamily: 'var(--font-jetbrains-mono)',
-                          color: isLabel ? 'rgba(93,255,168,0.65)' : '#D4EDE0',
+                          color: isLabel ? 'rgba(93,255,168,0.7)' : '#D4EDE0',
                         }}>
                         {line}
                       </p>
@@ -1151,20 +1166,6 @@ export default function CraftPage() {
 
       </div>
 
-      {/* ─── History Trigger ─── */}
-      <button onClick={() => setSidebarOpen(v => !v)}
-        className="fixed right-0 top-1/2 -translate-y-1/2 z-40 transition-all"
-        style={{
-          fontFamily: 'var(--font-jetbrains-mono)', fontSize: '9px', letterSpacing: '0.18em',
-          color: sidebarOpen ? '#2D9E6B' : 'rgba(58,90,69,0.5)',
-          background: 'rgba(13,21,13,0.92)',
-          borderLeft: `1px solid ${sidebarOpen ? 'rgba(45,158,107,0.28)' : 'rgba(45,158,107,0.1)'}`,
-          borderTop: '1px solid rgba(45,158,107,0.1)', borderBottom: '1px solid rgba(45,158,107,0.1)',
-          writingMode: 'vertical-lr', padding: '12px 6px', backdropFilter: 'blur(12px)',
-        }}>
-        [H] history
-      </button>
-
       {/* ─── History Sidebar ─── */}
       <AnimatePresence>
         {sidebarOpen && (
@@ -1173,20 +1174,21 @@ export default function CraftPage() {
             transition={{ type: 'spring', damping: 30, stiffness: 280 }}
             className="fixed right-0 top-0 bottom-0 z-30 w-72 c-scroll overflow-y-auto"
             style={{ background: 'rgba(10,18,10,0.97)', borderLeft: '1px solid rgba(45,158,107,0.15)', backdropFilter: 'blur(20px)' }}>
-            <div className="p-5 pt-16">
+            <div className="p-5 pt-8">
               <div className="flex items-center justify-between mb-6">
                 <span className="text-[10px] uppercase tracking-widest"
-                  style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(58,90,69,0.6)' }}>
+                  style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.5)' }}>
                   Prompt History
                 </span>
-                <button onClick={() => setSidebarOpen(false)} className="transition-opacity hover:opacity-60"
-                  style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '12px', color: 'rgba(58,90,69,0.5)' }}>
+                <button onClick={() => setSidebarOpen(false)}
+                  className="flex items-center justify-center w-7 h-7 transition-opacity hover:opacity-60"
+                  style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '14px', color: 'rgba(141,184,154,0.5)' }}>
                   ✕
                 </button>
               </div>
               {history.length === 0 ? (
                 <p className="text-[11px] leading-relaxed"
-                  style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(58,90,69,0.38)' }}>
+                  style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.35)' }}>
                   No saved prompts yet.<br /><br />Copy a prompt to save it here.
                 </p>
               ) : (
@@ -1207,12 +1209,12 @@ export default function CraftPage() {
                           {entry.category}
                         </span>
                         <span className="text-[9px]"
-                          style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(58,90,69,0.45)' }}>
+                          style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.4)' }}>
                           {new Date(entry.createdAt).toLocaleDateString()}
                         </span>
                         {entry.blocks?.length && (
                           <span className="text-[9px] ml-auto"
-                            style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(58,90,69,0.32)' }}>
+                            style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.3)' }}>
                             {entry.blocks.length} blocks
                           </span>
                         )}
@@ -1234,13 +1236,13 @@ export default function CraftPage() {
           className="flex items-center gap-1 px-2 py-2"
           style={{
             backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-            background: 'rgba(8,13,8,0.8)', borderRadius: '20px', border: '1px solid rgba(45,158,107,0.1)',
+            background: 'rgba(8,13,8,0.45)', borderRadius: '20px', border: '1px solid rgba(45,158,107,0.1)',
           }}>
           <button onClick={() => builderRef.current?.scrollIntoView({ behavior: 'smooth' })}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all"
-            style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '11px', color: 'rgba(58,90,69,0.65)' }}
-            onMouseEnter={e => (e.currentTarget.style.color = '#2D9E6B')}
-            onMouseLeave={e => (e.currentTarget.style.color = 'rgba(58,90,69,0.65)')}>
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-colors"
+            style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '11px', color: 'rgba(141,184,154,0.55)' }}
+            onMouseEnter={e => (e.currentTarget.style.color = '#5DFFA8')}
+            onMouseLeave={e => (e.currentTarget.style.color = 'rgba(141,184,154,0.55)')}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
               <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
@@ -1248,13 +1250,26 @@ export default function CraftPage() {
             <span className="hidden sm:inline">Builder</span>
           </button>
 
-          <div className="w-px h-5" style={{ background: 'rgba(45,158,107,0.14)' }} />
+          <div className="w-px h-5" style={{ background: 'rgba(45,158,107,0.15)' }} />
+
+          <button onClick={handleImprove} disabled={!hasContent || isImproving}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-colors disabled:opacity-30"
+            style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '11px', color: isImproving ? '#5DFFA8' : 'rgba(141,184,154,0.55)' }}
+            onMouseEnter={e => { if (!isImproving) e.currentTarget.style.color = '#5DFFA8' }}
+            onMouseLeave={e => { if (!isImproving) e.currentTarget.style.color = 'rgba(141,184,154,0.55)' }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+            </svg>
+            <span className="hidden sm:inline">{isImproving ? 'Improving…' : 'Improve'}</span>
+          </button>
+
+          <div className="w-px h-5" style={{ background: 'rgba(45,158,107,0.15)' }} />
 
           <button onClick={() => setSidebarOpen(v => !v)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all"
-            style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '11px', color: sidebarOpen ? '#2D9E6B' : 'rgba(58,90,69,0.65)' }}
-            onMouseEnter={e => (e.currentTarget.style.color = '#2D9E6B')}
-            onMouseLeave={e => (e.currentTarget.style.color = sidebarOpen ? '#2D9E6B' : 'rgba(58,90,69,0.65)')}>
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-colors"
+            style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '11px', color: sidebarOpen ? '#5DFFA8' : 'rgba(141,184,154,0.55)' }}
+            onMouseEnter={e => (e.currentTarget.style.color = '#5DFFA8')}
+            onMouseLeave={e => (e.currentTarget.style.color = sidebarOpen ? '#5DFFA8' : 'rgba(141,184,154,0.55)')}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
             </svg>
