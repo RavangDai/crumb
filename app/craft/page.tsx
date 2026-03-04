@@ -576,7 +576,7 @@ export default function CraftPage() {
 
   const addBlock = useCallback((type: BlockType) => {
     setBlocks(prev => [...prev, createBlock(type)])
-    setTimeout(() => window.scrollBy({ top: 200, behavior: 'smooth' }), 120)
+    setTimeout(() => addMenuRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 80)
   }, [])
 
   const loadTemplate = (categoryId: string) => {
@@ -584,7 +584,7 @@ export default function CraftPage() {
     if (!tmpl) return
     setActiveCategory(categoryId)
     setBlocks(tmpl.map(b => ({ ...b, id: uid() })))
-    setTimeout(() => builderRef.current?.scrollIntoView({ behavior: 'smooth' }), 80)
+    setTimeout(() => builderRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 80)
   }
 
   const handleCopy = () => {
@@ -656,7 +656,7 @@ export default function CraftPage() {
       setActiveCategory(entry.category)
     }
     setSidebarOpen(false)
-    setTimeout(() => builderRef.current?.scrollIntoView({ behavior: 'smooth' }), 80)
+    setTimeout(() => builderRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 80)
   }
 
   const sevIcon  = { error: '⊘', warning: '⚠', tip: '○' }
@@ -664,7 +664,7 @@ export default function CraftPage() {
 
   return (
     <motion.main
-      className="min-h-screen pb-28 overflow-x-hidden"
+      className="min-h-screen pb-28"
       style={{ background: '#080D08', color: '#D4EDE0', fontFamily: 'var(--font-dm-sans)' }}
       initial={{ filter: 'blur(18px)', opacity: 0 }}
       animate={{ filter: 'blur(0px)', opacity: 1 }}
@@ -675,6 +675,8 @@ export default function CraftPage() {
         .c-scroll::-webkit-scrollbar { width: 4px; }
         .c-scroll::-webkit-scrollbar-thumb { background: rgba(45,158,107,0.15); border-radius: 2px; }
         textarea::placeholder, input::placeholder { color: rgba(141,184,154,0.3); }
+        .hide-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
       `}</style>
 
       {/* Background */}
@@ -704,19 +706,31 @@ export default function CraftPage() {
             <span style={{ color: '#D4EDE0', fontWeight: 600 }}>Craft</span>
           </div>
         </div>
-        <TransitionLink href="/crumb"
-          type="crumb"
-          className="flex items-center gap-1.5 transition-opacity duration-200 hover:opacity-90"
-          style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '12px', color: 'rgba(141,184,154,0.5)' }}>
-          <div className="w-4 h-4 relative opacity-60">
-            <Image src="/Crumbv2.png" alt="Crumb" fill className="object-contain"
-              style={{ filter: 'hue-rotate(100deg) saturate(0.35)' }} />
+        <div className="relative group">
+          <TransitionLink href="/crumb"
+            type="crumb"
+            className="flex items-center gap-1.5 transition-opacity duration-200 hover:opacity-90"
+            style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '12px', color: 'rgba(141,184,154,0.5)' }}>
+            <div className="w-4 h-4 relative opacity-60">
+              <Image src="/Crumbv2.png" alt="Crumb" fill className="object-contain"
+                style={{ filter: 'hue-rotate(100deg) saturate(0.35)' }} />
+            </div>
+            <span>/ Crumb</span>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.6 }}>
+              <path d="M5 12h14M12 5l7 7-7 7" />
+            </svg>
+          </TransitionLink>
+          <div className="absolute right-0 top-full mt-2 px-2.5 py-1.5 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-150 whitespace-nowrap"
+            style={{
+              fontFamily: 'var(--font-jetbrains-mono)', fontSize: '11px',
+              color: 'rgba(141,184,154,0.8)',
+              background: 'rgba(13,21,13,0.92)',
+              border: '1px solid rgba(45,158,107,0.2)',
+              borderRadius: '2px',
+            }}>
+            Switch to Crumb — AI memory compression
           </div>
-          <span>/ Crumb</span>
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.6 }}>
-            <path d="M5 12h14M12 5l7 7-7 7" />
-          </svg>
-        </TransitionLink>
+        </div>
       </nav>
 
       <div className="relative z-10 px-8 md:px-16 pt-24">
@@ -740,7 +754,7 @@ export default function CraftPage() {
         </motion.section>
 
         {/* ─── Template Strip ─── */}
-        <section className="mb-12 -mx-8 md:-mx-16 px-8 md:px-16 overflow-x-auto">
+        <section className="mb-12 -mx-8 md:-mx-16 px-8 md:px-16 overflow-x-auto hide-scrollbar">
           <div className="flex items-center gap-2 pb-1" style={{ minWidth: 'max-content' }}>
             <span className="flex-shrink-0 text-[10px] mr-3"
               style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(58,90,69,0.38)', letterSpacing: '0.18em' }}>
@@ -818,7 +832,7 @@ export default function CraftPage() {
           </div>
 
           {/* RIGHT: DNA + Linter ── 42% */}
-          <div className="lg:w-[42%] flex flex-col gap-6">
+          <div className="lg:w-[42%] flex flex-col gap-6 lg:sticky lg:top-24 lg:self-start">
 
             {/* Prompt DNA */}
             <div className="p-7" style={{ background: 'rgba(13,21,13,0.55)', border: '1px solid rgba(45,158,107,0.1)' }}>
@@ -948,7 +962,7 @@ export default function CraftPage() {
             </span>
           </div>
 
-          <div className="c-scroll overflow-y-auto mb-6" style={{ maxHeight: '320px', minHeight: '100px' }}>
+          <div className="mb-6">
             {hasContent ? (
               <div className="flex flex-col gap-1">
                 {assembled.split('\n').map((line, i) => {
@@ -1121,7 +1135,7 @@ export default function CraftPage() {
               <div className="h-px mb-6" style={{ background: 'rgba(93,255,168,0.08)' }} />
 
               {/* Improved prompt text */}
-              <div className="c-scroll overflow-y-auto mb-6" style={{ maxHeight: '320px' }}>
+              <div className="mb-6">
                 <div className="flex flex-col gap-1">
                   {improvedPrompt.split('\n').map((line, i) => {
                     if (!line.trim()) return <div key={i} className="h-2" />
@@ -1238,7 +1252,7 @@ export default function CraftPage() {
             backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
             background: 'rgba(8,13,8,0.45)', borderRadius: '20px', border: '1px solid rgba(45,158,107,0.1)',
           }}>
-          <button onClick={() => builderRef.current?.scrollIntoView({ behavior: 'smooth' })}
+          <button onClick={() => builderRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-colors"
             style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '11px', color: 'rgba(141,184,154,0.55)' }}
             onMouseEnter={e => (e.currentTarget.style.color = '#5DFFA8')}
