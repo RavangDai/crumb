@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
 import Image from 'next/image'
+import { TransitionLink } from '@/context/transition'
 import ConversationInput from '@/components/ConversationInput'
 import BrainFileOutput from '@/components/BrainFileOutput'
 import CompressionVisualizer from '@/components/CompressionVisualizer'
@@ -220,12 +220,12 @@ export default function Home() {
         {/* ─── Brand Mark — centered (intentional emphasis) ─── */}
         <div className="flex items-center justify-center mb-20">
           <div className="flex items-center gap-3">
-            <Link href="/" className="flex items-center gap-3 group">
+            <TransitionLink href="/" type="home" className="flex items-center gap-3 group">
               <div className="w-8 h-8 flex items-center justify-center relative rounded-md overflow-hidden">
                 <Image src="/Crumbv2.png" alt="Crumb Logo" fill className="object-cover" />
               </div>
               <span className="font-heading font-semibold text-xl tracking-tight text-text-bright group-hover:text-primary transition-colors">Crumb.</span>
-            </Link>
+            </TransitionLink>
           </div>
         </div>
 
@@ -708,8 +708,9 @@ AI: Good choice! Here's how to set it up...`}
 
           <div className="w-px h-5 bg-border-ocean/30" />
 
-          <Link
+          <TransitionLink
             href="/craft"
+            type="craft"
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-mono transition-all text-muted hover:text-primary hover:bg-primary/10"
             title="Craft — AI Prompt Builder"
           >
@@ -718,7 +719,7 @@ AI: Good choice! Here's how to set it up...`}
               <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
             </svg>
             <span className="hidden sm:inline">Craft</span>
-          </Link>
+          </TransitionLink>
         </div>
       </div>
 

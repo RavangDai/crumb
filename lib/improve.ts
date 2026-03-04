@@ -28,6 +28,38 @@ Return ONLY valid JSON with no markdown wrapper, in exactly this shape:
 
 The "changes" array must have exactly 3 entries. Each must be concrete — name what was wrong and what you did to fix it. No generic claims like "made it clearer".`
 
+// ─── Multi-strategy JSON extraction ──────────────────────────────────────────
+
+function extractResult(raw: string): { improved: string; changes: string[] } | null {
+  const candidates: string[] = [
+    raw,
+    // strip multiline code fences
+    raw.replace(/```(?:json)?\s*\n?([\s\S]*?)\n?\s*```/gi, '$1').trim(),
+  ]
+
+  // Also extract the first {...} block found anywhere in the text
+  const jsonBlock = raw.match(/\{[\s\S]*\}/)
+  if (jsonBlock) candidates.push(jsonBlock[0])
+
+  for (const s of candidates) {
+    if (!s) continue
+    try {
+      const p = JSON.parse(s)
+      // Accept direct shape or one level of nesting
+      const node = typeof p.improved === 'string' ? p : (p.result ?? p.output ?? p.data ?? null)
+      if (!node) continue
+      if (typeof node.improved === 'string' && Array.isArray(node.changes)) {
+        return { improved: node.improved, changes: (node.changes as string[]).slice(0, 3) }
+      }
+    } catch {
+      // try next
+    }
+  }
+  return null
+}
+
+// ─── Main export ──────────────────────────────────────────────────────────────
+
 export async function improvePrompt(rawPrompt: string): Promise<{ improved: string; changes: string[] }> {
   const apiKey = process.env.GEMINI_API_KEY
   if (!apiKey) throw new Error('GEMINI_API_KEY is not configured.')
@@ -38,16 +70,25 @@ export async function improvePrompt(rawPrompt: string): Promise<{ improved: stri
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        // Use systemInstruction so the model treats it as a system prompt,
+        // not as part of the user message
+        systemInstruction: {
+          parts: [{ text: IMPROVE_SYSTEM_PROMPT }]
+        },
         contents: [
           {
-            parts: [{
-              text: `${IMPROVE_SYSTEM_PROMPT}\n\nHere is the prompt to improve:\n\n${rawPrompt}`
-            }]
+            role: 'user',
+            parts: [{ text: `Here is the prompt to improve:\n\n${rawPrompt}` }]
           }
         ],
         generationConfig: {
           temperature: 0.4,
           maxOutputTokens: 2000,
+          // Disable thinking budget — keeps response structure simple and
+          // predictable (no thought parts), matching how compress.ts works
+          thinkingConfig: {
+            thinkingBudget: 0,
+          },
         }
       })
     }
@@ -59,19 +100,26 @@ export async function improvePrompt(rawPrompt: string): Promise<{ improved: stri
   }
 
   const data = await response.json()
-  const raw = data.candidates?.[0]?.content?.parts?.[0]?.text
-  if (!raw) throw new Error('No response from Gemini')
 
-  // Strip markdown code fences if Gemini wraps in ```json ... ```
-  const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim()
+  // Same part-access pattern as the working compress.ts
+  const parts: Array<{ text?: string; thought?: boolean }> =
+    data.candidates?.[0]?.content?.parts ?? []
 
-  try {
-    const parsed = JSON.parse(cleaned)
-    if (!parsed.improved || !Array.isArray(parsed.changes)) {
-      throw new Error('Unexpected response shape')
-    }
-    return { improved: parsed.improved, changes: parsed.changes.slice(0, 3) }
-  } catch {
-    throw new Error('Could not parse improvement response. Try again.')
+  // Skip thought parts (thinking trace), take first real output
+  const outputText =
+    parts.find(p => !p.thought && typeof p.text === 'string')?.text ??
+    parts[0]?.text
+
+  console.log('[improve] parts count:', parts.length)
+  console.log('[improve] outputText snippet:', outputText?.slice(0, 400))
+
+  if (!outputText) throw new Error('No response from Gemini')
+
+  const result = extractResult(outputText)
+  if (!result) {
+    throw new Error(
+      `Could not parse improvement response — model returned: ${outputText.slice(0, 300)}`
+    )
   }
+  return result
 }

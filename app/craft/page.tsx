@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
-import Link from 'next/link'
 import Image from 'next/image'
+import { TransitionLink } from '@/context/transition'
 import { motion, AnimatePresence, Reorder, useDragControls } from 'framer-motion'
 import { getVault } from '@/lib/vault'
 
@@ -532,6 +532,7 @@ export default function CraftPage() {
   const [improvedPrompt, setImprovedPrompt] = useState('')
   const [improveChanges, setImproveChanges] = useState<string[]>([])
   const [improveError, setImproveError]     = useState('')
+  const [improveStage, setImproveStage]     = useState(0)
 
   const builderRef  = useRef<HTMLDivElement>(null)
   const addMenuRef  = useRef<HTMLDivElement>(null)
@@ -595,6 +596,14 @@ export default function CraftPage() {
     a.href = url; a.download = `craft-${Date.now()}.txt`; a.click()
     URL.revokeObjectURL(url)
   }
+
+  const IMPROVE_STAGES = ['Reading prompt…', 'Analysing structure…', 'Engineering…', 'Refining…']
+
+  useEffect(() => {
+    if (!isImproving) { setImproveStage(0); return }
+    const id = setInterval(() => setImproveStage(s => (s + 1) % 4), 2200)
+    return () => clearInterval(id)
+  }, [isImproving])
 
   const handleImprove = async () => {
     if (!assembled || isImproving) return
@@ -677,14 +686,15 @@ export default function CraftPage() {
             <Image src="/Craftv2.png" alt="Craft" fill className="object-contain" />
           </div>
           <div className="flex items-center gap-2" style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '13px' }}>
-            <Link href="/" style={{ color: 'rgba(58,90,69,0.55)' }} className="hover:opacity-75 transition-opacity">
+            <TransitionLink href="/" type="home" style={{ color: 'rgba(58,90,69,0.55)' }} className="hover:opacity-75 transition-opacity">
               CrumbCraft.
-            </Link>
+            </TransitionLink>
             <span style={{ color: 'rgba(58,90,69,0.25)' }}>/</span>
             <span style={{ color: '#D4EDE0', fontWeight: 600 }}>Craft</span>
           </div>
         </div>
-        <Link href="/crumb"
+        <TransitionLink href="/crumb"
+          type="crumb"
           className="flex items-center gap-1.5 transition-opacity duration-200 hover:opacity-90"
           style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '12px', color: 'rgba(58,90,69,0.45)' }}>
           <div className="w-4 h-4 relative opacity-50">
@@ -695,7 +705,7 @@ export default function CraftPage() {
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.5 }}>
             <path d="M5 12h14M12 5l7 7-7 7" />
           </svg>
-        </Link>
+        </TransitionLink>
       </nav>
 
       <div className="relative z-10 px-8 md:px-16 pt-4">
@@ -855,7 +865,62 @@ export default function CraftPage() {
         </div>
 
         {/* ─── Assembled Prompt ── full width below the split ─── */}
-        <div className="mt-10 p-7" style={{ background: 'rgba(13,21,13,0.55)', border: '1px solid rgba(45,158,107,0.1)' }}>
+        <motion.div
+          className="mt-10 p-7"
+          style={{ background: 'rgba(13,21,13,0.55)', border: '1px solid rgba(45,158,107,0.1)', position: 'relative', overflow: 'hidden' }}
+          animate={isImproving ? {
+            boxShadow: [
+              '0 0 0px rgba(93,255,168,0), inset 0 0 0px rgba(93,255,168,0)',
+              '0 0 30px rgba(93,255,168,0.07), inset 0 0 50px rgba(93,255,168,0.02)',
+              '0 0 0px rgba(93,255,168,0), inset 0 0 0px rgba(93,255,168,0)',
+            ],
+          } : { boxShadow: '0 0 0px rgba(93,255,168,0)' }}
+          transition={isImproving ? { duration: 2.8, repeat: Infinity, ease: 'easeInOut' } : { duration: 0.6 }}
+        >
+          {/* ── AI scan overlay ── */}
+          <AnimatePresence>
+            {isImproving && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.4 }}
+                style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden', zIndex: 10 }}
+              >
+                {/* Dim veil */}
+                <div style={{ position: 'absolute', inset: 0, background: 'rgba(2,8,2,0.32)' }} />
+                {/* Scan sweep unit */}
+                <motion.div
+                  animate={{ y: ['-60px', '900px'] }}
+                  transition={{ duration: 3.4, repeat: Infinity, ease: 'linear' }}
+                  style={{ position: 'absolute', left: 0, right: 0, top: 0 }}
+                >
+                  <div style={{ height: 48, background: 'linear-gradient(to bottom, transparent, rgba(93,255,168,0.06))' }} />
+                  <div style={{
+                    height: 2,
+                    background: 'linear-gradient(90deg, transparent 0%, rgba(93,255,168,0.45) 12%, rgba(93,255,168,0.9) 50%, rgba(93,255,168,0.45) 88%, transparent 100%)',
+                    boxShadow: '0 0 18px rgba(93,255,168,0.65), 0 0 6px rgba(93,255,168,1)',
+                  }} />
+                  <div style={{ height: 18, background: 'linear-gradient(to bottom, rgba(93,255,168,0.04), transparent)' }} />
+                </motion.div>
+                {/* Corner brackets */}
+                {[
+                  { top: 12, left: 12, borderTop: '1px solid rgba(93,255,168,0.4)', borderLeft: '1px solid rgba(93,255,168,0.4)' },
+                  { top: 12, right: 12, borderTop: '1px solid rgba(93,255,168,0.4)', borderRight: '1px solid rgba(93,255,168,0.4)' },
+                  { bottom: 12, left: 12, borderBottom: '1px solid rgba(93,255,168,0.4)', borderLeft: '1px solid rgba(93,255,168,0.4)' },
+                  { bottom: 12, right: 12, borderBottom: '1px solid rgba(93,255,168,0.4)', borderRight: '1px solid rgba(93,255,168,0.4)' },
+                ].map((s, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, scale: 0.7 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: i * 0.06, duration: 0.3, ease: 'easeOut' }}
+                    style={{ position: 'absolute', width: 14, height: 14, ...s }}
+                  />
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2.5">
               <div className="w-1 h-4 rounded-full" style={{ background: '#7A8DC4', opacity: 0.45 }} />
@@ -912,23 +977,78 @@ export default function CraftPage() {
               }}>
               Export .txt
             </button>
-            <button onClick={handleImprove} disabled={!hasContent || isImproving}
-              className="flex items-center gap-2 text-sm px-6 py-2.5 transition-all disabled:opacity-30 ml-auto"
+            <button
+              onClick={handleImprove}
+              disabled={!hasContent || isImproving}
+              className="flex items-center gap-2.5 text-sm px-6 py-2.5 ml-auto relative overflow-hidden"
               style={{
                 fontFamily: 'var(--font-jetbrains-mono)', borderRadius: '2px',
-                color: '#080D08',
-                background: isImproving ? 'rgba(93,255,168,0.6)' : '#5DFFA8',
-                border: '1px solid #5DFFA8',
-              }}>
+                color: isImproving ? '#5DFFA8' : '#080D08',
+                background: isImproving ? 'rgba(93,255,168,0.04)' : '#5DFFA8',
+                border: `1px solid ${isImproving ? 'rgba(93,255,168,0.35)' : '#5DFFA8'}`,
+                transition: 'color 0.35s, background 0.35s, border-color 0.35s',
+                opacity: (!hasContent && !isImproving) ? 0.3 : 1,
+                cursor: isImproving ? 'default' : undefined,
+              }}
+            >
+              {/* Pulsing radial glow inside button while loading */}
+              {isImproving && (
+                <motion.div
+                  animate={{ opacity: [0, 0.18, 0] }}
+                  transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
+                  style={{
+                    position: 'absolute', inset: 0, pointerEvents: 'none',
+                    background: 'radial-gradient(ellipse at center, rgba(93,255,168,0.35) 0%, transparent 70%)',
+                  }}
+                />
+              )}
+
               {isImproving ? (
-                <>
-                  <svg className="animate-spin h-3.5 w-3.5" viewBox="0 0 24 24" fill="none">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                  </svg>
-                  Improving...
-                </>
-              ) : '⚡ Improve with AI'}
+                <div className="flex items-center gap-2.5 relative z-10">
+                  {/* Orbit animation */}
+                  <div style={{ width: 15, height: 15, position: 'relative', flexShrink: 0 }}>
+                    <div style={{
+                      position: 'absolute', inset: 0, borderRadius: '50%',
+                      border: '1px solid rgba(93,255,168,0.18)',
+                    }} />
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 2.2, repeat: Infinity, ease: 'linear' }}
+                      style={{ position: 'absolute', inset: 0 }}
+                    >
+                      <div style={{
+                        position: 'absolute', top: -1.5, left: '50%',
+                        width: 3, height: 3, borderRadius: '50%',
+                        background: '#5DFFA8', transform: 'translateX(-50%)',
+                        boxShadow: '0 0 5px #5DFFA8',
+                      }} />
+                    </motion.div>
+                    <motion.div
+                      animate={{ scale: [0.5, 1, 0.5], opacity: [0.4, 1, 0.4] }}
+                      transition={{ duration: 1.1, repeat: Infinity, ease: 'easeInOut' }}
+                      style={{
+                        position: 'absolute', top: '50%', left: '50%',
+                        width: 4, height: 4, borderRadius: '50%',
+                        background: '#5DFFA8', transform: 'translate(-50%, -50%)',
+                      }}
+                    />
+                  </div>
+                  {/* Cycling status text */}
+                  <AnimatePresence mode="wait">
+                    <motion.span
+                      key={improveStage}
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -5 }}
+                      transition={{ duration: 0.22 }}
+                    >
+                      {IMPROVE_STAGES[improveStage]}
+                    </motion.span>
+                  </AnimatePresence>
+                </div>
+              ) : (
+                <span className="relative z-10">⚡ Improve with AI</span>
+              )}
             </button>
           </div>
 
@@ -939,7 +1059,7 @@ export default function CraftPage() {
               <p className="text-sm" style={{ color: 'rgba(196,122,90,0.8)' }}>{improveError}</p>
             </div>
           )}
-        </div>
+        </motion.div>
 
         {/* ─── Improved Prompt result ─── */}
         <AnimatePresence>

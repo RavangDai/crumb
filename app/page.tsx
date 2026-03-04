@@ -1,8 +1,8 @@
 'use client'
 
-import Link from 'next/link'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
+import { TransitionLink } from '@/context/transition'
 
 export default function CrumbCraftLanding() {
   return (
@@ -25,8 +25,9 @@ export default function CrumbCraftLanding() {
       <div className="flex-1 flex flex-col md:flex-row">
 
         {/* ── Left: Crumb ── */}
-        <Link
+        <TransitionLink
           href="/crumb"
+          type="crumb"
           className="group relative flex-1 flex flex-col items-center justify-center min-h-[50vh] md:min-h-0 p-14 md:p-20 transition-[filter] duration-500 hover:brightness-[1.12]"
           style={{ background: '#040D12' }}
         >
@@ -89,7 +90,7 @@ export default function CrumbCraftLanding() {
               </svg>
             </div>
           </motion.div>
-        </Link>
+        </TransitionLink>
 
         {/* ── Divider ── */}
         <div
@@ -102,8 +103,9 @@ export default function CrumbCraftLanding() {
         />
 
         {/* ── Right: Craft ── */}
-        <Link
+        <TransitionLink
           href="/craft"
+          type="craft"
           className="group relative flex-1 flex flex-col items-center justify-center min-h-[50vh] md:min-h-0 p-14 md:p-20 transition-[filter] duration-500 hover:brightness-[1.12]"
           style={{ background: '#080D08' }}
         >
@@ -165,7 +167,7 @@ export default function CrumbCraftLanding() {
               </svg>
             </div>
           </motion.div>
-        </Link>
+        </TransitionLink>
       </div>
 
       {/* ─── Footer ─── */}

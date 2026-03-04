@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Sora, DM_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import { TransitionProvider } from "@/context/transition";
 
 const sora = Sora({
   variable: "--font-sora",
@@ -36,7 +37,7 @@ export default function RootLayout({
         className={`${dmSans.variable} ${sora.variable} ${jetbrainsMono.variable} font-sans antialiased`}
         suppressHydrationWarning
       >
-        {children}
+        <TransitionProvider>{children}</TransitionProvider>
       </body>
     </html>
   );
