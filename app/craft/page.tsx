@@ -254,6 +254,7 @@ function saveHistory(blocks: Block[], assembled: string, category: string): Prom
 // ─── Pentagon DNA ─────────────────────────────────────────────────────────────
 
 function PentagonDNA({ score }: { score: DNAScore }) {
+  const [showBars, setShowBars] = useState(false)
   const axes = [
     { label: 'Clarity',    value: score.clarity },
     { label: 'Specific',   value: score.specificity },
@@ -272,9 +273,14 @@ function PentagonDNA({ score }: { score: DNAScore }) {
   const toPath = (pts: { x: number; y: number }[]) =>
     pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ') + 'Z'
   const overall = Math.round(axes.reduce((s, a) => s + a.value, 0) / axes.length)
+  const ringR = 36
+  const ringCirc = 2 * Math.PI * ringR
+  const ringColor = overall > 65 ? '#5DFFA8' : overall > 35 ? '#2D9E6B' : '#C47A5A'
 
   return (
-    <div className="flex flex-col items-center gap-5">
+    <div className="flex flex-col items-center gap-5"
+      onMouseEnter={() => setShowBars(true)}
+      onMouseLeave={() => setShowBars(false)}>
       <svg width="260" height="260" viewBox="0 0 260 260">
         {rings.map(r => (
           <path key={r} d={toPath(axes.map((_, i) => pt(i, R * r)))}
@@ -312,31 +318,55 @@ function PentagonDNA({ score }: { score: DNAScore }) {
             </text>
           )
         })}
-        <text x={cx} y={cy - 9} textAnchor="middle" fontSize="28" fontWeight="700"
+        {/* Score ring track */}
+        <circle cx={cx} cy={cy} r={ringR} fill="none" stroke="rgba(45,158,107,0.12)" strokeWidth="3" />
+        {/* Score ring progress */}
+        <motion.circle
+          cx={cx} cy={cy} r={ringR}
+          fill="none"
+          stroke={ringColor}
+          strokeWidth="3"
+          strokeLinecap="round"
+          strokeDasharray={ringCirc}
+          initial={{ strokeDashoffset: ringCirc }}
+          animate={{ strokeDashoffset: (1 - overall / 100) * ringCirc }}
+          transition={{ duration: 0.9, delay: 0.3, ease: 'easeOut' }}
+          transform={`rotate(-90, ${cx}, ${cy})`}
+        />
+        <text x={cx} y={cy - 8} textAnchor="middle" fontSize="26" fontWeight="700"
           fill="#D4EDE0" fontFamily="var(--font-sora)">{overall}</text>
-        <text x={cx} y={cy + 14} textAnchor="middle" fontSize="9"
+        <text x={cx} y={cy + 13} textAnchor="middle" fontSize="9"
           fill="rgba(141,184,154,0.5)" fontFamily="var(--font-jetbrains-mono)" letterSpacing="0.15em">SCORE</text>
       </svg>
 
-      {/* Per-axis breakdown */}
-      <div className="w-full flex flex-col gap-2.5 px-1">
-        {axes.map(ax => (
-          <div key={ax.label} className="flex items-center gap-3">
-            <span style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '11px', color: 'rgba(141,184,154,0.75)', width: '68px', flexShrink: 0 }}>
-              {ax.label}
-            </span>
-            <div className="flex-1 h-[3px] rounded-full overflow-hidden" style={{ background: 'rgba(45,158,107,0.1)' }}>
-              <motion.div className="h-full rounded-full"
-                style={{ background: ax.value > 65 ? '#5DFFA8' : ax.value > 35 ? '#2D9E6B' : '#C47A5A' }}
-                initial={{ width: 0 }} animate={{ width: `${ax.value}%` }}
-                transition={{ duration: 0.6, delay: 0.2 }} />
-            </div>
-            <span style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '11px', color: 'rgba(141,184,154,0.6)', width: '28px', textAlign: 'right', flexShrink: 0 }}>
-              {ax.value}
-            </span>
-          </div>
-        ))}
-      </div>
+      {/* Per-axis breakdown — visible on hover */}
+      <AnimatePresence>
+        {showBars && (
+          <motion.div
+            className="w-full flex flex-col gap-2.5 px-1 overflow-hidden"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.22, ease: 'easeInOut' }}>
+            {axes.map(ax => (
+              <div key={ax.label} className="flex items-center gap-3">
+                <span style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '11px', color: 'rgba(141,184,154,0.75)', width: '68px', flexShrink: 0 }}>
+                  {ax.label}
+                </span>
+                <div className="flex-1 h-[3px] rounded-full overflow-hidden" style={{ background: 'rgba(45,158,107,0.1)' }}>
+                  <motion.div className="h-full rounded-full"
+                    style={{ background: ax.value > 65 ? '#5DFFA8' : ax.value > 35 ? '#2D9E6B' : '#C47A5A' }}
+                    initial={{ width: 0 }} animate={{ width: `${ax.value}%` }}
+                    transition={{ duration: 0.5 }} />
+                </div>
+                <span style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '11px', color: 'rgba(141,184,154,0.6)', width: '28px', textAlign: 'right', flexShrink: 0 }}>
+                  {ax.value}
+                </span>
+              </div>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
@@ -406,6 +436,7 @@ function BlockCard({ block, onChange, onDelete }: {
         initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.97 }}
+        whileDrag={{ scale: 1.02, boxShadow: '0 16px 40px rgba(0,0,0,0.45), 0 0 0 1px rgba(45,158,107,0.25)' }}
         transition={{ type: 'spring', damping: 28, stiffness: 220 }}
         className="group relative mb-2"
         style={{ background: meta.bg, border: `1px solid rgba(45,158,107,0.1)`, borderLeft: `2px solid ${meta.color}`, borderRadius: '3px' }}
@@ -416,14 +447,15 @@ function BlockCard({ block, onChange, onDelete }: {
           <span style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '11px', color: meta.color, letterSpacing: '0.15em' }}>
             {meta.icon} {meta.label}
           </span>
-          <div className="flex items-center gap-3 opacity-30 group-hover:opacity-100 transition-opacity">
+          <div className="flex items-center gap-3">
             <div onPointerDown={e => controls.start(e)}
-              className="cursor-grab active:cursor-grabbing touch-none"
-              style={{ color: 'rgba(58,90,69,0.4)', fontSize: '14px' }} title="Drag to reorder">
+              className="cursor-grab active:cursor-grabbing touch-none opacity-20 group-hover:opacity-70 transition-opacity"
+              style={{ color: 'rgba(58,90,69,0.6)', fontSize: '14px' }} title="Drag to reorder">
               ⠿
             </div>
-            <button onClick={onDelete} className="transition-opacity hover:opacity-70"
-              style={{ color: 'rgba(196,122,90,0.6)', fontSize: '13px' }}>✕</button>
+            <button onClick={onDelete}
+              className="opacity-0 group-hover:opacity-100 transition-opacity hover:opacity-60"
+              style={{ color: 'rgba(196,122,90,0.7)', fontSize: '13px' }}>✕</button>
           </div>
         </div>
 
@@ -434,9 +466,10 @@ function BlockCard({ block, onChange, onDelete }: {
               <div className="flex flex-wrap gap-1.5">
                 {(Object.entries(TECHNIQUES) as [TechniqueId, typeof TECHNIQUES[TechniqueId]][]).map(([id, tech]) => (
                   <button key={id} onClick={() => onChange({ ...block, techniqueId: id })}
-                    className="text-[10px] px-2.5 py-1 transition-all"
+                    className="text-[10px] px-2.5 py-1"
                     style={{
                       fontFamily: 'var(--font-jetbrains-mono)', borderRadius: '2px',
+                      transition: 'background 100ms ease, color 100ms ease, border-color 100ms ease',
                       ...(block.techniqueId === id
                         ? { color: '#080D08', background: '#A8D4BA', border: '1px solid #A8D4BA' }
                         : { color: 'rgba(168,212,186,0.65)', background: 'rgba(168,212,186,0.05)', border: '1px solid rgba(168,212,186,0.18)' }
@@ -482,9 +515,10 @@ function BlockCard({ block, onChange, onDelete }: {
               <div className="flex flex-wrap gap-1.5">
                 {FORMAT_CHIPS.map(fmt => (
                   <button key={fmt} onClick={() => onChange({ ...block, content: fmt })}
-                    className="text-[10px] px-2.5 py-1 transition-all"
+                    className="text-[10px] px-2.5 py-1"
                     style={{
                       fontFamily: 'var(--font-jetbrains-mono)', borderRadius: '2px',
+                      transition: 'background 100ms ease, color 100ms ease, border-color 100ms ease',
                       ...(block.content === fmt
                         ? { color: '#080D08', background: '#7A8DC4', border: '1px solid #7A8DC4' }
                         : { color: 'rgba(122,141,196,0.65)', background: 'rgba(122,141,196,0.05)', border: '1px solid rgba(122,141,196,0.18)' }
@@ -533,11 +567,12 @@ export default function CraftPage() {
   const [copiedImproved, setCopiedImproved] = useState(false)
 
   // AI Improve
-  const [isImproving, setIsImproving]       = useState(false)
-  const [improvedPrompt, setImprovedPrompt] = useState('')
-  const [improveChanges, setImproveChanges] = useState<string[]>([])
-  const [improveError, setImproveError]     = useState('')
-  const [improveStage, setImproveStage]     = useState(0)
+  const [isImproving, setIsImproving]         = useState(false)
+  const [improvedPrompt, setImprovedPrompt]   = useState('')
+  const [improveChanges, setImproveChanges]   = useState<string[]>([])
+  const [improveError, setImproveError]       = useState('')
+  const [improveStage, setImproveStage]       = useState(0)
+  const [expandedChanges, setExpandedChanges] = useState<number[]>([])
 
   const builderRef  = useRef<HTMLDivElement>(null)
   const addMenuRef  = useRef<HTMLDivElement>(null)
@@ -846,6 +881,52 @@ export default function CraftPage() {
               <PentagonDNA score={dna} />
             </div>
 
+            {/* Quick Fixes */}
+            {(() => {
+              const fixes: { label: string; score: number; blockType: BlockType; tip: string }[] = (
+                [
+                  { label: 'Clarity',    score: dna.clarity,     blockType: 'persona'    as BlockType, tip: '+ Add Persona' },
+                  { label: 'Specificity',score: dna.specificity, blockType: 'context'    as BlockType, tip: '+ Add Context' },
+                  { label: 'Structure',  score: dna.structure,   blockType: 'format'     as BlockType, tip: '+ Add Format' },
+                  { label: 'Context',    score: dna.context,     blockType: 'context'    as BlockType, tip: '+ Add Context' },
+                  { label: 'Guardrails', score: dna.guardrails,  blockType: 'constraint' as BlockType, tip: '+ Add Constraint' },
+                ] as { label: string; score: number; blockType: BlockType; tip: string }[]
+              ).filter(f => f.score < 50 && !blocks.some(b => b.type === f.blockType))
+              if (!fixes.length) return null
+              return (
+                <div className="p-5" style={{ background: 'rgba(13,21,13,0.35)', border: '1px solid rgba(45,158,107,0.08)' }}>
+                  <div className="flex items-center gap-2.5 mb-4">
+                    <div className="w-1 h-4 rounded-full" style={{ background: '#C4A45A', opacity: 0.45 }} />
+                    <span className="text-[11px] uppercase tracking-widest"
+                      style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.55)' }}>
+                      Quick Fixes
+                    </span>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    {fixes.map(f => (
+                      <div key={f.label} className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '11px', color: '#C47A5A' }}>
+                            {f.label} {f.score}
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => addBlock(f.blockType)}
+                          className="flex-shrink-0 text-[10px] px-2.5 py-1 transition-all hover:opacity-80"
+                          style={{
+                            fontFamily: 'var(--font-jetbrains-mono)', borderRadius: '2px',
+                            color: '#5DFFA8', border: '1px solid rgba(93,255,168,0.2)',
+                            background: 'rgba(93,255,168,0.04)',
+                          }}>
+                          {f.tip}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )
+            })()}
+
             {/* Linter */}
             <div className="p-7" style={{ background: 'rgba(13,21,13,0.45)', border: '1px solid rgba(45,158,107,0.1)' }}>
               <div className="flex items-center justify-between mb-5">
@@ -965,19 +1046,27 @@ export default function CraftPage() {
           <div className="mb-6">
             {hasContent ? (
               <div className="flex flex-col gap-1">
-                {assembled.split('\n').map((line, i) => {
-                  if (!line.trim()) return <div key={i} className="h-2" />
-                  const isLabel = /^(You are|Context:|Format your|Constraints:|Example:|Think step|Before respond|After your|Rate your|Consider at)/.test(line)
-                  return (
-                    <p key={i} className="text-sm leading-relaxed"
-                      style={{
-                        fontFamily: 'var(--font-jetbrains-mono)',
-                        color: isLabel ? 'rgba(93,255,168,0.7)' : '#D4EDE0',
-                      }}>
-                      {line}
-                    </p>
-                  )
-                })}
+                {(() => {
+                  let section: BlockType = 'objective'
+                  let wasPersona = false
+                  return assembled.split('\n').map((line, i) => {
+                    if (!line.trim()) return <div key={i} className="h-2" />
+                    if (/^You are/.test(line))           { section = 'persona';    wasPersona = true }
+                    else if (/^Context:/.test(line))     { section = 'context';    wasPersona = false }
+                    else if (/^Example:/.test(line))     { section = 'example';    wasPersona = false }
+                    else if (/^(Input:|Output:)/.test(line)) { section = 'example'; wasPersona = false }
+                    else if (/^Constraints:/.test(line)) { section = 'constraint'; wasPersona = false }
+                    else if (/^Format your/.test(line))  { section = 'format';     wasPersona = false }
+                    else if (/^(Think step|Before respond|After your|Rate your|Consider at)/.test(line)) { section = 'technique'; wasPersona = false }
+                    else if (wasPersona)                 { section = 'objective';  wasPersona = false }
+                    return (
+                      <p key={i} className="text-sm leading-relaxed"
+                        style={{ fontFamily: 'var(--font-jetbrains-mono)', color: BLOCK_META[section].color }}>
+                        {line}
+                      </p>
+                    )
+                  })
+                })()}
               </div>
             ) : (
               <p className="text-sm" style={{ color: 'rgba(141,184,154,0.3)' }}>
@@ -1116,40 +1205,73 @@ export default function CraftPage() {
                 </button>
               </div>
 
-              {/* What changed */}
+              {/* What changed — truncated with expand toggle */}
               {improveChanges.length > 0 && (
-                <div className="mb-6 flex flex-col gap-2.5">
-                  {improveChanges.map((change, i) => (
-                    <div key={i} className="flex items-start gap-3">
-                      <span style={{ color: '#5DFFA8', fontSize: '12px', flexShrink: 0, marginTop: '3px', opacity: 0.7 }}>
-                        {i + 1}.
-                      </span>
-                      <p className="text-sm leading-relaxed" style={{ color: 'rgba(212,237,224,0.65)' }}>
-                        {change}
-                      </p>
-                    </div>
-                  ))}
+                <div className="mb-6 flex flex-col gap-2">
+                  {improveChanges.map((change, i) => {
+                    const text = typeof change === 'string' ? change : String(change)
+                    const firstSentenceEnd = text.search(/\.\s/)
+                    const short = firstSentenceEnd > 0 ? text.slice(0, firstSentenceEnd + 1) : text.slice(0, 80)
+                    const hasMore = text.length > short.length
+                    const expanded = expandedChanges.includes(i)
+                    return (
+                      <div key={i} className="flex items-start gap-3">
+                        <span style={{ color: '#5DFFA8', fontSize: '11px', flexShrink: 0, marginTop: '3px', opacity: 0.7, fontFamily: 'var(--font-jetbrains-mono)' }}>
+                          {i + 1}.
+                        </span>
+                        <div className="flex flex-col gap-0.5">
+                          <p className="text-sm leading-relaxed" style={{ color: 'rgba(212,237,224,0.75)' }}>
+                            <strong style={{ color: 'rgba(212,237,224,0.95)', fontWeight: 600 }}>
+                              {short}
+                            </strong>
+                            {expanded && hasMore && (
+                              <span style={{ color: 'rgba(212,237,224,0.55)' }}>{text.slice(short.length)}</span>
+                            )}
+                          </p>
+                          {hasMore && (
+                            <button
+                              onClick={() => setExpandedChanges(prev => expanded ? prev.filter(n => n !== i) : [...prev, i])}
+                              className="text-left text-[10px] transition-opacity hover:opacity-100"
+                              style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(93,255,168,0.45)', opacity: 0.7 }}>
+                              {expanded ? '↑ less' : '↓ more'}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
               )}
 
               <div className="h-px mb-6" style={{ background: 'rgba(93,255,168,0.08)' }} />
 
-              {/* Improved prompt text */}
+              {/* Improved prompt text — staggered line reveal */}
               <div className="mb-6">
-                <div className="flex flex-col gap-1">
-                  {improvedPrompt.split('\n').map((line, i) => {
-                    if (!line.trim()) return <div key={i} className="h-2" />
-                    const isLabel = /^(You are|Context:|Format your|Constraints:|Example:|Think step|Before respond|After your|Rate your|Consider at)/.test(line)
-                    return (
-                      <p key={i} className="text-sm leading-relaxed"
-                        style={{
-                          fontFamily: 'var(--font-jetbrains-mono)',
-                          color: isLabel ? 'rgba(93,255,168,0.7)' : '#D4EDE0',
-                        }}>
-                        {line}
-                      </p>
-                    )
-                  })}
+                <div className="flex flex-col gap-1" key={improvedPrompt.slice(0, 20)}>
+                  {(() => {
+                    let section: BlockType = 'objective'
+                    let wasPersona = false
+                    return improvedPrompt.split('\n').map((line, i) => {
+                      if (!line.trim()) return <div key={i} className="h-2" />
+                      if (/^You are/.test(line))           { section = 'persona';    wasPersona = true }
+                      else if (/^Context:/.test(line))     { section = 'context';    wasPersona = false }
+                      else if (/^Example:/.test(line))     { section = 'example';    wasPersona = false }
+                      else if (/^(Input:|Output:)/.test(line)) { section = 'example'; wasPersona = false }
+                      else if (/^Constraints:/.test(line)) { section = 'constraint'; wasPersona = false }
+                      else if (/^Format your/.test(line))  { section = 'format';     wasPersona = false }
+                      else if (/^(Think step|Before respond|After your|Rate your|Consider at)/.test(line)) { section = 'technique'; wasPersona = false }
+                      else if (wasPersona)                 { section = 'objective';  wasPersona = false }
+                      return (
+                        <motion.p key={i} className="text-sm leading-relaxed"
+                          initial={{ opacity: 0, y: 4 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.2, delay: i * 0.018 }}
+                          style={{ fontFamily: 'var(--font-jetbrains-mono)', color: BLOCK_META[section].color }}>
+                          {line}
+                        </motion.p>
+                      )
+                    })
+                  })()}
                 </div>
               </div>
 
