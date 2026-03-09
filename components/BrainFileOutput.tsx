@@ -134,7 +134,7 @@ export default function BrainFileOutput({ content, originalContent, confidenceDa
       {/* ─── Confidence Score — layered depth background ─── */}
       {confidenceData && (
         <div
-          className="relative flex flex-col sm:flex-row items-start gap-8 py-10 px-8 -mx-6 animate-scale-in"
+          className="relative flex flex-col sm:flex-row items-start gap-6 sm:gap-8 py-8 sm:py-10 px-4 sm:px-8 -mx-3 sm:-mx-6 animate-scale-in"
           style={{
             background: 'linear-gradient(180deg, transparent 0px, #061420 3rem, #061420 calc(100% - 3rem), transparent 100%)',
             maskImage: 'linear-gradient(to right, transparent 0px, black 2rem, black calc(100% - 2rem), transparent 100%)',
@@ -188,7 +188,7 @@ export default function BrainFileOutput({ content, originalContent, confidenceDa
               { label: 'Constraints Noted', value: confidenceData.breakdown.constraints_noted, from: '#FB923C', to: '#F97316' },
             ].map((item, i) => (
               <div key={item.label} className="flex items-center gap-3">
-                <span className="text-[10px] text-muted font-mono w-[140px] flex-shrink-0">{item.label}</span>
+                <span className="text-[10px] text-muted font-mono w-24 sm:w-[140px] flex-shrink-0">{item.label}</span>
                 <div className="flex-1 h-1 bg-border-ocean/20 rounded-full overflow-hidden">
                   <div
                     className="h-full rounded-full"
@@ -208,7 +208,7 @@ export default function BrainFileOutput({ content, originalContent, confidenceDa
       )}
 
       {/* ─── Header — cleanly separated from content ─── */}
-      <div className="flex flex-col gap-6 px-8 mb-8 relative z-10">
+      <div className="flex flex-col gap-6 px-4 sm:px-8 mb-8 relative z-10">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-white/5 pb-0">
           <div className="flex items-center gap-3 pb-4">
             <div className="relative w-8 h-8">
@@ -222,7 +222,7 @@ export default function BrainFileOutput({ content, originalContent, confidenceDa
           </div>
 
           {/* Tabs - editorial style */}
-          <div className="flex items-center gap-6 pt-2">
+          <div className="flex items-center gap-4 sm:gap-6 pt-2">
             {[
               { id: 'cards', label: 'Document' },
               { id: 'diff', label: 'Diff' },
@@ -259,7 +259,7 @@ export default function BrainFileOutput({ content, originalContent, confidenceDa
       {/* ─── Document view — atmospheric design ─── */}
       {
         view === 'cards' && (
-          <div className="flex flex-col -mx-6">
+          <div className="flex flex-col -mx-3 sm:-mx-6">
             {SECTIONS.map((section, idx) => {
               const sectionContent = extractSection(section.key)
               if (sectionContent === 'No content extracted.') return null
@@ -303,10 +303,10 @@ export default function BrainFileOutput({ content, originalContent, confidenceDa
                   </span>
 
                   {/* Content with left accent border */}
-                  <div className="relative py-12 px-8 pl-12 flex">
+                  <div className="relative py-8 sm:py-12 px-4 sm:px-8 pl-8 sm:pl-12 flex">
                     {/* Left accent border — the only structural line */}
                     <div
-                      className="absolute left-4 top-0 bottom-0 w-[3px] rounded-full"
+                      className="absolute left-3 sm:left-4 top-0 bottom-0 w-[3px] rounded-full"
                       style={{ backgroundColor: section.accentBorder, opacity: 0.4 }}
                     />
 
@@ -364,7 +364,7 @@ export default function BrainFileOutput({ content, originalContent, confidenceDa
               </div>
             </div>
 
-            <div className="relative flex flex-col md:flex-row h-[600px] overflow-hidden" style={{ marginLeft: '-3%', marginRight: '-5%' }}>
+            <div className="relative flex flex-col md:flex-row h-[480px] sm:h-[560px] md:h-[600px] overflow-hidden rounded-sm">
               <div className="hidden md:block absolute top-16 -left-1 z-10" style={{ writingMode: 'vertical-lr' }}>
                 <span className="text-[9px] font-mono text-muted/40 uppercase tracking-[0.3em] rotate-180" style={{ transform: 'rotate(180deg)' }}>Original Conversation</span>
               </div>
@@ -449,7 +449,7 @@ export default function BrainFileOutput({ content, originalContent, confidenceDa
       {/* ─── Raw view — newspaper style ─── */}
       {
         view === 'raw' && (
-          <div className="relative mt-6 -mx-6 py-12 px-8 animate-fade-in-up" style={{
+          <div className="relative mt-6 -mx-3 sm:-mx-6 py-8 sm:py-12 px-4 sm:px-8 animate-fade-in-up" style={{
             background: 'linear-gradient(180deg, transparent 0px, #061420 3rem, #061420 calc(100% - 3rem), transparent 100%)',
             maskImage: 'linear-gradient(to right, transparent 0px, black 2rem, black calc(100% - 2rem), transparent 100%)',
             WebkitMaskImage: 'linear-gradient(to right, transparent 0px, black 2rem, black calc(100% - 2rem), transparent 100%)',

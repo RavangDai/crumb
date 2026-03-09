@@ -723,7 +723,7 @@ export default function CraftPage() {
       </div>
 
       {/* ─── Nav ─── */}
-      <nav className="fixed top-0 left-0 right-0 z-50 flex justify-between items-center px-8 md:px-14 py-4"
+      <nav className="fixed top-0 left-0 right-0 z-50 flex justify-between items-center px-4 sm:px-8 md:px-14 py-4"
         style={{
           backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
           background: 'rgba(8,13,8,0.6)',
@@ -768,7 +768,7 @@ export default function CraftPage() {
         </div>
       </nav>
 
-      <div className="relative z-10 px-8 md:px-16 pt-24">
+      <div className="relative z-10 px-4 sm:px-8 md:px-16 pt-24">
 
         {/* ─── Hero ─── */}
         <motion.section className="mb-12"
@@ -789,7 +789,7 @@ export default function CraftPage() {
         </motion.section>
 
         {/* ─── Template Strip ─── */}
-        <section className="mb-12 -mx-8 md:-mx-16 px-8 md:px-16 overflow-x-auto hide-scrollbar">
+        <section className="mb-12 -mx-4 sm:-mx-8 md:-mx-16 px-4 sm:px-8 md:px-16 overflow-x-auto hide-scrollbar">
           <div className="flex items-center gap-2 pb-1" style={{ minWidth: 'max-content' }}>
             <span className="flex-shrink-0 text-[10px] mr-3"
               style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(58,90,69,0.38)', letterSpacing: '0.18em' }}>
@@ -1303,12 +1303,26 @@ export default function CraftPage() {
       </div>
 
       {/* ─── History Sidebar ─── */}
+      {/* Mobile backdrop */}
       <AnimatePresence>
         {sidebarOpen && (
           <motion.div
+            key="craft-backdrop"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-20 sm:hidden"
+            style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {sidebarOpen && (
+          <motion.div
+            key="craft-sidebar"
             initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 30, stiffness: 280 }}
-            className="fixed right-0 top-0 bottom-0 z-30 w-72 c-scroll overflow-y-auto"
+            className="fixed right-0 top-0 bottom-0 z-30 w-full sm:w-80 c-scroll overflow-y-auto"
             style={{ background: 'rgba(10,18,10,0.97)', borderLeft: '1px solid rgba(45,158,107,0.15)', backdropFilter: 'blur(20px)' }}>
             <div className="p-5 pt-8">
               <div className="flex items-center justify-between mb-6">

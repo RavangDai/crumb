@@ -9,16 +9,23 @@ export default function CrumbCraftLanding() {
     <main className="min-h-screen flex flex-col" style={{ background: '#020810', color: '#fff' }}>
 
       {/* ─── Wordmark ─── */}
-      <div className="relative z-20 flex justify-center pt-10 pb-2">
+      <div className="relative z-20 flex flex-col items-center pt-8 sm:pt-10 pb-2 gap-2">
         <motion.span
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: 'easeOut' }}
-          className="font-mono text-[11px] uppercase tracking-[0.45em]"
+          className="font-mono text-[10px] sm:text-[11px] uppercase tracking-[0.45em]"
           style={{ color: 'rgba(255,255,255,0.18)' }}
         >
           C R U M B C R A F T
         </motion.span>
+        <motion.div
+          initial={{ scaleX: 0, opacity: 0 }}
+          animate={{ scaleX: 1, opacity: 1 }}
+          transition={{ duration: 0.8, ease: 'easeOut', delay: 0.3 }}
+          className="h-px w-16"
+          style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent)' }}
+        />
       </div>
 
       {/* ─── Split Hero ─── */}
@@ -28,7 +35,7 @@ export default function CrumbCraftLanding() {
         <TransitionLink
           href="/crumb"
           type="crumb"
-          className="group relative flex-1 flex flex-col items-center justify-center min-h-[50vh] md:min-h-0 p-14 md:p-20 transition-[filter] duration-500 hover:brightness-[1.12]"
+          className="group relative flex-1 flex flex-col items-center justify-center min-h-[50vh] md:min-h-0 p-8 sm:p-12 md:p-20 transition-[filter] duration-500 hover:brightness-[1.12]"
           style={{ background: '#040D12' }}
         >
           {/* Hover border glow */}
@@ -60,25 +67,26 @@ export default function CrumbCraftLanding() {
             className="relative z-10 flex flex-col items-center text-center gap-7"
           >
             {/* Logo */}
-            <div className="w-16 h-16 relative opacity-90 group-hover:opacity-100 transition-opacity duration-300">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 relative opacity-90 group-hover:opacity-100 transition-opacity duration-300"
+              style={{ filter: 'drop-shadow(0 0 18px rgba(6,182,212,0.15))' }}>
               <Image src="/Crumbv2.png" alt="Crumb" fill className="object-contain" />
             </div>
 
             {/* Name + divider */}
             <div className="flex flex-col items-center gap-2">
-              <h2 className="font-heading text-4xl font-semibold tracking-tight" style={{ color: '#E8F4F8' }}>Crumb</h2>
-              <div className="w-8 h-px" style={{ background: 'rgba(6,182,212,0.5)' }} />
+              <h2 className="font-heading text-3xl sm:text-4xl font-semibold tracking-tight" style={{ color: '#E8F4F8' }}>Crumb</h2>
+              <div className="w-8 h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(6,182,212,0.6), transparent)' }} />
             </div>
 
             {/* Pitch */}
-            <p className="text-sm leading-relaxed max-w-[260px] font-mono" style={{ color: 'rgba(6,182,212,0.55)' }}>
+            <p className="text-sm leading-relaxed max-w-[240px] sm:max-w-[260px] font-mono text-center" style={{ color: 'rgba(6,182,212,0.55)' }}>
               Compress AI context into portable files that restore sessions anywhere.
             </p>
 
             {/* CTA */}
             <div
-              className="flex items-center gap-2 text-sm font-mono mt-1"
-              style={{ color: '#06B6D4' }}
+              className="flex items-center gap-2 text-sm font-mono mt-1 px-4 py-2 rounded-full transition-all duration-300 group-hover:bg-cyan-500/10"
+              style={{ color: '#06B6D4', border: '1px solid rgba(6,182,212,0.15)' }}
             >
               <span>Open Crumb</span>
               <svg
@@ -106,7 +114,7 @@ export default function CrumbCraftLanding() {
         <TransitionLink
           href="/craft"
           type="craft"
-          className="group relative flex-1 flex flex-col items-center justify-center min-h-[50vh] md:min-h-0 p-14 md:p-20 transition-[filter] duration-500 hover:brightness-[1.12]"
+          className="group relative flex-1 flex flex-col items-center justify-center min-h-[50vh] md:min-h-0 p-8 sm:p-12 md:p-20 transition-[filter] duration-500 hover:brightness-[1.12]"
           style={{ background: '#080D08' }}
         >
           {/* Hover border glow */}
@@ -137,25 +145,26 @@ export default function CrumbCraftLanding() {
             className="relative z-10 flex flex-col items-center text-center gap-7"
           >
             {/* Craft logo */}
-            <div className="w-16 h-16 relative opacity-85 group-hover:opacity-100 transition-opacity duration-300">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 relative opacity-85 group-hover:opacity-100 transition-opacity duration-300"
+              style={{ filter: 'drop-shadow(0 0 18px rgba(45,158,107,0.15))' }}>
               <Image src="/Craftv2.png" alt="Craft" fill className="object-contain" />
             </div>
 
             {/* Name + divider */}
             <div className="flex flex-col items-center gap-2">
-              <h2 className="font-heading text-4xl font-semibold tracking-tight" style={{ color: '#D4EDE0' }}>Craft</h2>
-              <div className="w-8 h-px" style={{ background: 'rgba(45,158,107,0.5)' }} />
+              <h2 className="font-heading text-3xl sm:text-4xl font-semibold tracking-tight" style={{ color: '#D4EDE0' }}>Craft</h2>
+              <div className="w-8 h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(45,158,107,0.6), transparent)' }} />
             </div>
 
             {/* Pitch */}
-            <p className="text-sm leading-relaxed max-w-[260px] font-mono" style={{ color: 'rgba(45,158,107,0.6)' }}>
+            <p className="text-sm leading-relaxed max-w-[240px] sm:max-w-[260px] font-mono text-center" style={{ color: 'rgba(45,158,107,0.6)' }}>
               Build smarter prompts with structure, AI-ready templates, and guided builders.
             </p>
 
             {/* CTA */}
             <div
-              className="flex items-center gap-2 text-sm font-mono mt-1"
-              style={{ color: '#2D9E6B' }}
+              className="flex items-center gap-2 text-sm font-mono mt-1 px-4 py-2 rounded-full transition-all duration-300 group-hover:bg-emerald-500/10"
+              style={{ color: '#2D9E6B', border: '1px solid rgba(45,158,107,0.15)' }}
             >
               <span>Open Craft</span>
               <svg

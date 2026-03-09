@@ -13,12 +13,12 @@ export default function ConversationInput({ value, onChange, isLoading }: Props)
 
   return (
     <div className="flex flex-col gap-2" style={{ animation: 'fadeUp 0.8s ease-out 0.2s both' }}>
-      <div className="flex justify-between items-center">
+      <div className="flex flex-wrap justify-between items-center gap-2">
         <label className="text-xs font-medium text-muted uppercase tracking-widest">
           Conversation Input
         </label>
         <span className="text-xs text-muted/60 font-mono">
-          {wordCount.toLocaleString()} words · {charCount.toLocaleString()} / 50,000
+          {wordCount.toLocaleString()} words · {charCount.toLocaleString()} / 50k
         </span>
       </div>
 

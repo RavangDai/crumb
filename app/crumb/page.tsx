@@ -242,7 +242,7 @@ export default function Home() {
             <span className="w-8 h-px bg-gradient-to-l from-transparent to-primary/50 inline-block" />
           </div>
 
-          <h1 className="font-heading text-5xl md:text-7xl font-semibold tracking-tight leading-[1.1] text-text-bright max-w-4xl mb-6 mx-auto" style={{ animation: 'fadeUp 0.8s ease-out 0.2s both' }}>
+          <h1 className="font-heading text-4xl sm:text-5xl md:text-7xl font-semibold tracking-tight leading-[1.1] text-text-bright max-w-4xl mb-6 mx-auto px-4 sm:px-0" style={{ animation: 'fadeUp 0.8s ease-out 0.2s both' }}>
             Never Lose <br className="hidden md:block" />
             <span style={{ background: 'linear-gradient(90deg, #06B6D4, #3B82F6, #10FDAC, #06B6D4)', backgroundSize: '300% 100%', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', animation: 'gradientFlow 5s ease infinite' }}>
               Context
@@ -250,7 +250,7 @@ export default function Home() {
             {' '}Again
           </h1>
 
-          <p className="text-muted text-base max-w-lg leading-relaxed mb-8 mx-auto" style={{ animation: 'fadeUp 0.8s ease-out 0.3s both' }}>
+          <p className="text-muted text-base max-w-lg leading-relaxed mb-8 mx-auto px-6 sm:px-0" style={{ animation: 'fadeUp 0.8s ease-out 0.3s both' }}>
             Compress any long AI conversation into a portable Crumb File.
             Drop it into any new chat and continue exactly where you left off.
           </p>
@@ -291,7 +291,7 @@ export default function Home() {
 
           <div className="relative py-12">
             {/* Full-bleed section label */}
-            <div className="pl-[8%] pr-[5%] mb-6" style={{ animation: 'fadeUp 0.8s ease-out 0.1s both' }}>
+            <div className="px-4 sm:px-8 md:pl-[8%] md:pr-[5%] mb-6" style={{ animation: 'fadeUp 0.8s ease-out 0.1s both' }}>
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                   <div className="w-1.5 h-1.5 rounded-full bg-primary animate-glow-breathe" />
@@ -343,7 +343,7 @@ export default function Home() {
             <div className="w-full h-px bg-gradient-to-r from-transparent via-primary/15 to-transparent" />
 
             {/* Content indented — not full width, offset left */}
-            <div className="pl-[12%] pr-[10%] mt-8 flex flex-col gap-8" style={{ animation: 'fadeUp 0.8s ease-out 0.2s both' }}>
+            <div className="px-4 sm:px-8 md:pl-[12%] md:pr-[10%] mt-8 flex flex-col gap-8" style={{ animation: 'fadeUp 0.8s ease-out 0.2s both' }}>
               <div>
                 {isLoading ? (
                   <CompressionVisualizer />
@@ -357,7 +357,7 @@ export default function Home() {
               </div>
 
               {/* Pill button — left of center, not dead center */}
-              <div className="flex justify-start pl-[5%] pt-2 pb-4" style={{ animation: 'fadeUp 0.8s ease-out 0.3s both' }}>
+              <div className="flex justify-start pl-0 sm:pl-[5%] pt-2 pb-4" style={{ animation: 'fadeUp 0.8s ease-out 0.3s both' }}>
                 <button
                   onClick={handleCompress}
                   disabled={isLoading || !conversation.trim()}
@@ -402,7 +402,7 @@ export default function Home() {
 
         {/* ─── Output — asymmetric, wider than normal content column ─── */}
         {crumbFile && (
-          <section id="output" className="mb-12 pl-[8%] pr-[5%]">
+          <section id="output" className="mb-12 px-4 sm:px-8 md:pl-[8%] md:pr-[5%]">
             <BrainFileOutput content={crumbFile} originalContent={conversation} confidenceData={confidenceData} />
           </section>
         )}
@@ -424,7 +424,7 @@ export default function Home() {
             <div className="relative py-12">
               <div className="w-full h-px bg-gradient-to-r from-transparent via-accent/15 to-transparent mb-8" />
 
-              <div className="pl-[8%] pr-[8%]">
+              <div className="px-4 sm:px-8 md:px-[8%]">
                 {/* Section label */}
                 <div className="mb-8" style={{ animation: 'fadeUp 0.6s ease-out both' }}>
                   <div className="flex items-center gap-3 mb-2">
@@ -537,32 +537,28 @@ AI: Good choice! Here's how to set it up...`}
 
           <div className="relative py-16">
             {/* Full-bleed title — starts from far left */}
-            <div className="pl-[8%] mb-14">
+            <div className="px-4 sm:px-8 md:pl-[8%] mb-14">
               <h2 className="font-heading text-3xl font-semibold text-text-bright" style={{ animation: 'fadeUp 0.8s ease-out 0.1s both' }}>How It Works</h2>
               <p className="text-sm text-muted font-mono mt-3 max-w-md" style={{ animation: 'fadeUp 0.8s ease-out 0.2s both' }}>A trail of crumbs — three steps to never lose context</p>
               <div className="w-24 h-px mt-4 bg-gradient-to-r from-primary/30 to-transparent" style={{ animation: 'fadeUp 0.8s ease-out 0.3s both' }} />
             </div>
 
-            {/* Steps — staggered vertically AND horizontally */}
-            <div className="relative flex flex-col pl-[8%]">
+            {/* Steps — staggered vertically AND horizontally (horizontal cascade on md+) */}
+            <div className="relative flex flex-col px-4 sm:px-8 md:pl-[8%]">
               {[
-                { step: '01', title: 'Paste Conversation', desc: 'Copy any long AI chat and paste it into the compression input', accentColor: '#06B6D4', glowColor: 'rgba(6,182,212,0.05)', verticalDrop: 0 },
-                { step: '02', title: 'Compress', desc: 'AI extracts the essential meaning, decisions, and technical context', accentColor: '#3B82F6', glowColor: 'rgba(59,130,246,0.05)', verticalDrop: 40 },
-                { step: '03', title: 'Continue Anywhere', desc: 'Drop the Crumb File into any new AI chat to restore full context', accentColor: '#10B981', glowColor: 'rgba(16,185,129,0.05)', verticalDrop: 80 },
+                { step: '01', title: 'Paste Conversation', desc: 'Copy any long AI chat and paste it into the compression input', accentColor: '#06B6D4', glowColor: 'rgba(6,182,212,0.05)' },
+                { step: '02', title: 'Compress', desc: 'AI extracts the essential meaning, decisions, and technical context', accentColor: '#3B82F6', glowColor: 'rgba(59,130,246,0.05)' },
+                { step: '03', title: 'Continue Anywhere', desc: 'Drop the Crumb File into any new AI chat to restore full context', accentColor: '#10B981', glowColor: 'rgba(16,185,129,0.05)' },
               ].map((item, idx) => (
                 <div
                   key={item.step}
-                  className="relative"
-                  style={{
-                    paddingLeft: `${idx * 80}px`,
-                    marginTop: idx > 0 ? `${item.verticalDrop - (idx - 1) * 40}px` : '0',
-                    animation: `fadeUp 0.8s ease-out ${0.4 + idx * 0.2}s both`,
-                  }}
+                  className={`relative ${idx === 1 ? 'mt-6 md:mt-[40px] md:pl-[80px]' : idx === 2 ? 'mt-6 md:mt-[80px] md:pl-[160px]' : ''}`}
+                  style={{ animation: `fadeUp 0.8s ease-out ${0.4 + idx * 0.2}s both` }}
                 >
-                  {/* Connecting line */}
+                  {/* Connecting line — desktop only */}
                   {idx < 2 && (
                     <div
-                      className="absolute w-px bg-gradient-to-b to-transparent"
+                      className="absolute hidden md:block w-px bg-gradient-to-b to-transparent"
                       style={{
                         left: `${idx * 80 + 20}px`,
                         top: '100%',
@@ -603,9 +599,9 @@ AI: Good choice! Here's how to set it up...`}
                     </div>
                   </div>
 
-                  {/* Angled connector */}
+                  {/* Angled connector — desktop only */}
                   {idx < 2 && (
-                    <svg className="absolute pointer-events-none" style={{ left: `${20}px`, bottom: '-8px', width: '100px', height: '50px' }} viewBox="0 0 100 50" fill="none">
+                    <svg className="absolute hidden md:block pointer-events-none" style={{ left: `${20}px`, bottom: '-8px', width: '100px', height: '50px' }} viewBox="0 0 100 50" fill="none">
                       <path d={`M 0 0 Q 25 50, 80 45`} stroke={`${item.accentColor}40`} strokeWidth="1" fill="none" />
                       <circle cx="80" cy="45" r="2.5" fill={`${item.accentColor}60`} />
                     </svg>
@@ -617,7 +613,7 @@ AI: Good choice! Here's how to set it up...`}
         </section>
 
         {/* ─── Footer ─── */}
-        <footer className="relative pt-16 pb-10 px-[8%] overflow-hidden" style={{ background: 'linear-gradient(180deg, transparent 0%, #061420 20%, #0A1E2E 60%, transparent 100%)' }}>
+        <footer className="relative pt-16 pb-10 px-4 sm:px-8 md:px-[8%] overflow-hidden" style={{ background: 'linear-gradient(180deg, transparent 0%, #061420 20%, #0A1E2E 60%, transparent 100%)' }}>
           {/* Radial glow */}
           <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at 10% 60%, rgba(6,182,212,0.04) 0%, transparent 50%)' }} />
           {/* Ghost watermark */}

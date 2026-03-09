@@ -87,7 +87,7 @@ export default function VaultModal({ onClose, onLoad }: Props) {
       onClick={handleBackdrop}
     >
       <div
-        className="relative w-full max-w-2xl max-h-[80vh] flex flex-col rounded-2xl overflow-hidden animate-scale-in"
+        className="relative w-full max-w-2xl max-h-[90vh] sm:max-h-[80vh] flex flex-col rounded-none sm:rounded-2xl overflow-hidden animate-scale-in"
         style={{
           background: 'linear-gradient(180deg, #0B1929 0%, #061420 100%)',
           boxShadow: '0 0 0 1px rgba(6,182,212,0.12), 0 32px 80px rgba(0,0,0,0.6)',
@@ -153,8 +153,8 @@ export default function VaultModal({ onClose, onLoad }: Props) {
                     </div>
                   </div>
 
-                  {/* Actions */}
-                  <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                  {/* Actions — always visible on mobile, hover on desktop */}
+                  <div className="flex items-center gap-3 opacity-70 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex-shrink-0">
                     <button
                       onClick={() => { onLoad(entry); onClose() }}
                       className="text-[11px] font-mono text-primary hover:text-text-bright transition-colors underline underline-offset-2 decoration-primary/30"
