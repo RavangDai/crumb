@@ -5,6 +5,12 @@ import Image from 'next/image'
 import { TransitionLink } from '@/context/transition'
 import { motion, AnimatePresence, Reorder, useDragControls } from 'framer-motion'
 import { getVault } from '@/lib/vault'
+import {
+  UserCircle2, Crosshair, BookOpen, Zap, ArrowLeftRight, ShieldOff, LayoutTemplate,
+  Code2, PenLine, Palette, BarChart2, Search, Package, Megaphone, GraduationCap,
+  OctagonX, AlertTriangle, Lightbulb, Wand2, PenSquare, Clock, ArrowRight,
+  type LucideIcon,
+} from 'lucide-react'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -47,14 +53,14 @@ interface PromptEntry {
 
 const HISTORY_KEY = 'craft_history'
 
-const BLOCK_META: Record<BlockType, { label: string; color: string; bg: string; placeholder: string; icon: string }> = {
-  persona:    { label: 'PERSONA',    color: '#2D9E6B', bg: 'rgba(45,158,107,0.07)',  placeholder: 'senior [LANGUAGE] developer with 10+ years of experience', icon: '◉' },
-  objective:  { label: 'OBJECTIVE',  color: '#5DFFA8', bg: 'rgba(93,255,168,0.04)',  placeholder: 'Review this code for bugs, performance issues, and best practices', icon: '◎' },
-  context:    { label: 'CONTEXT',    color: '#8DB89A', bg: 'rgba(141,184,154,0.04)', placeholder: 'Relevant background, code snippets, or details...', icon: '≡' },
-  technique:  { label: 'TECHNIQUE',  color: '#A8D4BA', bg: 'rgba(168,212,186,0.04)', placeholder: '', icon: '⚡' },
-  example:    { label: 'EXAMPLE',    color: '#C4A45A', bg: 'rgba(196,164,90,0.04)',  placeholder: '', icon: '↔' },
-  constraint: { label: 'CONSTRAINT', color: '#C47A5A', bg: 'rgba(196,122,90,0.05)',  placeholder: 'Critical issues first. No praise. Max 3 bullet points.', icon: '⊘' },
-  format:     { label: 'FORMAT',     color: '#7A8DC4', bg: 'rgba(122,141,196,0.05)', placeholder: 'Describe output structure...', icon: '◧' },
+const BLOCK_META: Record<BlockType, { label: string; color: string; bg: string; placeholder: string; Icon: LucideIcon }> = {
+  persona:    { label: 'PERSONA',    color: '#2D9E6B', bg: 'rgba(45,158,107,0.07)',  placeholder: 'senior [LANGUAGE] developer with 10+ years of experience', Icon: UserCircle2 },
+  objective:  { label: 'OBJECTIVE',  color: '#5DFFA8', bg: 'rgba(93,255,168,0.04)',  placeholder: 'Review this code for bugs, performance issues, and best practices', Icon: Crosshair },
+  context:    { label: 'CONTEXT',    color: '#8DB89A', bg: 'rgba(141,184,154,0.04)', placeholder: 'Relevant background, code snippets, or details...', Icon: BookOpen },
+  technique:  { label: 'TECHNIQUE',  color: '#A8D4BA', bg: 'rgba(168,212,186,0.04)', placeholder: '', Icon: Zap },
+  example:    { label: 'EXAMPLE',    color: '#C4A45A', bg: 'rgba(196,164,90,0.04)',  placeholder: '', Icon: ArrowLeftRight },
+  constraint: { label: 'CONSTRAINT', color: '#C47A5A', bg: 'rgba(196,122,90,0.05)',  placeholder: 'Critical issues first. No praise. Max 3 bullet points.', Icon: ShieldOff },
+  format:     { label: 'FORMAT',     color: '#7A8DC4', bg: 'rgba(122,141,196,0.05)', placeholder: 'Describe output structure...', Icon: LayoutTemplate },
 }
 
 const TECHNIQUES: Record<TechniqueId, { label: string; description: string; content: string }> = {
@@ -88,14 +94,14 @@ const TECHNIQUES: Record<TechniqueId, { label: string; description: string; cont
 const FORMAT_CHIPS = ['Bullet List', 'JSON', 'Step-by-step', 'Essay', 'Table', 'Code Block', 'Markdown']
 
 const CATEGORIES = [
-  { id: 'code-dev',      label: 'Code & Dev',    icon: '</>' },
-  { id: 'writing-copy',  label: 'Writing',        icon: '✍'  },
-  { id: 'design-ui',     label: 'Design & UI',    icon: '◈'  },
-  { id: 'data-analysis', label: 'Data Analysis',  icon: '∑'  },
-  { id: 'research',      label: 'Research',       icon: '◎'  },
-  { id: 'product',       label: 'Product',        icon: '◇'  },
-  { id: 'marketing',     label: 'Marketing',      icon: '⟐'  },
-  { id: 'learning',      label: 'Learning',       icon: '⊕'  },
+  { id: 'code-dev',      label: 'Code & Dev',    Icon: Code2 },
+  { id: 'writing-copy',  label: 'Writing',        Icon: PenLine },
+  { id: 'design-ui',     label: 'Design & UI',    Icon: Palette },
+  { id: 'data-analysis', label: 'Data Analysis',  Icon: BarChart2 },
+  { id: 'research',      label: 'Research',       Icon: Search },
+  { id: 'product',       label: 'Product',        Icon: Package },
+  { id: 'marketing',     label: 'Marketing',      Icon: Megaphone },
+  { id: 'learning',      label: 'Learning',       Icon: GraduationCap },
 ]
 
 const BLOCK_TEMPLATES: Record<string, Omit<Block, 'id'>[]> = {
@@ -255,6 +261,10 @@ function saveHistory(blocks: Block[], assembled: string, category: string): Prom
 
 function PentagonDNA({ score }: { score: DNAScore }) {
   const [showBars, setShowBars] = useState(false)
+  const [hoveredAxis, setHoveredAxis] = useState<number | null>(null)
+  const [displayScore, setDisplayScore] = useState(0)
+  const displayScoreRef = useRef(0)
+
   const axes = [
     { label: 'Clarity',    value: score.clarity },
     { label: 'Specific',   value: score.specificity },
@@ -262,7 +272,31 @@ function PentagonDNA({ score }: { score: DNAScore }) {
     { label: 'Context',    value: score.context },
     { label: 'Guardrails', value: score.guardrails },
   ]
-  const cx = 130, cy = 130, R = 90
+
+  const overall = Math.round(axes.reduce((s, a) => s + a.value, 0) / axes.length)
+
+  // Animate score count-up whenever overall changes
+  useEffect(() => {
+    const target = overall
+    const start = displayScoreRef.current
+    if (start === target) return
+    const duration = 700
+    const startTime = performance.now()
+    let raf: number
+    const tick = (now: number) => {
+      const t = Math.min((now - startTime) / duration, 1)
+      const eased = 1 - Math.pow(1 - t, 3)
+      const current = Math.round(start + (target - start) * eased)
+      displayScoreRef.current = current
+      setDisplayScore(current)
+      if (t < 1) { raf = requestAnimationFrame(tick) }
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [overall])
+
+  // Expanded geometry: cx/cy shifted inward, viewBox padded for label room
+  const cx = 140, cy = 148, R = 88
   const pt = (i: number, r: number) => ({
     x: cx + r * Math.cos(-Math.PI / 2 + (i * 2 * Math.PI) / 5),
     y: cy + r * Math.sin(-Math.PI / 2 + (i * 2 * Math.PI) / 5),
@@ -272,16 +306,18 @@ function PentagonDNA({ score }: { score: DNAScore }) {
   const data  = axes.map((ax, i) => pt(i, (ax.value / 100) * R))
   const toPath = (pts: { x: number; y: number }[]) =>
     pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ') + 'Z'
-  const overall = Math.round(axes.reduce((s, a) => s + a.value, 0) / axes.length)
+
   const ringR = 36
   const ringCirc = 2 * Math.PI * ringR
   const ringColor = overall > 65 ? '#5DFFA8' : overall > 35 ? '#2D9E6B' : '#C47A5A'
 
   return (
-    <div className="flex flex-col items-center gap-5"
+    <div className="flex flex-col items-center gap-4 w-full"
       onMouseEnter={() => setShowBars(true)}
-      onMouseLeave={() => setShowBars(false)}>
-      <svg width="260" height="260" viewBox="0 0 260 260">
+      onMouseLeave={() => { setShowBars(false); setHoveredAxis(null) }}>
+
+      {/* SVG: viewBox expanded to prevent label clipping */}
+      <svg width="100%" height="auto" viewBox="0 0 280 296" style={{ maxWidth: '280px' }}>
         {rings.map(r => (
           <path key={r} d={toPath(axes.map((_, i) => pt(i, R * r)))}
             fill="none" stroke="rgba(45,158,107,0.1)" strokeWidth="1" />
@@ -305,19 +341,34 @@ function PentagonDNA({ score }: { score: DNAScore }) {
             transition={{ delay: i * 0.07, type: 'spring', stiffness: 300 }}
           />
         ))}
+
+        {/* Axis labels with invisible hover rectangles for tooltip */}
         {outer.map((p, i) => {
           const angle = -Math.PI / 2 + (i * 2 * Math.PI) / 5
-          const lx = cx + (R + 24) * Math.cos(angle)
-          const ly = cy + (R + 24) * Math.sin(angle)
+          const lx = cx + (R + 28) * Math.cos(angle)
+          const ly = cy + (R + 28) * Math.sin(angle)
+          const isHovered = hoveredAxis === i
+          const isHighVal = axes[i].value > 65
           return (
-            <text key={i} x={lx.toFixed(1)} y={ly.toFixed(1)}
-              textAnchor="middle" dominantBaseline="middle"
-              fontSize="11" fill={axes[i].value > 65 ? 'rgba(93,255,168,0.8)' : 'rgba(141,184,154,0.65)'}
-              fontFamily="var(--font-jetbrains-mono)">
-              {axes[i].label}
-            </text>
+            <g key={i}
+              onMouseEnter={() => setHoveredAxis(i)}
+              onMouseLeave={() => setHoveredAxis(null)}
+              style={{ cursor: 'help' }}>
+              <text
+                x={lx.toFixed(1)} y={ly.toFixed(1)}
+                textAnchor="middle" dominantBaseline="middle"
+                fontSize="11"
+                fill={isHighVal ? 'rgba(93,255,168,0.9)' : isHovered ? 'rgba(212,237,224,0.9)' : 'rgba(141,184,154,0.7)'}
+                fontFamily="var(--font-jetbrains-mono)"
+                style={{ transition: 'fill 0.15s' }}>
+                {axes[i].label}
+              </text>
+              {/* Invisible hit area */}
+              <rect x={lx - 36} y={ly - 12} width="72" height="24" fill="transparent" />
+            </g>
           )
         })}
+
         {/* Score ring track */}
         <circle cx={cx} cy={cy} r={ringR} fill="none" stroke="rgba(45,158,107,0.12)" strokeWidth="3" />
         {/* Score ring progress */}
@@ -334,10 +385,32 @@ function PentagonDNA({ score }: { score: DNAScore }) {
           transform={`rotate(-90, ${cx}, ${cy})`}
         />
         <text x={cx} y={cy - 8} textAnchor="middle" fontSize="26" fontWeight="700"
-          fill="#D4EDE0" fontFamily="var(--font-sora)">{overall}</text>
+          fill="#D4EDE0" fontFamily="var(--font-sora)">{displayScore}</text>
         <text x={cx} y={cy + 13} textAnchor="middle" fontSize="9"
           fill="rgba(141,184,154,0.5)" fontFamily="var(--font-jetbrains-mono)" letterSpacing="0.15em">SCORE</text>
       </svg>
+
+      {/* Axis tooltip */}
+      <AnimatePresence>
+        {hoveredAxis !== null && (
+          <motion.div
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.15 }}
+            className="w-full px-3 py-2 text-center"
+            style={{
+              fontFamily: 'var(--font-jetbrains-mono)', fontSize: '10px',
+              color: 'rgba(141,184,154,0.75)',
+              background: 'rgba(13,21,13,0.7)',
+              border: '1px solid rgba(45,158,107,0.12)',
+              borderRadius: '2px',
+            }}>
+            <span style={{ color: 'rgba(212,237,224,0.9)', fontWeight: 600 }}>{axes[hoveredAxis].label}: </span>
+            {AXIS_TOOLTIPS[hoveredAxis]}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Per-axis breakdown — visible on hover */}
       <AnimatePresence>
@@ -395,15 +468,17 @@ function AddBlockMenu({ onAdd, onClose, usedTypes }: { onAdd: (t: BlockType) => 
       className="absolute bottom-full mb-2 left-0 z-50 w-56 overflow-hidden"
       style={{ background: 'rgba(10,18,10,0.98)', border: '1px solid rgba(45,158,107,0.22)', borderRadius: '3px', backdropFilter: 'blur(20px)' }}
     >
-      {available.map(item => (
+      {available.map(item => {
+        const BIcon = BLOCK_META[item.type].Icon
+        return (
         <button
           key={item.type}
           onClick={() => { onAdd(item.type); onClose() }}
           className="w-full flex items-center gap-3 px-3.5 py-2.5 text-left transition-colors hover:bg-white/[0.025]"
           style={{ borderBottom: '1px solid rgba(45,158,107,0.06)' }}
         >
-          <span style={{ color: BLOCK_META[item.type].color, fontSize: '13px', width: '16px', flexShrink: 0 }}>
-            {BLOCK_META[item.type].icon}
+          <span style={{ color: BLOCK_META[item.type].color, width: '16px', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
+            <BIcon size={13} strokeWidth={1.5} />
           </span>
           <div>
             <div style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '10px', color: BLOCK_META[item.type].color, letterSpacing: '0.1em' }}>
@@ -414,7 +489,8 @@ function AddBlockMenu({ onAdd, onClose, usedTypes }: { onAdd: (t: BlockType) => 
             </div>
           </div>
         </button>
-      ))}
+        )
+      })}
     </motion.div>
   )
 }
@@ -427,35 +503,58 @@ function BlockCard({ block, onChange, onDelete }: {
   onDelete: () => void
 }) {
   const meta = BLOCK_META[block.type]
+  const BlockIcon = meta.Icon
   const controls = useDragControls()
 
   return (
     <Reorder.Item value={block} dragListener={false} dragControls={controls} className="select-none">
       <motion.div
         layout
-        initial={{ opacity: 0, y: 6 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.97 }}
-        whileDrag={{ scale: 1.02, boxShadow: '0 16px 40px rgba(0,0,0,0.45), 0 0 0 1px rgba(45,158,107,0.25)' }}
-        transition={{ type: 'spring', damping: 28, stiffness: 220 }}
-        className="group relative mb-2"
-        style={{ background: meta.bg, border: `1px solid rgba(45,158,107,0.1)`, borderLeft: `2px solid ${meta.color}`, borderRadius: '3px' }}
+        initial={{ opacity: 0, y: 10, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.96, y: -4 }}
+        whileDrag={{ scale: 1.025, boxShadow: `0 20px 48px rgba(0,0,0,0.55), 0 0 0 1px ${meta.color}35` }}
+        transition={{ type: 'spring', damping: 26, stiffness: 240 }}
+        className="group relative mb-2.5"
+        style={{ background: meta.bg, border: `1px solid ${meta.color}1e`, borderLeft: `3px solid ${meta.color}`, borderRadius: '4px' }}
+        whileHover={{ boxShadow: `0 2px 20px rgba(0,0,0,0.3), 0 0 0 1px ${meta.color}28` }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3"
-          style={{ borderBottom: '1px solid rgba(45,158,107,0.1)' }}>
-          <span style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '11px', color: meta.color, letterSpacing: '0.15em' }}>
-            {meta.icon} {meta.label}
+        <div className="flex items-center justify-between px-4 py-2.5"
+          style={{ borderBottom: `1px solid ${meta.color}18` }}>
+          {/* Colored type badge */}
+          <span style={{
+            fontFamily: 'var(--font-jetbrains-mono)', fontSize: '10px',
+            color: meta.color, letterSpacing: '0.12em',
+            background: `${meta.color}14`,
+            border: `1px solid ${meta.color}28`,
+            padding: '2px 8px 2px 6px', borderRadius: '3px',
+            display: 'inline-flex', alignItems: 'center', gap: '5px',
+          }}>
+            <BlockIcon size={11} strokeWidth={1.5} />
+            {meta.label}
           </span>
-          <div className="flex items-center gap-3">
-            <div onPointerDown={e => controls.start(e)}
-              className="cursor-grab active:cursor-grabbing touch-none opacity-20 group-hover:opacity-70 transition-opacity"
-              style={{ color: 'rgba(58,90,69,0.6)', fontSize: '14px' }} title="Drag to reorder">
-              ⠿
+          <div className="flex items-center gap-2.5">
+            {/* Drag handle — always visible, prominent on hover */}
+            <div
+              onPointerDown={e => controls.start(e)}
+              className="cursor-grab active:cursor-grabbing touch-none transition-opacity"
+              style={{ color: meta.color, opacity: 0.35 }}
+              onMouseEnter={e => (e.currentTarget.style.opacity = '0.75')}
+              onMouseLeave={e => (e.currentTarget.style.opacity = '0.35')}
+              title="Drag to reorder">
+              <svg width="10" height="14" viewBox="0 0 10 14" fill="currentColor">
+                <circle cx="2.5" cy="2.5" r="1.3"/>
+                <circle cx="7.5" cy="2.5" r="1.3"/>
+                <circle cx="2.5" cy="7" r="1.3"/>
+                <circle cx="7.5" cy="7" r="1.3"/>
+                <circle cx="2.5" cy="11.5" r="1.3"/>
+                <circle cx="7.5" cy="11.5" r="1.3"/>
+              </svg>
             </div>
             <button onClick={onDelete}
               className="opacity-0 group-hover:opacity-100 transition-opacity hover:opacity-60"
-              style={{ color: 'rgba(196,122,90,0.7)', fontSize: '13px' }}>✕</button>
+              style={{ color: 'rgba(196,122,90,0.8)', fontSize: '13px', lineHeight: 1 }}>✕</button>
           </div>
         </div>
 
@@ -551,6 +650,14 @@ function BlockCard({ block, onChange, onDelete }: {
 }
 
 const IMPROVE_STAGES = ['Reading prompt…', 'Analysing structure…', 'Engineering…', 'Refining…']
+
+const AXIS_TOOLTIPS = [
+  'How free of vague or ambiguous language your prompt is',
+  'How precise and concrete your instructions and targets are',
+  'Whether the desired output format is clearly defined',
+  'How much relevant background context is provided',
+  'Whether rules, limits, and constraints are explicitly set',
+]
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
@@ -694,7 +801,7 @@ export default function CraftPage() {
     setTimeout(() => builderRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 80)
   }
 
-  const sevIcon  = { error: '⊘', warning: '⚠', tip: '○' }
+  const sevIcon: Record<Severity, LucideIcon> = { error: OctagonX, warning: AlertTriangle, tip: Lightbulb }
   const sevColor = { error: '#C47A5A', warning: '#C4A45A', tip: '#5DFFA8' }
 
   return (
@@ -706,12 +813,17 @@ export default function CraftPage() {
       transition={{ type: 'spring', damping: 30, stiffness: 100 }}
     >
       <style>{`
-        .c-scroll { scrollbar-color: rgba(45,158,107,0.15) transparent; scrollbar-width: thin; }
-        .c-scroll::-webkit-scrollbar { width: 4px; }
-        .c-scroll::-webkit-scrollbar-thumb { background: rgba(45,158,107,0.15); border-radius: 2px; }
-        textarea::placeholder, input::placeholder { color: rgba(141,184,154,0.3); }
+        .c-scroll { scrollbar-color: rgba(45,158,107,0.22) transparent; scrollbar-width: thin; }
+        .c-scroll::-webkit-scrollbar { width: 3px; }
+        .c-scroll::-webkit-scrollbar-track { background: transparent; }
+        .c-scroll::-webkit-scrollbar-thumb { background: rgba(45,158,107,0.22); border-radius: 2px; }
+        .c-scroll::-webkit-scrollbar-thumb:hover { background: rgba(93,255,168,0.35); }
+        textarea::placeholder, input::placeholder { color: rgba(141,184,154,0.38); }
         .hide-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
+        @media (min-width: 1024px) {
+          .craft-split-left { scroll-padding-bottom: 56px; }
+        }
       `}</style>
 
       {/* Background */}
@@ -741,31 +853,18 @@ export default function CraftPage() {
             <span style={{ color: '#D4EDE0', fontWeight: 600 }}>Craft</span>
           </div>
         </div>
-        <div className="relative group">
-          <TransitionLink href="/crumb"
-            type="crumb"
-            className="flex items-center gap-1.5 transition-opacity duration-200 hover:opacity-90"
-            style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '12px', color: 'rgba(141,184,154,0.5)' }}>
-            <div className="w-4 h-4 relative opacity-60">
-              <Image src="/Crumbv2.png" alt="Crumb" fill className="object-contain"
-                style={{ filter: 'hue-rotate(100deg) saturate(0.35)' }} />
-            </div>
-            <span>/ Crumb</span>
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.6 }}>
-              <path d="M5 12h14M12 5l7 7-7 7" />
-            </svg>
-          </TransitionLink>
-          <div className="absolute right-0 top-full mt-2 px-2.5 py-1.5 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-150 whitespace-nowrap"
-            style={{
-              fontFamily: 'var(--font-jetbrains-mono)', fontSize: '11px',
-              color: 'rgba(141,184,154,0.8)',
-              background: 'rgba(13,21,13,0.92)',
-              border: '1px solid rgba(45,158,107,0.2)',
-              borderRadius: '2px',
-            }}>
-            Switch to Crumb — AI memory compression
+        <TransitionLink href="/crumb"
+          type="crumb"
+          className="flex items-center gap-1.5 transition-opacity duration-200 hover:opacity-80"
+          style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '12px', color: 'rgba(141,184,154,0.5)' }}
+          title="Switch to Crumb — AI memory compression">
+          <div className="w-4 h-4 relative opacity-50">
+            <Image src="/Crumbv2.png" alt="Crumb" fill className="object-contain"
+              style={{ filter: 'hue-rotate(100deg) saturate(0.35)' }} />
           </div>
-        </div>
+          <span>Crumb</span>
+          <ArrowRight size={9} strokeWidth={2} style={{ opacity: 0.5 }} />
+        </TransitionLink>
       </nav>
 
       <div className="relative z-10 px-4 sm:px-8 md:px-16 pt-24">
@@ -789,13 +888,16 @@ export default function CraftPage() {
         </motion.section>
 
         {/* ─── Template Strip ─── */}
-        <section className="mb-12 -mx-4 sm:-mx-8 md:-mx-16 px-4 sm:px-8 md:px-16 overflow-x-auto hide-scrollbar">
-          <div className="flex items-center gap-2 pb-1" style={{ minWidth: 'max-content' }}>
+        <section className="sticky top-[58px] z-40 mb-8 -mx-4 sm:-mx-8 md:-mx-16 px-4 sm:px-8 md:px-16 overflow-x-auto hide-scrollbar py-2.5"
+          style={{ background: 'rgba(8,13,8,0.92)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(45,158,107,0.07)' }}>
+          <div className="flex items-center gap-2 pb-0.5" style={{ minWidth: 'max-content' }}>
             <span className="flex-shrink-0 text-[10px] mr-3"
               style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(58,90,69,0.38)', letterSpacing: '0.18em' }}>
               TEMPLATES
             </span>
-            {CATEGORIES.map(cat => (
+            {CATEGORIES.map(cat => {
+              const CatIcon = cat.Icon
+              return (
               <button key={cat.id} onClick={() => loadTemplate(cat.id)}
                 className="flex items-center gap-2 px-4 py-2 text-xs flex-shrink-0 transition-all duration-200"
                 style={{
@@ -805,10 +907,11 @@ export default function CraftPage() {
                     : { color: 'rgba(141,184,154,0.65)', background: 'rgba(45,158,107,0.04)', border: '1px solid rgba(45,158,107,0.14)' }
                   ),
                 }}>
-                <span>{cat.icon}</span>
+                <CatIcon size={12} strokeWidth={1.5} />
                 <span>{cat.label}</span>
               </button>
-            ))}
+              )
+            })}
           </div>
         </section>
 
@@ -816,16 +919,16 @@ export default function CraftPage() {
         <div className="flex flex-col lg:flex-row gap-10 lg:gap-14" ref={builderRef}>
 
           {/* LEFT: Block Composer ── 58% */}
-          <div className="lg:w-[58%]">
+          <div className="lg:w-[58%] flex flex-col lg:max-h-[calc(100vh-220px)] lg:overflow-y-auto c-scroll lg:pr-3">
             <div className="flex items-center gap-2.5 mb-5">
               <div className="w-1 h-4 rounded-full" style={{ background: '#2D9E6B', opacity: 0.4 }} />
               <span className="text-[11px] uppercase tracking-widest"
                 style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.55)' }}>
                 Blocks
               </span>
-              <span className="text-[10px] ml-1"
-                style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(58,90,69,0.3)' }}>
-                · drag ⠿ to reorder
+              <span className="text-[10px] ml-1 hidden sm:inline"
+                style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.35)' }}>
+                · drag to reorder
               </span>
             </div>
 
@@ -840,7 +943,9 @@ export default function CraftPage() {
             </Reorder.Group>
 
             {/* Add Block + Load from Crumb */}
-            <div className="relative flex items-center gap-4 mt-3 py-4" ref={addMenuRef}>
+            <div className="relative flex items-center gap-4 mt-auto pt-3 pb-2 lg:sticky lg:bottom-0"
+              ref={addMenuRef}
+              style={{ backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', background: 'rgba(8,13,8,0.9)', borderTop: '1px solid rgba(45,158,107,0.07)' }}>
               <AnimatePresence>
                 {showAddMenu && (
                   <AddBlockMenu onAdd={addBlock} onClose={() => setShowAddMenu(false)} usedTypes={blocks.map(b => b.type)} />
@@ -867,7 +972,7 @@ export default function CraftPage() {
           </div>
 
           {/* RIGHT: DNA + Linter ── 42% */}
-          <div className="lg:w-[42%] flex flex-col gap-6 lg:sticky lg:top-24 lg:self-start">
+          <div className="lg:w-[42%] flex flex-col gap-6 lg:sticky lg:top-[120px] lg:self-start lg:max-h-[calc(100vh-140px)] lg:overflow-y-auto c-scroll">
 
             {/* Prompt DNA */}
             <div className="p-7" style={{ background: 'rgba(13,21,13,0.55)', border: '1px solid rgba(45,158,107,0.1)' }}>
@@ -951,19 +1056,22 @@ export default function CraftPage() {
               ) : (
                 <div className="flex flex-col gap-3.5">
                   <AnimatePresence>
-                    {warnings.map(w => (
+                    {warnings.map(w => {
+                      const SIcon = sevIcon[w.severity]
+                      return (
                       <motion.div key={w.id}
                         initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -6 }}
                         className="flex items-start gap-3">
-                        <span style={{ color: sevColor[w.severity], fontSize: '13px', flexShrink: 0, marginTop: '2px' }}>
-                          {sevIcon[w.severity]}
+                        <span style={{ color: sevColor[w.severity], flexShrink: 0, marginTop: '2px', display: 'flex', alignItems: 'center' }}>
+                          <SIcon size={13} strokeWidth={1.5} />
                         </span>
                         <span className="text-sm leading-relaxed"
                           style={{ color: 'rgba(212,237,224,0.65)' }}>
                           {w.message}
                         </span>
                       </motion.div>
-                    ))}
+                      )
+                    })}
                   </AnimatePresence>
                 </div>
               )}
@@ -1164,7 +1272,7 @@ export default function CraftPage() {
                   </AnimatePresence>
                 </div>
               ) : (
-                <span className="relative z-10">⚡ Improve with AI</span>
+                <span className="relative z-10 flex items-center gap-2"><Wand2 size={14} strokeWidth={1.5} /> Improve with AI</span>
               )}
             </button>
           </div>
@@ -1172,7 +1280,7 @@ export default function CraftPage() {
           {/* ── Improve error ── */}
           {improveError && (
             <div className="mt-4 flex items-start gap-2.5 px-1">
-              <span style={{ color: '#C47A5A', fontSize: '13px', flexShrink: 0 }}>⊘</span>
+              <OctagonX size={13} strokeWidth={1.5} style={{ color: '#C47A5A', flexShrink: 0 }} />
               <p className="text-sm" style={{ color: 'rgba(196,122,90,0.8)' }}>{improveError}</p>
             </div>
           )}
@@ -1393,10 +1501,7 @@ export default function CraftPage() {
             style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '11px', color: 'rgba(141,184,154,0.55)' }}
             onMouseEnter={e => (e.currentTarget.style.color = '#5DFFA8')}
             onMouseLeave={e => (e.currentTarget.style.color = 'rgba(141,184,154,0.55)')}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
-              <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
-            </svg>
+            <PenSquare size={14} strokeWidth={1.5} />
             <span className="hidden sm:inline">Builder</span>
           </button>
 
@@ -1407,9 +1512,7 @@ export default function CraftPage() {
             style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '11px', color: isImproving ? '#5DFFA8' : 'rgba(141,184,154,0.55)' }}
             onMouseEnter={e => { if (!isImproving) e.currentTarget.style.color = '#5DFFA8' }}
             onMouseLeave={e => { if (!isImproving) e.currentTarget.style.color = 'rgba(141,184,154,0.55)' }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-            </svg>
+            <Wand2 size={14} strokeWidth={1.5} />
             <span className="hidden sm:inline">{isImproving ? 'Improving…' : 'Improve'}</span>
           </button>
 
@@ -1420,9 +1523,7 @@ export default function CraftPage() {
             style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '11px', color: sidebarOpen ? '#5DFFA8' : 'rgba(141,184,154,0.55)' }}
             onMouseEnter={e => (e.currentTarget.style.color = '#5DFFA8')}
             onMouseLeave={e => (e.currentTarget.style.color = sidebarOpen ? '#5DFFA8' : 'rgba(141,184,154,0.55)')}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
-            </svg>
+            <Clock size={14} strokeWidth={1.5} />
             <span className="hidden sm:inline">History</span>
           </button>
         </motion.div>

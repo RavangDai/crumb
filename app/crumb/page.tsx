@@ -11,6 +11,7 @@ import VaultModal from '@/components/VaultModal'
 import { CompressionDepth } from '@/lib/prompt'
 import { ConfidenceData, VaultEntry } from '@/lib/types'
 import { saveToVault, extractVaultTitle } from '@/lib/vault'
+import { Zap, Loader2, ArrowUp, PenLine, History, PenSquare } from 'lucide-react'
 
 const MIN_WORDS = 30
 
@@ -371,17 +372,12 @@ export default function Home() {
                   <div className="relative flex items-center justify-center gap-2">
                     {isLoading ? (
                       <>
-                        <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                        </svg>
+                        <Loader2 className="animate-spin h-4 w-4" strokeWidth={1.5} />
                         Compressing...
                       </>
                     ) : (
                       <>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-                        </svg>
+                        <Zap size={16} strokeWidth={1.5} />
                         Compress into Crumb File
                       </>
                     )}
@@ -444,9 +440,7 @@ export default function Home() {
                         onClick={() => setShowUpdateInput(true)}
                         className="flex items-center gap-2 text-sm font-mono text-accent/70 hover:text-accent transition-colors duration-200 group"
                       >
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="opacity-60 group-hover:opacity-100 transition-opacity">
-                          <path d="M12 5v14M5 12l7-7 7 7" />
-                        </svg>
+                        <ArrowUp size={13} strokeWidth={1.5} className="opacity-60 group-hover:opacity-100 transition-opacity" />
                         Add new conversation
                         <span className="h-px w-8 bg-accent/30 group-hover:w-16 transition-all duration-300 inline-block" />
                       </button>
@@ -492,17 +486,12 @@ AI: Good choice! Here's how to set it up...`}
                             <div className="relative flex items-center gap-2">
                               {isUpdating ? (
                                 <>
-                                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                                  </svg>
+                                  <Loader2 className="animate-spin h-4 w-4" strokeWidth={1.5} />
                                   Updating...
                                 </>
                               ) : (
                                 <>
-                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                                    <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
-                                  </svg>
+                                  <PenLine size={14} strokeWidth={1.5} />
                                   Update Crumb File
                                 </>
                               )}
@@ -682,9 +671,7 @@ AI: Good choice! Here's how to set it up...`}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-mono transition-all hover:bg-primary/10 text-muted hover:text-primary"
             title="Compress"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-            </svg>
+            <Zap size={16} strokeWidth={1.5} />
             <span className="hidden sm:inline">Compress</span>
           </button>
 
@@ -695,10 +682,7 @@ AI: Good choice! Here's how to set it up...`}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-mono transition-all hover:bg-primary/10 text-muted hover:text-primary"
             title="History"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10" />
-              <polyline points="12 6 12 12 16 14" />
-            </svg>
+            <History size={16} strokeWidth={1.5} />
             <span className="hidden sm:inline">History</span>
           </button>
 
@@ -710,10 +694,7 @@ AI: Good choice! Here's how to set it up...`}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-mono transition-all text-muted hover:text-primary hover:bg-primary/10"
             title="Craft — AI Prompt Builder"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
-              <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
-            </svg>
+            <PenSquare size={16} strokeWidth={1.5} />
             <span className="hidden sm:inline">Craft</span>
           </TransitionLink>
         </div>

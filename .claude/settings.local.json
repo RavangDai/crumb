@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(npx tsc:*)",
-      "Bash(awk NR>=85 && NR<=140:*)"
+      "Bash(awk NR>=85 && NR<=140:*)",
+      "Bash(cd \"C:\\\\Users\\\\bibek\\\\Personal Projects\\\\Crumb\\\\crumb\" && npm install lucide-react)",
+      "Bash(cd \"C:\\\\Users\\\\bibek\\\\Personal Projects\\\\Crumb\\\\crumb\" && npx next build 2>&1 | tail -20)"
     ]
   }
 }
