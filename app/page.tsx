@@ -9,23 +9,32 @@ export default function CrumbCraftLanding() {
     <main className="min-h-screen flex flex-col" style={{ background: '#020810', color: '#fff' }}>
 
       {/* ─── Wordmark ─── */}
-      <div className="relative z-20 flex flex-col items-center pt-8 sm:pt-10 pb-2 gap-2">
-        <motion.span
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: 'easeOut' }}
-          className="font-mono text-[10px] sm:text-[11px] uppercase tracking-[0.45em]"
-          style={{ color: 'rgba(255,255,255,0.18)' }}
-        >
-          C R U M B C R A F T
-        </motion.span>
+      <div className="relative z-20 flex flex-col items-center pt-8 sm:pt-10 pb-4">
         <motion.div
-          initial={{ scaleX: 0, opacity: 0 }}
-          animate={{ scaleX: 1, opacity: 1 }}
-          transition={{ duration: 0.8, ease: 'easeOut', delay: 0.3 }}
-          className="h-px w-16"
-          style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent)' }}
-        />
+          className="flex items-center gap-3"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, ease: 'easeOut' }}
+          style={{
+            filter: 'drop-shadow(0 0 28px rgba(6,182,212,0.18)) drop-shadow(0 0 56px rgba(16,253,172,0.07))',
+          }}
+        >
+          <Image
+            src="/leafcrumbcraft.png"
+            alt="CrumbCraft"
+            width={28}
+            height={28}
+            className="h-6 sm:h-7 w-auto object-contain opacity-80"
+            priority
+          />
+          <span
+            className="font-heading tracking-[0.18em]"
+            style={{ fontSize: 'clamp(0.85rem, 1.4vw, 1.05rem)' }}
+          >
+            <span style={{ color: '#6B7280', fontWeight: 700 }}>CRUMB</span>
+            <span style={{ color: '#374151', fontWeight: 400 }}>CRAFT</span>
+          </span>
+        </motion.div>
       </div>
 
       {/* ─── Split Hero ─── */}

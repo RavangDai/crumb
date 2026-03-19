@@ -43,27 +43,31 @@ body {
   font-family: var(--font-sans);
 }
 
-/* Dark scrollbar */
-* {
+/* Dark scrollbar — page level only */
+html, body {
   scrollbar-width: thin;
   scrollbar-color: rgba(6, 182, 212, 0.15) transparent;
 }
 
-*::-webkit-scrollbar {
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
-*::-webkit-scrollbar-track {
+html::-webkit-scrollbar-track,
+body::-webkit-scrollbar-track {
   background: transparent;
 }
 
-*::-webkit-scrollbar-thumb {
+html::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb {
   background: rgba(6, 182, 212, 0.15);
   border-radius: 3px;
 }
 
-*::-webkit-scrollbar-thumb:hover {
+html::-webkit-scrollbar-thumb:hover,
+body::-webkit-scrollbar-thumb:hover {
   background: rgba(6, 182, 212, 0.3);
 }
 

@@ -8,7 +8,7 @@ import { getVault } from '@/lib/vault'
 import {
   UserCircle2, Crosshair, BookOpen, Zap, ArrowLeftRight, ShieldOff, LayoutTemplate,
   Code2, PenLine, Palette, BarChart2, Search, Package, Megaphone, GraduationCap,
-  OctagonX, AlertTriangle, Lightbulb, Wand2, PenSquare, Clock, ArrowRight,
+  OctagonX, AlertTriangle, Lightbulb, Wand2, PenSquare, Clock, ArrowRight, Sparkles, Wrench,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -52,6 +52,28 @@ interface PromptEntry {
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const HISTORY_KEY = 'craft_history'
+
+const CATEGORY_COLOR: Record<string, string> = {
+  'code-dev':      '#2D9E6B',
+  'writing-copy':  '#7A8DC4',
+  'design-ui':     '#8DB89A',
+  'data-analysis': '#C4A45A',
+  'research':      '#5DFFA8',
+  'product':       '#A8D4BA',
+  'marketing':     '#C47A5A',
+  'learning':      '#5DFFA8',
+  'custom':        '#2D9E6B',
+}
+
+function formatRelativeDate(ts: number): string {
+  const now = Date.now()
+  const diff = now - ts
+  if (diff < 60_000) return 'just now'
+  if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}m ago`
+  if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)}h ago`
+  if (diff < 172_800_000) return 'yesterday'
+  return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+}
 
 const BLOCK_META: Record<BlockType, { label: string; color: string; bg: string; placeholder: string; Icon: LucideIcon }> = {
   persona:    { label: 'PERSONA',    color: '#2D9E6B', bg: 'rgba(45,158,107,0.07)',  placeholder: 'senior [LANGUAGE] developer with 10+ years of experience', Icon: UserCircle2 },
@@ -255,6 +277,12 @@ function saveHistory(blocks: Block[], assembled: string, category: string): Prom
   const entry: PromptEntry = { id: uid(), assembled, blocks, category, createdAt: Date.now() }
   localStorage.setItem(HISTORY_KEY, JSON.stringify([entry, ...history].slice(0, 50)))
   return entry
+}
+
+function removeFromHistory(id: string): PromptEntry[] {
+  const updated = getHistory().filter(e => e.id !== id)
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(updated))
+  return updated
 }
 
 // ─── Pentagon DNA ─────────────────────────────────────────────────────────────
@@ -481,10 +509,10 @@ function AddBlockMenu({ onAdd, onClose, usedTypes }: { onAdd: (t: BlockType) => 
             <BIcon size={13} strokeWidth={1.5} />
           </span>
           <div>
-            <div style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '10px', color: BLOCK_META[item.type].color, letterSpacing: '0.1em' }}>
+            <div style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '11px', color: BLOCK_META[item.type].color, letterSpacing: '0.06em' }}>
               {BLOCK_META[item.type].label}
             </div>
-            <div style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '10px', color: 'rgba(141,184,154,0.45)' }}>
+            <div style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '11px', color: 'rgba(141,184,154,0.6)' }}>
               {item.desc}
             </div>
           </div>
@@ -524,8 +552,8 @@ function BlockCard({ block, onChange, onDelete }: {
           style={{ borderBottom: `1px solid ${meta.color}18` }}>
           {/* Colored type badge */}
           <span style={{
-            fontFamily: 'var(--font-jetbrains-mono)', fontSize: '10px',
-            color: meta.color, letterSpacing: '0.12em',
+            fontFamily: 'var(--font-jetbrains-mono)', fontSize: '11px',
+            color: meta.color, letterSpacing: '0.07em',
             background: `${meta.color}14`,
             border: `1px solid ${meta.color}28`,
             padding: '2px 8px 2px 6px', borderRadius: '3px',
@@ -539,9 +567,9 @@ function BlockCard({ block, onChange, onDelete }: {
             <div
               onPointerDown={e => controls.start(e)}
               className="cursor-grab active:cursor-grabbing touch-none transition-opacity"
-              style={{ color: meta.color, opacity: 0.35 }}
-              onMouseEnter={e => (e.currentTarget.style.opacity = '0.75')}
-              onMouseLeave={e => (e.currentTarget.style.opacity = '0.35')}
+              style={{ color: meta.color, opacity: 0.5 }}
+              onMouseEnter={e => (e.currentTarget.style.opacity = '0.85')}
+              onMouseLeave={e => (e.currentTarget.style.opacity = '0.5')}
               title="Drag to reorder">
               <svg width="10" height="14" viewBox="0 0 10 14" fill="currentColor">
                 <circle cx="2.5" cy="2.5" r="1.3"/>
@@ -565,13 +593,13 @@ function BlockCard({ block, onChange, onDelete }: {
               <div className="flex flex-wrap gap-1.5">
                 {(Object.entries(TECHNIQUES) as [TechniqueId, typeof TECHNIQUES[TechniqueId]][]).map(([id, tech]) => (
                   <button key={id} onClick={() => onChange({ ...block, techniqueId: id })}
-                    className="text-[10px] px-2.5 py-1"
+                    className="text-[11px] px-2.5 py-1"
                     style={{
                       fontFamily: 'var(--font-jetbrains-mono)', borderRadius: '2px',
                       transition: 'background 100ms ease, color 100ms ease, border-color 100ms ease',
                       ...(block.techniqueId === id
                         ? { color: '#080D08', background: '#A8D4BA', border: '1px solid #A8D4BA' }
-                        : { color: 'rgba(168,212,186,0.65)', background: 'rgba(168,212,186,0.05)', border: '1px solid rgba(168,212,186,0.18)' }
+                        : { color: 'rgba(168,212,186,0.8)', background: 'rgba(168,212,186,0.05)', border: '1px solid rgba(168,212,186,0.22)' }
                       ),
                     }}>
                     {tech.label}
@@ -580,10 +608,10 @@ function BlockCard({ block, onChange, onDelete }: {
               </div>
               {block.techniqueId && (
                 <div className="flex flex-col gap-1.5 pt-1">
-                  <p style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '11px', color: 'rgba(168,212,186,0.7)' }}>
+                  <p style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '12px', color: 'rgba(168,212,186,0.85)', lineHeight: '1.6' }}>
                     → {TECHNIQUES[block.techniqueId].content}
                   </p>
-                  <p style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '10px', color: 'rgba(168,212,186,0.45)' }}>
+                  <p style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '11px', color: 'rgba(168,212,186,0.55)' }}>
                     {TECHNIQUES[block.techniqueId].description}
                   </p>
                 </div>
@@ -592,7 +620,7 @@ function BlockCard({ block, onChange, onDelete }: {
           ) : block.type === 'example' ? (
             <div className="flex flex-col gap-2">
               <div>
-                <div className="text-[10px] mb-1" style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(196,164,90,0.6)', letterSpacing: '0.12em' }}>INPUT</div>
+                <div className="text-[11px] mb-1.5" style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(196,164,90,0.75)', letterSpacing: '0.07em' }}>INPUT</div>
                 <textarea className="w-full bg-transparent text-sm leading-relaxed resize-none focus:outline-none"
                   style={{ fontFamily: 'var(--font-dm-sans)', color: '#D4EDE0' }}
                   rows={2} placeholder="Example input..."
@@ -601,7 +629,7 @@ function BlockCard({ block, onChange, onDelete }: {
               </div>
               <div className="h-px" style={{ background: 'rgba(196,164,90,0.08)' }} />
               <div>
-                <div className="text-[10px] mb-1" style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(196,164,90,0.6)', letterSpacing: '0.12em' }}>EXPECTED OUTPUT</div>
+                <div className="text-[11px] mb-1.5" style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(196,164,90,0.75)', letterSpacing: '0.07em' }}>EXPECTED OUTPUT</div>
                 <textarea className="w-full bg-transparent text-sm leading-relaxed resize-none focus:outline-none"
                   style={{ fontFamily: 'var(--font-dm-sans)', color: '#D4EDE0' }}
                   rows={2} placeholder="What the ideal response looks like..."
@@ -614,13 +642,13 @@ function BlockCard({ block, onChange, onDelete }: {
               <div className="flex flex-wrap gap-1.5">
                 {FORMAT_CHIPS.map(fmt => (
                   <button key={fmt} onClick={() => onChange({ ...block, content: fmt })}
-                    className="text-[10px] px-2.5 py-1"
+                    className="text-[11px] px-2.5 py-1"
                     style={{
                       fontFamily: 'var(--font-jetbrains-mono)', borderRadius: '2px',
                       transition: 'background 100ms ease, color 100ms ease, border-color 100ms ease',
                       ...(block.content === fmt
                         ? { color: '#080D08', background: '#7A8DC4', border: '1px solid #7A8DC4' }
-                        : { color: 'rgba(122,141,196,0.65)', background: 'rgba(122,141,196,0.05)', border: '1px solid rgba(122,141,196,0.18)' }
+                        : { color: 'rgba(122,141,196,0.82)', background: 'rgba(122,141,196,0.06)', border: '1px solid rgba(122,141,196,0.22)' }
                       ),
                     }}>
                     {fmt}
@@ -673,6 +701,18 @@ export default function CraftPage() {
   const [copied, setCopied]                 = useState(false)
   const [copiedImproved, setCopiedImproved] = useState(false)
 
+  // Mode toggle
+  const [craftMode, setCraftMode] = useState<'manual' | 'ai'>('manual')
+
+  // AI Generate mode
+  const [aiInput, setAiInput]             = useState('')
+  const [aiLoading, setAiLoading]         = useState(false)
+  const [aiStage, setAiStage]             = useState(0)
+  const [aiResult, setAiResult]           = useState('')
+  const [aiApproach, setAiApproach]       = useState<string[]>([])
+  const [aiError, setAiError]             = useState('')
+  const [aiCopied, setAiCopied]           = useState(false)
+
   // AI Improve
   const [isImproving, setIsImproving]         = useState(false)
   const [improvedPrompt, setImprovedPrompt]   = useState('')
@@ -681,11 +721,22 @@ export default function CraftPage() {
   const [improveStage, setImproveStage]       = useState(0)
   const [expandedChanges, setExpandedChanges] = useState<number[]>([])
 
+  const [hoveredHistoryId, setHoveredHistoryId] = useState<string | null>(null)
+
   const builderRef  = useRef<HTMLDivElement>(null)
   const addMenuRef  = useRef<HTMLDivElement>(null)
 
   useEffect(() => { setHistory(getHistory()) }, [])
-  const vaultHasEntries = typeof window !== 'undefined' && getVault().length > 0
+  const [vaultHasEntries, setVaultHasEntries] = useState(false)
+  useEffect(() => { setVaultHasEntries(getVault().length > 0) }, [])
+
+  // close history modal on Escape
+  useEffect(() => {
+    if (!sidebarOpen) return
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') setSidebarOpen(false) }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [sidebarOpen])
 
   // close add-menu on outside click
   useEffect(() => {
@@ -747,6 +798,35 @@ export default function CraftPage() {
   }
 
   useEffect(() => {
+    if (!aiLoading) { setAiStage(0); return }
+    const id = setInterval(() => setAiStage(s => (s + 1) % 4), 2000)
+    return () => clearInterval(id)
+  }, [aiLoading])
+
+  const handleGenerate = async () => {
+    if (!aiInput.trim() || aiLoading) return
+    setAiLoading(true)
+    setAiResult('')
+    setAiApproach([])
+    setAiError('')
+    try {
+      const res = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ description: aiInput }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Something went wrong')
+      setAiResult(data.prompt)
+      setAiApproach(data.approach)
+    } catch (err) {
+      setAiError(err instanceof Error ? err.message : 'Something went wrong')
+    } finally {
+      setAiLoading(false)
+    }
+  }
+
+  useEffect(() => {
     if (!isImproving) { setImproveStage(0); return }
     const id = setInterval(() => setImproveStage(s => (s + 1) % 4), 2200)
     return () => clearInterval(id)
@@ -792,6 +872,12 @@ export default function CraftPage() {
     })
   }
 
+  const handleDeleteHistory = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation()
+    const updated = removeFromHistory(id)
+    setHistory(updated)
+  }
+
   const loadFromHistory = (entry: PromptEntry) => {
     if (entry.blocks?.length) {
       setBlocks(entry.blocks.map(b => ({ ...b, id: uid() })))
@@ -818,7 +904,7 @@ export default function CraftPage() {
         .c-scroll::-webkit-scrollbar-track { background: transparent; }
         .c-scroll::-webkit-scrollbar-thumb { background: rgba(45,158,107,0.22); border-radius: 2px; }
         .c-scroll::-webkit-scrollbar-thumb:hover { background: rgba(93,255,168,0.35); }
-        textarea::placeholder, input::placeholder { color: rgba(141,184,154,0.38); }
+        textarea::placeholder, input::placeholder { color: rgba(141,184,154,0.5); }
         .hide-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         @media (min-width: 1024px) {
@@ -882,17 +968,59 @@ export default function CraftPage() {
             <span style={{ color: '#D4EDE0' }}>Prompt</span>{' '}
             <span style={{ color: '#2D9E6B' }}>Workshop</span>
           </h1>
-          <p className="mt-3 text-base leading-relaxed" style={{ color: 'rgba(141,184,154,0.55)', maxWidth: '460px' }}>
+          <p className="mt-3 text-base leading-relaxed" style={{ color: 'rgba(141,184,154,0.72)', maxWidth: '460px' }}>
             Build with technique blocks. Score with live DNA. Copy what actually works.
           </p>
         </motion.section>
 
+        {/* ─── Mode Toggle ─── */}
+        <motion.div
+          className="mb-8 flex items-center gap-1"
+          initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+          transition={{ type: 'spring', damping: 25, stiffness: 120, delay: 0.18 }}
+        >
+          <div className="flex" style={{ border: '1px solid rgba(45,158,107,0.18)', borderRadius: '3px', overflow: 'hidden' }}>
+            <button
+              onClick={() => setCraftMode('manual')}
+              className="flex items-center gap-2 px-5 py-2.5 text-xs transition-all"
+              style={{
+                fontFamily: 'var(--font-jetbrains-mono)',
+                ...(craftMode === 'manual'
+                  ? { color: '#080D08', background: '#2D9E6B' }
+                  : { color: 'rgba(141,184,154,0.5)', background: 'transparent' }
+                ),
+              }}
+            >
+              <Wrench size={12} strokeWidth={1.5} />
+              Manual
+            </button>
+            <button
+              onClick={() => setCraftMode('ai')}
+              className="flex items-center gap-2 px-5 py-2.5 text-xs transition-all"
+              style={{
+                fontFamily: 'var(--font-jetbrains-mono)',
+                borderLeft: '1px solid rgba(45,158,107,0.18)',
+                ...(craftMode === 'ai'
+                  ? { color: '#080D08', background: '#5DFFA8' }
+                  : { color: 'rgba(141,184,154,0.5)', background: 'transparent' }
+                ),
+              }}
+            >
+              <Sparkles size={12} strokeWidth={1.5} />
+              AI
+            </button>
+          </div>
+          <span className="ml-3 text-[11px]" style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.5)' }}>
+            {craftMode === 'manual' ? '— block-by-block control' : '— describe it, we engineer it'}
+          </span>
+        </motion.div>
+
         {/* ─── Template Strip ─── */}
-        <section className="sticky top-[58px] z-40 mb-8 -mx-4 sm:-mx-8 md:-mx-16 px-4 sm:px-8 md:px-16 overflow-x-auto hide-scrollbar py-2.5"
+        {craftMode === 'manual' && <section className="sticky top-[58px] z-40 mb-8 -mx-4 sm:-mx-8 md:-mx-16 px-4 sm:px-8 md:px-16 overflow-x-auto hide-scrollbar py-2.5"
           style={{ background: 'rgba(8,13,8,0.92)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(45,158,107,0.07)' }}>
           <div className="flex items-center gap-2 pb-0.5" style={{ minWidth: 'max-content' }}>
-            <span className="flex-shrink-0 text-[10px] mr-3"
-              style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(58,90,69,0.38)', letterSpacing: '0.18em' }}>
+            <span className="flex-shrink-0 text-[11px] mr-3"
+              style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.45)', letterSpacing: '0.1em' }}>
               TEMPLATES
             </span>
             {CATEGORIES.map(cat => {
@@ -913,21 +1041,214 @@ export default function CraftPage() {
               )
             })}
           </div>
-        </section>
+        </section>}
 
-        {/* ─── Main Split: Blocks left · DNA+Linter right ─── */}
-        <div className="flex flex-col lg:flex-row gap-10 lg:gap-14" ref={builderRef}>
+        {/* ─── AI Mode ─── */}
+        <AnimatePresence mode="wait">
+        {craftMode === 'ai' && (
+          <motion.div
+            key="ai-mode"
+            initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }}
+            transition={{ type: 'spring', damping: 28, stiffness: 200 }}
+            className="flex flex-col gap-6"
+          >
+            {/* Input area */}
+            <div className="p-7 relative overflow-hidden"
+              style={{ background: 'rgba(13,21,13,0.55)', border: '1px solid rgba(45,158,107,0.12)' }}>
+              <div className="flex items-center gap-2.5 mb-5">
+                <div className="w-1 h-4 rounded-full" style={{ background: '#5DFFA8', opacity: 0.45 }} />
+                <span className="text-[11px] uppercase tracking-widest"
+                  style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.72)' }}>
+                  Describe Your Task
+                </span>
+                <span className="ml-auto text-[10px]"
+                  style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.28)' }}>
+                  more detail → better prompt
+                </span>
+              </div>
+              <textarea
+                className="w-full bg-transparent text-sm leading-relaxed resize-none focus:outline-none c-scroll"
+                style={{
+                  fontFamily: 'var(--font-dm-sans)', color: '#D4EDE0',
+                  minHeight: '140px',
+                }}
+                placeholder={"I want an AI that reviews my pull request and gives me specific feedback on code quality, potential bugs, and anything that looks like a security issue. Should be blunt, not nice."}
+                value={aiInput}
+                onChange={e => { setAiInput(e.target.value); setAiResult(''); setAiApproach([]); setAiError('') }}
+                onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleGenerate() }}
+              />
+              {(() => {
+                const wc = aiInput.trim().split(/\s+/).filter(Boolean).length
+                if (wc > 0 && wc < 15) return (
+                  <p className="mt-2 text-[11px]" style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(196,164,90,0.78)' }}>
+                    Too vague — add what tech stack, who the audience is, or what tone you want. The AI can only work with what you give it.
+                  </p>
+                )
+                return null
+              })()}
+              <div className="flex items-center justify-between mt-4 pt-4" style={{ borderTop: '1px solid rgba(45,158,107,0.07)' }}>
+                <span className="text-[11px]" style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.55)' }}>
+                  {aiInput.trim().split(/\s+/).filter(Boolean).length} words · Ctrl+Enter to generate
+                </span>
+                <button
+                  onClick={handleGenerate}
+                  disabled={aiInput.trim().split(/\s+/).filter(Boolean).length < 5 || aiLoading}
+                  className="flex items-center gap-2.5 text-sm px-6 py-2.5 relative overflow-hidden transition-all disabled:opacity-30"
+                  style={{
+                    fontFamily: 'var(--font-jetbrains-mono)', borderRadius: '2px',
+                    color: aiLoading ? '#5DFFA8' : '#080D08',
+                    background: aiLoading ? 'rgba(93,255,168,0.04)' : '#5DFFA8',
+                    border: `1px solid ${aiLoading ? 'rgba(93,255,168,0.35)' : '#5DFFA8'}`,
+                  }}
+                >
+                  {aiLoading && (
+                    <motion.div
+                      animate={{ opacity: [0, 0.2, 0] }}
+                      transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                      style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'radial-gradient(ellipse at center, rgba(93,255,168,0.35) 0%, transparent 70%)' }}
+                    />
+                  )}
+                  {aiLoading ? (
+                    <div className="flex items-center gap-2.5 relative z-10">
+                      <div style={{ width: 14, height: 14, position: 'relative', flexShrink: 0 }}>
+                        <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: '1px solid rgba(93,255,168,0.2)' }} />
+                        <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: 'linear' }} style={{ position: 'absolute', inset: 0 }}>
+                          <div style={{ position: 'absolute', top: -1.5, left: '50%', width: 3, height: 3, borderRadius: '50%', background: '#5DFFA8', transform: 'translateX(-50%)', boxShadow: '0 0 5px #5DFFA8' }} />
+                        </motion.div>
+                      </div>
+                      <AnimatePresence mode="wait">
+                        <motion.span key={aiStage} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.2 }}>
+                          {IMPROVE_STAGES[aiStage]}
+                        </motion.span>
+                      </AnimatePresence>
+                    </div>
+                  ) : (
+                    <span className="relative z-10 flex items-center gap-2"><Sparkles size={13} strokeWidth={1.5} /> Generate Prompt</span>
+                  )}
+                </button>
+              </div>
+              {aiError && (
+                <div className="mt-3 flex items-start gap-2.5">
+                  <OctagonX size={13} strokeWidth={1.5} style={{ color: '#C47A5A', flexShrink: 0, marginTop: 2 }} />
+                  <p className="text-sm" style={{ color: 'rgba(196,122,90,0.8)' }}>{aiError}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Generated result */}
+            <AnimatePresence>
+            {aiResult && (
+              <motion.div
+                initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }}
+                transition={{ type: 'spring', damping: 28, stiffness: 200 }}
+                className="p-7"
+                style={{ background: 'rgba(8,20,12,0.7)', border: '1px solid rgba(93,255,168,0.18)' }}
+              >
+                <div className="flex items-center justify-between mb-5">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-1 h-4 rounded-full" style={{ background: '#5DFFA8', opacity: 0.6 }} />
+                    <span className="text-[11px] uppercase tracking-widest"
+                      style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(93,255,168,0.7)' }}>
+                      Generated Prompt
+                    </span>
+                  </div>
+                  <span className="text-[11px]" style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.6)' }}>
+                    {Math.round(aiResult.length / 4)} tokens
+                  </span>
+                </div>
+
+                <p className="text-sm leading-relaxed mb-6 whitespace-pre-wrap"
+                  style={{ fontFamily: 'var(--font-jetbrains-mono)', color: '#5DFFA8', lineHeight: '1.75' }}>
+                  {aiResult}
+                </p>
+
+                {aiApproach.length > 0 && (
+                  <div className="mb-6 flex flex-col gap-2.5 pt-5" style={{ borderTop: '1px solid rgba(93,255,168,0.08)' }}>
+                    <span className="text-[11px] uppercase tracking-[0.08em] mb-1"
+                      style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(93,255,168,0.62)' }}>
+                      What we engineered
+                    </span>
+                    {aiApproach.map((a, i) => (
+                      <motion.div key={i}
+                        initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: i * 0.08 }}
+                        className="flex items-start gap-3">
+                        <span style={{ color: '#5DFFA8', opacity: 0.45, fontFamily: 'var(--font-jetbrains-mono)', fontSize: '11px', flexShrink: 0, marginTop: 1 }}>
+                          {String(i + 1).padStart(2, '0')}
+                        </span>
+                        <p className="text-sm leading-relaxed" style={{ color: 'rgba(212,237,224,0.78)' }}>{a}</p>
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="flex items-center gap-3 pt-4" style={{ borderTop: '1px solid rgba(93,255,168,0.08)' }}>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(aiResult)
+                      setAiCopied(true)
+                      setTimeout(() => setAiCopied(false), 2200)
+                    }}
+                    className="flex items-center gap-2 text-sm px-6 py-2.5 transition-all"
+                    style={{
+                      fontFamily: 'var(--font-jetbrains-mono)', borderRadius: '2px',
+                      color: aiCopied ? '#5DFFA8' : '#D4EDE0',
+                      background: aiCopied ? 'rgba(93,255,168,0.07)' : 'rgba(93,255,168,0.08)',
+                      border: `1px solid ${aiCopied ? 'rgba(93,255,168,0.35)' : 'rgba(93,255,168,0.2)'}`,
+                    }}>
+                    {aiCopied ? '✓ Copied' : 'Copy Prompt'}
+                  </button>
+                  <button
+                    onClick={() => {
+                      const blob = new Blob([aiResult], { type: 'text/plain' })
+                      const url = URL.createObjectURL(blob)
+                      const a = document.createElement('a')
+                      a.href = url; a.download = `craft-ai-${Date.now()}.txt`; a.click()
+                      URL.revokeObjectURL(url)
+                    }}
+                    className="text-sm px-4 py-2.5 transition-all"
+                    style={{
+                      fontFamily: 'var(--font-jetbrains-mono)', borderRadius: '2px',
+                      color: 'rgba(141,184,154,0.6)', border: '1px solid rgba(45,158,107,0.14)', background: 'transparent',
+                    }}>
+                    Export .txt
+                  </button>
+                  <button
+                    onClick={() => {
+                      setCraftMode('manual')
+                      const tmpl: Block[] = [
+                        { id: uid(), type: 'objective', content: aiInput },
+                      ]
+                      setBlocks(tmpl)
+                    }}
+                    className="flex items-center gap-2 text-sm px-4 py-2.5 ml-auto transition-all hover:opacity-80"
+                    style={{
+                      fontFamily: 'var(--font-jetbrains-mono)', borderRadius: '2px',
+                      color: 'rgba(141,184,154,0.55)', border: '1px solid rgba(45,158,107,0.14)', background: 'transparent',
+                    }}>
+                    <Wrench size={12} strokeWidth={1.5} /> Refine in Manual
+                  </button>
+                </div>
+              </motion.div>
+            )}
+            </AnimatePresence>
+          </motion.div>
+        )}
+        </AnimatePresence>
+
+        {/* ─── Manual Mode: Main Split + Assembled ─── */}
+        {craftMode === 'manual' && <><div className="flex flex-col lg:flex-row gap-10 lg:gap-14" ref={builderRef}>
 
           {/* LEFT: Block Composer ── 58% */}
-          <div className="lg:w-[58%] flex flex-col lg:max-h-[calc(100vh-220px)] lg:overflow-y-auto c-scroll lg:pr-3">
+          <div className="lg:w-[58%] flex flex-col lg:pr-3">
             <div className="flex items-center gap-2.5 mb-5">
               <div className="w-1 h-4 rounded-full" style={{ background: '#2D9E6B', opacity: 0.4 }} />
               <span className="text-[11px] uppercase tracking-widest"
-                style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.55)' }}>
+                style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.72)' }}>
                 Blocks
               </span>
-              <span className="text-[10px] ml-1 hidden sm:inline"
-                style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.35)' }}>
+              <span className="text-[11px] ml-1 hidden sm:inline"
+                style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.5)' }}>
                 · drag to reorder
               </span>
             </div>
@@ -943,7 +1264,7 @@ export default function CraftPage() {
             </Reorder.Group>
 
             {/* Add Block + Load from Crumb */}
-            <div className="relative flex items-center gap-4 mt-auto pt-3 pb-2 lg:sticky lg:bottom-0"
+            <div className="relative flex items-center gap-4 mt-6 pt-3 pb-2"
               ref={addMenuRef}
               style={{ backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', background: 'rgba(8,13,8,0.9)', borderTop: '1px solid rgba(45,158,107,0.07)' }}>
               <AnimatePresence>
@@ -956,8 +1277,8 @@ export default function CraftPage() {
                 className="flex items-center gap-2 text-xs px-4 py-2 transition-all"
                 style={{
                   fontFamily: 'var(--font-jetbrains-mono)', borderRadius: '2px',
-                  color: showAddMenu ? '#2D9E6B' : 'rgba(141,184,154,0.55)',
-                  border: `1px solid ${showAddMenu ? 'rgba(45,158,107,0.3)' : 'rgba(45,158,107,0.14)'}`,
+                  color: showAddMenu ? '#2D9E6B' : 'rgba(141,184,154,0.72)',
+                  border: `1px solid ${showAddMenu ? 'rgba(45,158,107,0.3)' : 'rgba(45,158,107,0.22)'}`,
                   background: showAddMenu ? 'rgba(45,158,107,0.06)' : 'transparent',
                 }}>
                 + Add Block <span style={{ opacity: 0.4, fontSize: '9px' }}>▼</span>
@@ -965,21 +1286,21 @@ export default function CraftPage() {
               )}
               <button onClick={loadFromCrumb} disabled={!vaultHasEntries}
                 className="flex items-center gap-1.5 text-xs transition-opacity hover:opacity-75 disabled:opacity-25 disabled:cursor-not-allowed"
-                style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(45,158,107,0.5)' }}>
+                style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(45,158,107,0.75)' }}>
                 ⚡ Load from Crumb
               </button>
             </div>
           </div>
 
           {/* RIGHT: DNA + Linter ── 42% */}
-          <div className="lg:w-[42%] flex flex-col gap-6 lg:sticky lg:top-[120px] lg:self-start lg:max-h-[calc(100vh-140px)] lg:overflow-y-auto c-scroll">
+          <div className="lg:w-[42%] flex flex-col gap-6 lg:sticky lg:top-[120px] lg:self-start overflow-hidden">
 
             {/* Prompt DNA */}
             <div className="p-7" style={{ background: 'rgba(13,21,13,0.55)', border: '1px solid rgba(45,158,107,0.1)' }}>
               <div className="flex items-center gap-2.5 mb-6">
                 <div className="w-1 h-4 rounded-full" style={{ background: '#2D9E6B', opacity: 0.45 }} />
                 <span className="text-[11px] uppercase tracking-widest"
-                  style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.55)' }}>
+                  style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.72)' }}>
                   Prompt DNA
                 </span>
               </div>
@@ -1003,7 +1324,7 @@ export default function CraftPage() {
                   <div className="flex items-center gap-2.5 mb-4">
                     <div className="w-1 h-4 rounded-full" style={{ background: '#C4A45A', opacity: 0.45 }} />
                     <span className="text-[11px] uppercase tracking-widest"
-                      style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.55)' }}>
+                      style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.72)' }}>
                       Quick Fixes
                     </span>
                   </div>
@@ -1038,7 +1359,7 @@ export default function CraftPage() {
                 <div className="flex items-center gap-2.5">
                   <div className="w-1 h-4 rounded-full" style={{ background: '#C47A5A', opacity: 0.45 }} />
                   <span className="text-[11px] uppercase tracking-widest"
-                    style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.55)' }}>
+                    style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.72)' }}>
                     Linter
                   </span>
                 </div>
@@ -1050,7 +1371,7 @@ export default function CraftPage() {
               </div>
               {warnings.length === 0 ? (
                 <p className="text-sm leading-relaxed"
-                  style={{ color: hasContent ? 'rgba(93,255,168,0.4)' : 'rgba(141,184,154,0.3)' }}>
+                  style={{ color: hasContent ? 'rgba(93,255,168,0.65)' : 'rgba(141,184,154,0.5)' }}>
                   {hasContent ? 'No issues detected.' : 'Fill in blocks to see live analysis.'}
                 </p>
               ) : (
@@ -1066,7 +1387,7 @@ export default function CraftPage() {
                           <SIcon size={13} strokeWidth={1.5} />
                         </span>
                         <span className="text-sm leading-relaxed"
-                          style={{ color: 'rgba(212,237,224,0.65)' }}>
+                          style={{ color: 'rgba(212,237,224,0.82)' }}>
                           {w.message}
                         </span>
                       </motion.div>
@@ -1141,13 +1462,13 @@ export default function CraftPage() {
             <div className="flex items-center gap-2.5">
               <div className="w-1 h-4 rounded-full" style={{ background: '#7A8DC4', opacity: 0.45 }} />
               <span className="text-[11px] uppercase tracking-widest"
-                style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.55)' }}>
+                style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.72)' }}>
                 Assembled Prompt
               </span>
             </div>
             <span className="text-xs"
-              style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.45)' }}>
-              {tokenCount} tokens · {assembled.length} characters
+              style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.6)' }}>
+              {tokenCount} tokens · {assembled.length} chars
             </span>
           </div>
 
@@ -1158,7 +1479,7 @@ export default function CraftPage() {
                   let section: BlockType = 'objective'
                   let wasPersona = false
                   return assembled.split('\n').map((line, i) => {
-                    if (!line.trim()) return <div key={i} className="h-2" />
+                    if (!line.trim()) return <div key={i} className="h-3" />
                     if (/^You are/.test(line))           { section = 'persona';    wasPersona = true }
                     else if (/^Context:/.test(line))     { section = 'context';    wasPersona = false }
                     else if (/^Example:/.test(line))     { section = 'example';    wasPersona = false }
@@ -1177,7 +1498,7 @@ export default function CraftPage() {
                 })()}
               </div>
             ) : (
-              <p className="text-sm" style={{ color: 'rgba(141,184,154,0.3)' }}>
+              <p className="text-sm" style={{ color: 'rgba(141,184,154,0.5)' }}>
                 Fill in blocks above to assemble your prompt...
               </p>
             )}
@@ -1198,7 +1519,7 @@ export default function CraftPage() {
               className="text-sm px-4 py-2.5 transition-all disabled:opacity-25"
               style={{
                 fontFamily: 'var(--font-jetbrains-mono)', borderRadius: '2px',
-                color: 'rgba(141,184,154,0.6)', border: '1px solid rgba(45,158,107,0.14)', background: 'transparent',
+                color: 'rgba(141,184,154,0.72)', border: '1px solid rgba(45,158,107,0.2)', background: 'transparent',
               }}>
               Export .txt
             </button>
@@ -1360,7 +1681,7 @@ export default function CraftPage() {
                     let section: BlockType = 'objective'
                     let wasPersona = false
                     return improvedPrompt.split('\n').map((line, i) => {
-                      if (!line.trim()) return <div key={i} className="h-2" />
+                      if (!line.trim()) return <div key={i} className="h-3" />
                       if (/^You are/.test(line))           { section = 'persona';    wasPersona = true }
                       else if (/^Context:/.test(line))     { section = 'context';    wasPersona = false }
                       else if (/^Example:/.test(line))     { section = 'example';    wasPersona = false }
@@ -1407,84 +1728,170 @@ export default function CraftPage() {
             </motion.div>
           )}
         </AnimatePresence>
+        </> }
 
       </div>
 
       {/* ─── History Sidebar ─── */}
-      {/* Mobile backdrop */}
+      {/* ─── History Modal ─── */}
       <AnimatePresence>
         {sidebarOpen && (
           <motion.div
-            key="craft-backdrop"
+            key="craft-history-modal"
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-20 sm:hidden"
-            style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
-            onClick={() => setSidebarOpen(false)}
-          />
-        )}
-      </AnimatePresence>
-      <AnimatePresence>
-        {sidebarOpen && (
-          <motion.div
-            key="craft-sidebar"
-            initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
-            transition={{ type: 'spring', damping: 30, stiffness: 280 }}
-            className="fixed right-0 top-0 bottom-0 z-30 w-full sm:w-80 c-scroll overflow-y-auto"
-            style={{ background: 'rgba(10,18,10,0.97)', borderLeft: '1px solid rgba(45,158,107,0.15)', backdropFilter: 'blur(20px)' }}>
-            <div className="p-5 pt-8">
-              <div className="flex items-center justify-between mb-6">
-                <span className="text-[10px] uppercase tracking-widest"
-                  style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.5)' }}>
-                  Prompt History
-                </span>
+            transition={{ duration: 0.18 }}
+            className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+            style={{ background: 'rgba(4,9,4,0.88)', backdropFilter: 'blur(12px)' }}
+            onClick={e => { if (e.target === e.currentTarget) setSidebarOpen(false) }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96, y: 8 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.96, y: 8 }}
+              transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+              className="relative w-full max-w-2xl max-h-[85vh] flex flex-col rounded-2xl overflow-hidden"
+              style={{
+                background: 'linear-gradient(180deg, #0D1A0D 0%, #080D08 100%)',
+                boxShadow: '0 0 0 1px rgba(45,158,107,0.18), 0 32px 80px rgba(0,0,0,0.7)',
+              }}
+            >
+              {/* Top glow line */}
+              <div className="absolute top-0 left-0 right-0 h-px"
+                style={{ background: 'linear-gradient(90deg, transparent, rgba(93,255,168,0.3), transparent)' }} />
+
+              {/* Header */}
+              <div className="flex-shrink-0 flex items-center justify-between px-6 py-5"
+                style={{ borderBottom: '1px solid rgba(45,158,107,0.1)' }}>
+                <div className="flex items-center gap-3">
+                  <Clock size={13} strokeWidth={1.5} style={{ color: '#2D9E6B', opacity: 0.7 }} />
+                  <div className="w-px h-4" style={{ background: 'rgba(45,158,107,0.2)' }} />
+                  <div>
+                    <h2 className="text-sm font-semibold tracking-tight" style={{ fontFamily: 'var(--font-sora)', color: 'rgba(212,237,224,0.9)' }}>
+                      Prompt Vault
+                    </h2>
+                    <p className="text-[10px] mt-0.5" style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.5)' }}>
+                      {history.length} saved {history.length === 1 ? 'prompt' : 'prompts'}
+                    </p>
+                  </div>
+                </div>
                 <button onClick={() => setSidebarOpen(false)}
-                  className="flex items-center justify-center w-7 h-7 transition-opacity hover:opacity-60"
-                  style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '14px', color: 'rgba(141,184,154,0.5)' }}>
-                  ✕
+                  className="w-7 h-7 rounded-lg flex items-center justify-center transition-all"
+                  style={{ color: 'rgba(141,184,154,0.45)' }}
+                  onMouseEnter={e => { e.currentTarget.style.color = 'rgba(212,237,224,0.8)'; e.currentTarget.style.background = 'rgba(45,158,107,0.08)' }}
+                  onMouseLeave={e => { e.currentTarget.style.color = 'rgba(141,184,154,0.45)'; e.currentTarget.style.background = 'transparent' }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
                 </button>
               </div>
-              {history.length === 0 ? (
-                <p className="text-[11px] leading-relaxed"
-                  style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.35)' }}>
-                  No saved prompts yet.<br /><br />Copy a prompt to save it here.
-                </p>
-              ) : (
-                <div className="flex flex-col">
-                  {history.slice(0, 15).map((entry, i) => (
-                    <motion.button key={entry.id} onClick={() => loadFromHistory(entry)}
-                      className="text-left p-3 transition-all w-full hover:bg-white/[0.02]"
-                      style={{ borderBottom: '1px solid rgba(45,158,107,0.07)' }}
-                      initial={{ opacity: 0, x: 14 }} animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.035 }}>
-                      <p className="text-xs leading-relaxed mb-1.5 line-clamp-2"
-                        style={{ fontFamily: 'var(--font-dm-sans)', color: '#D4EDE0' }}>
-                        {entry.assembled.slice(0, 75)}...
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[9px] px-1.5 py-0.5"
-                          style={{ fontFamily: 'var(--font-jetbrains-mono)', color: '#2D9E6B', border: '1px solid rgba(45,158,107,0.2)', background: 'rgba(45,158,107,0.05)' }}>
-                          {entry.category}
-                        </span>
-                        <span className="text-[9px]"
-                          style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.4)' }}>
-                          {new Date(entry.createdAt).toLocaleDateString()}
-                        </span>
-                        {entry.blocks?.length && (
-                          <span className="text-[9px] ml-auto"
-                            style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.3)' }}>
-                            {entry.blocks.length} blocks
-                          </span>
-                        )}
-                      </div>
-                    </motion.button>
-                  ))}
+
+              {/* List */}
+              <div className="flex-1 overflow-y-auto">
+                {history.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-24 px-8 text-center gap-3">
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center"
+                      style={{ background: 'rgba(45,158,107,0.06)', border: '1px solid rgba(45,158,107,0.12)' }}>
+                      <Clock size={16} strokeWidth={1.5} style={{ color: 'rgba(141,184,154,0.4)' }} />
+                    </div>
+                    <p className="text-sm text-center leading-relaxed" style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.45)' }}>
+                      No saved prompts yet.<br />Copy a prompt to save it here.
+                    </p>
+                  </div>
+                ) : (
+                  <div style={{ borderTop: 'none' }}>
+                    {history.slice(0, 20).map((entry, i) => {
+                      const catColor = CATEGORY_COLOR[entry.category] ?? '#2D9E6B'
+                      const firstLine = entry.assembled.split('\n').find(l => l.trim()) ?? ''
+                      return (
+                        <div
+                          key={entry.id}
+                          className="group relative flex items-start gap-4 px-6 py-4 cursor-pointer transition-all duration-200 hover:bg-white/[0.02]"
+                          style={{
+                            borderBottom: '1px solid rgba(45,158,107,0.06)',
+                            animation: `fadeUp 0.35s ease-out ${i * 0.04}s both`,
+                          }}
+                          onClick={() => { loadFromHistory(entry); setSidebarOpen(false) }}
+                        >
+                          {/* Category dot */}
+                          <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center mt-0.5"
+                            style={{ background: `${catColor}12`, border: `1px solid ${catColor}30` }}>
+                            <div className="w-2 h-2 rounded-full" style={{ background: catColor, opacity: 0.8 }} />
+                          </div>
+
+                          {/* Content */}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm leading-snug truncate pr-2"
+                              style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(212,237,224,0.85)' }}>
+                              {firstLine.slice(0, 120)}{firstLine.length > 120 ? '…' : ''}
+                            </p>
+                            <div className="flex items-center gap-3 mt-1.5 flex-wrap">
+                              <span className="text-[10px]"
+                                style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.5)' }}>
+                                {formatRelativeDate(entry.createdAt)}
+                              </span>
+                              <span className="text-[10px] px-1.5 py-0.5 rounded-[2px]"
+                                style={{
+                                  fontFamily: 'var(--font-jetbrains-mono)',
+                                  color: catColor,
+                                  background: `${catColor}14`,
+                                  border: `1px solid ${catColor}25`,
+                                  letterSpacing: '0.04em',
+                                }}>
+                                {entry.category}
+                              </span>
+                              {entry.blocks?.length > 0 && (
+                                <span className="text-[10px]"
+                                  style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.35)' }}>
+                                  {entry.blocks.length} blocks
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Actions */}
+                          <div className="flex items-center gap-3 opacity-60 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex-shrink-0 mt-0.5">
+                            <span className="text-[11px] underline underline-offset-2"
+                              style={{ fontFamily: 'var(--font-jetbrains-mono)', color: '#2D9E6B', textDecorationColor: 'rgba(45,158,107,0.3)' }}>
+                              Load
+                            </span>
+                            <button
+                              onClick={e => handleDeleteHistory(e, entry.id)}
+                              className="transition-colors"
+                              style={{ color: 'rgba(141,184,154,0.25)' }}
+                              onMouseEnter={e => (e.currentTarget.style.color = 'rgba(196,122,90,0.8)')}
+                              onMouseLeave={e => (e.currentTarget.style.color = 'rgba(141,184,154,0.25)')}
+                              title="Delete">
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                                <polyline points="3 6 5 6 21 6" />
+                                <path d="M19 6l-1 14H6L5 6" />
+                                <path d="M10 11v6M14 11v6" />
+                              </svg>
+                            </button>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Footer */}
+              {history.length > 0 && (
+                <div className="flex-shrink-0 px-6 py-3" style={{ borderTop: '1px solid rgba(45,158,107,0.08)' }}>
+                  <p className="text-[10px]" style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.3)' }}>
+                    Stored locally in your browser · Max 50 entries
+                  </p>
                 </div>
               )}
-            </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* ─── Footer ─── */}
+      <div className="relative z-10 flex justify-center py-6 mt-4">
+        <span className="font-mono text-[10px] tracking-widest" style={{ color: 'rgba(141,184,154,0.2)' }}>
+          © 2026 CrumbCraft
+        </span>
+      </div>
 
       {/* ─── Bottom Dock ─── */}
       <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
@@ -1498,9 +1905,9 @@ export default function CraftPage() {
           }}>
           <button onClick={() => builderRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-colors"
-            style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '11px', color: 'rgba(141,184,154,0.55)' }}
+            style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '11px', color: 'rgba(141,184,154,0.72)' }}
             onMouseEnter={e => (e.currentTarget.style.color = '#5DFFA8')}
-            onMouseLeave={e => (e.currentTarget.style.color = 'rgba(141,184,154,0.55)')}>
+            onMouseLeave={e => (e.currentTarget.style.color = 'rgba(141,184,154,0.72)')}>
             <PenSquare size={14} strokeWidth={1.5} />
             <span className="hidden sm:inline">Builder</span>
           </button>
@@ -1509,9 +1916,9 @@ export default function CraftPage() {
 
           <button onClick={handleImprove} disabled={!hasContent || isImproving}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-colors disabled:opacity-30"
-            style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '11px', color: isImproving ? '#5DFFA8' : 'rgba(141,184,154,0.55)' }}
+            style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '11px', color: isImproving ? '#5DFFA8' : 'rgba(141,184,154,0.72)' }}
             onMouseEnter={e => { if (!isImproving) e.currentTarget.style.color = '#5DFFA8' }}
-            onMouseLeave={e => { if (!isImproving) e.currentTarget.style.color = 'rgba(141,184,154,0.55)' }}>
+            onMouseLeave={e => { if (!isImproving) e.currentTarget.style.color = 'rgba(141,184,154,0.72)' }}>
             <Wand2 size={14} strokeWidth={1.5} />
             <span className="hidden sm:inline">{isImproving ? 'Improving…' : 'Improve'}</span>
           </button>
@@ -1520,9 +1927,9 @@ export default function CraftPage() {
 
           <button onClick={() => setSidebarOpen(v => !v)}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-colors"
-            style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '11px', color: sidebarOpen ? '#5DFFA8' : 'rgba(141,184,154,0.55)' }}
+            style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '11px', color: sidebarOpen ? '#5DFFA8' : 'rgba(141,184,154,0.72)' }}
             onMouseEnter={e => (e.currentTarget.style.color = '#5DFFA8')}
-            onMouseLeave={e => (e.currentTarget.style.color = sidebarOpen ? '#5DFFA8' : 'rgba(141,184,154,0.55)')}>
+            onMouseLeave={e => (e.currentTarget.style.color = sidebarOpen ? '#5DFFA8' : 'rgba(141,184,154,0.72)')}>
             <Clock size={14} strokeWidth={1.5} />
             <span className="hidden sm:inline">History</span>
           </button>

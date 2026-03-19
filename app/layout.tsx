@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   title: "CrumbCraft",
   description: "AI Memory Compression & Prompt Crafting",
   icons: {
-    icon: '/Crumb.png',
+    icon: '/leafcrumbcraft.png',  
   },
 };
 
