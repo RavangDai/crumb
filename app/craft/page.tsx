@@ -601,7 +601,10 @@ function BlockCard({ block, onChange, onDelete }: {
                         ? { color: '#080D08', background: '#A8D4BA', border: '1px solid #A8D4BA' }
                         : { color: 'rgba(168,212,186,0.8)', background: 'rgba(168,212,186,0.05)', border: '1px solid rgba(168,212,186,0.22)' }
                       ),
-                    }}>
+                    }}
+                    onMouseEnter={e => { if (block.techniqueId !== id) { e.currentTarget.style.background = 'rgba(168,212,186,0.12)'; e.currentTarget.style.borderColor = 'rgba(168,212,186,0.38)'; e.currentTarget.style.color = 'rgba(168,212,186,1)' } }}
+                    onMouseLeave={e => { if (block.techniqueId !== id) { e.currentTarget.style.background = 'rgba(168,212,186,0.05)'; e.currentTarget.style.borderColor = 'rgba(168,212,186,0.22)'; e.currentTarget.style.color = 'rgba(168,212,186,0.8)' } }}
+                  >
                     {tech.label}
                   </button>
                 ))}
@@ -650,7 +653,10 @@ function BlockCard({ block, onChange, onDelete }: {
                         ? { color: '#080D08', background: '#7A8DC4', border: '1px solid #7A8DC4' }
                         : { color: 'rgba(122,141,196,0.82)', background: 'rgba(122,141,196,0.06)', border: '1px solid rgba(122,141,196,0.22)' }
                       ),
-                    }}>
+                    }}
+                    onMouseEnter={e => { if (block.content !== fmt) { e.currentTarget.style.background = 'rgba(122,141,196,0.13)'; e.currentTarget.style.borderColor = 'rgba(122,141,196,0.38)'; e.currentTarget.style.color = 'rgba(122,141,196,1)' } }}
+                    onMouseLeave={e => { if (block.content !== fmt) { e.currentTarget.style.background = 'rgba(122,141,196,0.06)'; e.currentTarget.style.borderColor = 'rgba(122,141,196,0.22)'; e.currentTarget.style.color = 'rgba(122,141,196,0.82)' } }}
+                  >
                     {fmt}
                   </button>
                 ))}
@@ -1034,7 +1040,10 @@ export default function CraftPage() {
                     ? { color: '#080D08', background: '#2D9E6B', border: '1px solid #2D9E6B' }
                     : { color: 'rgba(141,184,154,0.65)', background: 'rgba(45,158,107,0.04)', border: '1px solid rgba(45,158,107,0.14)' }
                   ),
-                }}>
+                }}
+                onMouseEnter={e => { if (activeCategory !== cat.id) { const el = e.currentTarget; el.style.color = 'rgba(141,184,154,0.95)'; el.style.background = 'rgba(45,158,107,0.09)'; el.style.borderColor = 'rgba(45,158,107,0.28)' } }}
+                onMouseLeave={e => { if (activeCategory !== cat.id) { const el = e.currentTarget; el.style.color = 'rgba(141,184,154,0.65)'; el.style.background = 'rgba(45,158,107,0.04)'; el.style.borderColor = 'rgba(45,158,107,0.14)' } }}
+              >
                 <CatIcon size={12} strokeWidth={1.5} />
                 <span>{cat.label}</span>
               </button>
@@ -1053,8 +1062,46 @@ export default function CraftPage() {
             className="flex flex-col gap-6"
           >
             {/* Input area */}
-            <div className="p-7 relative overflow-hidden"
-              style={{ background: 'rgba(13,21,13,0.55)', border: '1px solid rgba(45,158,107,0.12)' }}>
+            <motion.div className="p-7 relative overflow-hidden"
+              style={{ background: 'rgba(13,21,13,0.55)', border: '1px solid rgba(45,158,107,0.12)' }}
+              animate={aiLoading ? {
+                boxShadow: [
+                  '0 0 0px rgba(93,255,168,0)',
+                  '0 0 32px rgba(93,255,168,0.08), inset 0 0 50px rgba(93,255,168,0.025)',
+                  '0 0 0px rgba(93,255,168,0)',
+                ],
+              } : { boxShadow: '0 0 0px rgba(93,255,168,0)' }}
+              transition={aiLoading ? { duration: 2.4, repeat: Infinity, ease: 'easeInOut' } : { duration: 0.6 }}
+            >
+              {/* AI loading overlay: particles + shimmer */}
+              <AnimatePresence>
+                {aiLoading && (
+                  <motion.div
+                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                    transition={{ duration: 0.35 }}
+                    style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden', zIndex: 5 }}
+                  >
+                    {[0, 1, 2, 3].map(i => (
+                      <motion.div key={i}
+                        style={{
+                          position: 'absolute', width: 3, height: 3, borderRadius: '50%',
+                          background: '#5DFFA8', boxShadow: '0 0 7px rgba(93,255,168,0.9)',
+                          left: `${15 + i * 23}%`, bottom: 8,
+                        }}
+                        animate={{ y: [0, -90], opacity: [0, 0.75, 0] }}
+                        transition={{ duration: 2.2, delay: i * 0.55, repeat: Infinity, ease: 'easeOut' }}
+                      />
+                    ))}
+                    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 1, overflow: 'hidden' }}>
+                      <motion.div
+                        style={{ height: '100%', width: '38%', background: 'linear-gradient(90deg, transparent, rgba(93,255,168,0.75), transparent)' }}
+                        animate={{ x: ['-100%', '380%'] }}
+                        transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
+                      />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
               <div className="flex items-center gap-2.5 mb-5">
                 <div className="w-1 h-4 rounded-full" style={{ background: '#5DFFA8', opacity: 0.45 }} />
                 <span className="text-[11px] uppercase tracking-widest"
@@ -1121,6 +1168,15 @@ export default function CraftPage() {
                           {IMPROVE_STAGES[aiStage]}
                         </motion.span>
                       </AnimatePresence>
+                      <div className="flex gap-[3px] ml-1.5">
+                        {[0, 1, 2].map(i => (
+                          <motion.div key={i}
+                            style={{ width: 3, height: 3, borderRadius: '50%', background: '#5DFFA8', flexShrink: 0 }}
+                            animate={{ opacity: [0.25, 1, 0.25], scale: [0.7, 1.2, 0.7] }}
+                            transition={{ duration: 1.1, delay: i * 0.2, repeat: Infinity, ease: 'easeInOut' }}
+                          />
+                        ))}
+                      </div>
                     </div>
                   ) : (
                     <span className="relative z-10 flex items-center gap-2"><Sparkles size={13} strokeWidth={1.5} /> Generate Prompt</span>
@@ -1133,7 +1189,7 @@ export default function CraftPage() {
                   <p className="text-sm" style={{ color: 'rgba(196,122,90,0.8)' }}>{aiError}</p>
                 </div>
               )}
-            </div>
+            </motion.div>
 
             {/* Generated result */}
             <AnimatePresence>
@@ -1195,7 +1251,10 @@ export default function CraftPage() {
                       color: aiCopied ? '#5DFFA8' : '#D4EDE0',
                       background: aiCopied ? 'rgba(93,255,168,0.07)' : 'rgba(93,255,168,0.08)',
                       border: `1px solid ${aiCopied ? 'rgba(93,255,168,0.35)' : 'rgba(93,255,168,0.2)'}`,
-                    }}>
+                    }}
+                    onMouseEnter={e => { if (!aiCopied) { e.currentTarget.style.background = 'rgba(93,255,168,0.14)'; e.currentTarget.style.borderColor = 'rgba(93,255,168,0.32)' } }}
+                    onMouseLeave={e => { if (!aiCopied) { e.currentTarget.style.background = 'rgba(93,255,168,0.08)'; e.currentTarget.style.borderColor = 'rgba(93,255,168,0.2)' } }}
+                  >
                     {aiCopied ? '✓ Copied' : 'Copy Prompt'}
                   </button>
                   <button
@@ -1210,7 +1269,10 @@ export default function CraftPage() {
                     style={{
                       fontFamily: 'var(--font-jetbrains-mono)', borderRadius: '2px',
                       color: 'rgba(141,184,154,0.6)', border: '1px solid rgba(45,158,107,0.14)', background: 'transparent',
-                    }}>
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(45,158,107,0.06)'; e.currentTarget.style.color = 'rgba(141,184,154,0.9)'; e.currentTarget.style.borderColor = 'rgba(45,158,107,0.25)' }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(141,184,154,0.6)'; e.currentTarget.style.borderColor = 'rgba(45,158,107,0.14)' }}
+                  >
                     Export .txt
                   </button>
                   <button
@@ -1280,7 +1342,10 @@ export default function CraftPage() {
                   color: showAddMenu ? '#2D9E6B' : 'rgba(141,184,154,0.72)',
                   border: `1px solid ${showAddMenu ? 'rgba(45,158,107,0.3)' : 'rgba(45,158,107,0.22)'}`,
                   background: showAddMenu ? 'rgba(45,158,107,0.06)' : 'transparent',
-                }}>
+                }}
+                onMouseEnter={e => { if (!showAddMenu) { e.currentTarget.style.color = '#2D9E6B'; e.currentTarget.style.background = 'rgba(45,158,107,0.06)'; e.currentTarget.style.borderColor = 'rgba(45,158,107,0.32)' } }}
+                onMouseLeave={e => { if (!showAddMenu) { e.currentTarget.style.color = 'rgba(141,184,154,0.72)'; e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'rgba(45,158,107,0.22)' } }}
+              >
                 + Add Block <span style={{ opacity: 0.4, fontSize: '9px' }}>▼</span>
               </button>
               )}
@@ -1512,7 +1577,10 @@ export default function CraftPage() {
                 color: copied ? '#5DFFA8' : '#D4EDE0',
                 background: copied ? 'rgba(93,255,168,0.07)' : 'rgba(45,158,107,0.1)',
                 border: `1px solid ${copied ? 'rgba(93,255,168,0.28)' : 'rgba(45,158,107,0.2)'}`,
-              }}>
+              }}
+              onMouseEnter={e => { if (!copied && hasContent) { e.currentTarget.style.background = 'rgba(45,158,107,0.18)'; e.currentTarget.style.borderColor = 'rgba(45,158,107,0.35)' } }}
+              onMouseLeave={e => { if (!copied) { e.currentTarget.style.background = 'rgba(45,158,107,0.1)'; e.currentTarget.style.borderColor = 'rgba(45,158,107,0.2)' } }}
+            >
               {copied ? '✓ Copied' : 'Copy Prompt'}
             </button>
             <button onClick={handleExport} disabled={!hasContent}
@@ -1520,7 +1588,10 @@ export default function CraftPage() {
               style={{
                 fontFamily: 'var(--font-jetbrains-mono)', borderRadius: '2px',
                 color: 'rgba(141,184,154,0.72)', border: '1px solid rgba(45,158,107,0.2)', background: 'transparent',
-              }}>
+              }}
+              onMouseEnter={e => { if (hasContent) { e.currentTarget.style.background = 'rgba(45,158,107,0.06)'; e.currentTarget.style.color = 'rgba(141,184,154,0.95)'; e.currentTarget.style.borderColor = 'rgba(45,158,107,0.3)' } }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(141,184,154,0.72)'; e.currentTarget.style.borderColor = 'rgba(45,158,107,0.2)' }}
+            >
               Export .txt
             </button>
             <button
@@ -1713,7 +1784,10 @@ export default function CraftPage() {
                     color: copiedImproved ? '#5DFFA8' : '#080D08',
                     background: copiedImproved ? 'rgba(93,255,168,0.15)' : '#5DFFA8',
                     border: `1px solid ${copiedImproved ? 'rgba(93,255,168,0.4)' : '#5DFFA8'}`,
-                  }}>
+                  }}
+                  onMouseEnter={e => { if (!copiedImproved) { e.currentTarget.style.background = 'rgba(93,255,168,0.88)'; e.currentTarget.style.boxShadow = '0 0 16px rgba(93,255,168,0.25)' } }}
+                  onMouseLeave={e => { if (!copiedImproved) { e.currentTarget.style.background = '#5DFFA8'; e.currentTarget.style.boxShadow = 'none' } }}
+                >
                   {copiedImproved ? '✓ Copied' : 'Copy Improved'}
                 </button>
                 <button onClick={handleImprove} disabled={isImproving}
@@ -1721,7 +1795,10 @@ export default function CraftPage() {
                   style={{
                     fontFamily: 'var(--font-jetbrains-mono)', borderRadius: '2px',
                     color: 'rgba(93,255,168,0.55)', border: '1px solid rgba(93,255,168,0.18)', background: 'transparent',
-                  }}>
+                  }}
+                  onMouseEnter={e => { if (!isImproving) { e.currentTarget.style.background = 'rgba(93,255,168,0.06)'; e.currentTarget.style.color = 'rgba(93,255,168,0.85)'; e.currentTarget.style.borderColor = 'rgba(93,255,168,0.3)' } }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(93,255,168,0.55)'; e.currentTarget.style.borderColor = 'rgba(93,255,168,0.18)' }}
+                >
                   Regenerate
                 </button>
               </div>
@@ -1904,10 +1981,10 @@ export default function CraftPage() {
             background: 'rgba(8,13,8,0.45)', borderRadius: '20px', border: '1px solid rgba(45,158,107,0.1)',
           }}>
           <button onClick={() => builderRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-colors"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all"
             style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '11px', color: 'rgba(141,184,154,0.72)' }}
-            onMouseEnter={e => (e.currentTarget.style.color = '#5DFFA8')}
-            onMouseLeave={e => (e.currentTarget.style.color = 'rgba(141,184,154,0.72)')}>
+            onMouseEnter={e => { e.currentTarget.style.color = '#5DFFA8'; e.currentTarget.style.background = 'rgba(45,158,107,0.1)' }}
+            onMouseLeave={e => { e.currentTarget.style.color = 'rgba(141,184,154,0.72)'; e.currentTarget.style.background = 'transparent' }}>
             <PenSquare size={14} strokeWidth={1.5} />
             <span className="hidden sm:inline">Builder</span>
           </button>
@@ -1915,10 +1992,10 @@ export default function CraftPage() {
           <div className="w-px h-5" style={{ background: 'rgba(45,158,107,0.15)' }} />
 
           <button onClick={handleImprove} disabled={!hasContent || isImproving}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-colors disabled:opacity-30"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all disabled:opacity-30"
             style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '11px', color: isImproving ? '#5DFFA8' : 'rgba(141,184,154,0.72)' }}
-            onMouseEnter={e => { if (!isImproving) e.currentTarget.style.color = '#5DFFA8' }}
-            onMouseLeave={e => { if (!isImproving) e.currentTarget.style.color = 'rgba(141,184,154,0.72)' }}>
+            onMouseEnter={e => { if (!isImproving) { e.currentTarget.style.color = '#5DFFA8'; e.currentTarget.style.background = 'rgba(45,158,107,0.1)' } }}
+            onMouseLeave={e => { if (!isImproving) { e.currentTarget.style.color = 'rgba(141,184,154,0.72)'; e.currentTarget.style.background = 'transparent' } }}>
             <Wand2 size={14} strokeWidth={1.5} />
             <span className="hidden sm:inline">{isImproving ? 'Improving…' : 'Improve'}</span>
           </button>
@@ -1926,10 +2003,10 @@ export default function CraftPage() {
           <div className="w-px h-5" style={{ background: 'rgba(45,158,107,0.15)' }} />
 
           <button onClick={() => setSidebarOpen(v => !v)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-colors"
-            style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '11px', color: sidebarOpen ? '#5DFFA8' : 'rgba(141,184,154,0.72)' }}
-            onMouseEnter={e => (e.currentTarget.style.color = '#5DFFA8')}
-            onMouseLeave={e => (e.currentTarget.style.color = sidebarOpen ? '#5DFFA8' : 'rgba(141,184,154,0.72)')}>
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all"
+            style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '11px', color: sidebarOpen ? '#5DFFA8' : 'rgba(141,184,154,0.72)', background: sidebarOpen ? 'rgba(45,158,107,0.1)' : 'transparent' }}
+            onMouseEnter={e => { e.currentTarget.style.color = '#5DFFA8'; e.currentTarget.style.background = 'rgba(45,158,107,0.1)' }}
+            onMouseLeave={e => { e.currentTarget.style.color = sidebarOpen ? '#5DFFA8' : 'rgba(141,184,154,0.72)'; e.currentTarget.style.background = sidebarOpen ? 'rgba(45,158,107,0.1)' : 'transparent' }}>
             <Clock size={14} strokeWidth={1.5} />
             <span className="hidden sm:inline">History</span>
           </button>
