@@ -685,6 +685,117 @@ function BlockCard({ block, onChange, onDelete }: {
 
 const IMPROVE_STAGES = ['Reading prompt…', 'Analysing structure…', 'Engineering…', 'Refining…']
 
+// ─── Shared Loading Overlay ──────────────────────────────────────────────────
+
+function CraftLoadingOverlay() {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.35 }}
+      style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden', zIndex: 10 }}
+    >
+      {/* Dim veil */}
+      <div style={{ position: 'absolute', inset: 0, background: 'rgba(2,8,2,0.25)' }} />
+
+      {/* Scan sweep */}
+      <motion.div
+        animate={{ y: ['-60px', '900px'] }}
+        transition={{ duration: 3.2, repeat: Infinity, ease: 'linear' }}
+        style={{ position: 'absolute', left: 0, right: 0, top: 0 }}
+      >
+        <div style={{ height: 40, background: 'linear-gradient(to bottom, transparent, rgba(93,255,168,0.05))' }} />
+        <div style={{
+          height: 1.5,
+          background: 'linear-gradient(90deg, transparent 0%, rgba(93,255,168,0.4) 15%, rgba(93,255,168,0.85) 50%, rgba(93,255,168,0.4) 85%, transparent 100%)',
+          boxShadow: '0 0 14px rgba(93,255,168,0.5), 0 0 4px rgba(93,255,168,0.8)',
+        }} />
+        <div style={{ height: 14, background: 'linear-gradient(to bottom, rgba(93,255,168,0.03), transparent)' }} />
+      </motion.div>
+
+      {/* Corner brackets */}
+      {[
+        { top: 10, left: 10, borderTop: '1px solid rgba(93,255,168,0.35)', borderLeft: '1px solid rgba(93,255,168,0.35)' },
+        { top: 10, right: 10, borderTop: '1px solid rgba(93,255,168,0.35)', borderRight: '1px solid rgba(93,255,168,0.35)' },
+        { bottom: 10, left: 10, borderBottom: '1px solid rgba(93,255,168,0.35)', borderLeft: '1px solid rgba(93,255,168,0.35)' },
+        { bottom: 10, right: 10, borderBottom: '1px solid rgba(93,255,168,0.35)', borderRight: '1px solid rgba(93,255,168,0.35)' },
+      ].map((s, i) => (
+        <motion.div key={i}
+          initial={{ opacity: 0, scale: 0.6 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: i * 0.06, duration: 0.3, ease: 'easeOut' }}
+          style={{ position: 'absolute', width: 12, height: 12, ...s }}
+        />
+      ))}
+
+      {/* Bottom shimmer */}
+      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 1, overflow: 'hidden' }}>
+        <motion.div
+          style={{ height: '100%', width: '35%', background: 'linear-gradient(90deg, transparent, rgba(93,255,168,0.7), transparent)' }}
+          animate={{ x: ['-100%', '400%'] }}
+          transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+        />
+      </div>
+    </motion.div>
+  )
+}
+
+// ─── Shared Loading Button Content ───────────────────────────────────────────
+
+function LoadingButtonContent({ stage }: { stage: number }) {
+  return (
+    <div className="flex items-center gap-2.5 relative z-10">
+      {/* Orbit spinner */}
+      <div style={{ width: 14, height: 14, position: 'relative', flexShrink: 0 }}>
+        <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: '1px solid rgba(93,255,168,0.18)' }} />
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+          style={{ position: 'absolute', inset: 0 }}
+        >
+          <div style={{
+            position: 'absolute', top: -1.5, left: '50%',
+            width: 3, height: 3, borderRadius: '50%',
+            background: '#5DFFA8', transform: 'translateX(-50%)',
+            boxShadow: '0 0 5px #5DFFA8',
+          }} />
+        </motion.div>
+        <motion.div
+          animate={{ scale: [0.5, 1, 0.5], opacity: [0.4, 1, 0.4] }}
+          transition={{ duration: 1.1, repeat: Infinity, ease: 'easeInOut' }}
+          style={{
+            position: 'absolute', top: '50%', left: '50%',
+            width: 3.5, height: 3.5, borderRadius: '50%',
+            background: '#5DFFA8', transform: 'translate(-50%, -50%)',
+          }}
+        />
+      </div>
+      {/* Cycling text */}
+      <AnimatePresence mode="wait">
+        <motion.span key={stage}
+          initial={{ opacity: 0, y: 4 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -4 }}
+          transition={{ duration: 0.2 }}
+        >
+          {IMPROVE_STAGES[stage]}
+        </motion.span>
+      </AnimatePresence>
+      {/* Thinking dots */}
+      <div className="flex gap-[3px] ml-1">
+        {[0, 1, 2].map(i => (
+          <motion.div key={i}
+            style={{ width: 2.5, height: 2.5, borderRadius: '50%', background: '#5DFFA8', flexShrink: 0 }}
+            animate={{ opacity: [0.2, 1, 0.2], scale: [0.7, 1.2, 0.7] }}
+            transition={{ duration: 1.1, delay: i * 0.2, repeat: Infinity, ease: 'easeInOut' }}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
+
 const AXIS_TOOLTIPS = [
   'How free of vague or ambiguous language your prompt is',
   'How precise and concrete your instructions and targets are',
@@ -736,12 +847,18 @@ export default function CraftPage() {
   const [vaultHasEntries, setVaultHasEntries] = useState(false)
   useEffect(() => { setVaultHasEntries(getVault().length > 0) }, [])
 
-  // close history modal on Escape
+  // close history modal on Escape + lock scroll
   useEffect(() => {
     if (!sidebarOpen) return
+    document.documentElement.style.setProperty('overflow', 'hidden', 'important')
+    document.body.style.setProperty('overflow', 'hidden', 'important')
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') setSidebarOpen(false) }
     window.addEventListener('keydown', handler)
-    return () => window.removeEventListener('keydown', handler)
+    return () => {
+      document.documentElement.style.removeProperty('overflow')
+      document.body.style.removeProperty('overflow')
+      window.removeEventListener('keydown', handler)
+    }
   }, [sidebarOpen])
 
   // close add-menu on outside click
@@ -897,6 +1014,7 @@ export default function CraftPage() {
   const sevColor = { error: '#C47A5A', warning: '#C4A45A', tip: '#5DFFA8' }
 
   return (
+    <>
     <motion.main
       className="min-h-screen pb-28"
       style={{ background: '#080D08', color: '#D4EDE0', fontFamily: 'var(--font-dm-sans)' }}
@@ -905,14 +1023,18 @@ export default function CraftPage() {
       transition={{ type: 'spring', damping: 30, stiffness: 100 }}
     >
       <style>{`
-        .c-scroll { scrollbar-color: rgba(45,158,107,0.22) transparent; scrollbar-width: thin; }
-        .c-scroll::-webkit-scrollbar { width: 3px; }
-        .c-scroll::-webkit-scrollbar-track { background: transparent; }
-        .c-scroll::-webkit-scrollbar-thumb { background: rgba(45,158,107,0.22); border-radius: 2px; }
-        .c-scroll::-webkit-scrollbar-thumb:hover { background: rgba(93,255,168,0.35); }
+        html, body,
+        html *, body * {
+          scrollbar-width: none !important;
+          -ms-overflow-style: none !important;
+        }
+        html::-webkit-scrollbar, body::-webkit-scrollbar,
+        *::-webkit-scrollbar {
+          display: none !important;
+          width: 0 !important;
+          height: 0 !important;
+        }
         textarea::placeholder, input::placeholder { color: rgba(141,184,154,0.5); }
-        .hide-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
-        .hide-scrollbar::-webkit-scrollbar { display: none; }
         @media (min-width: 1024px) {
           .craft-split-left { scroll-padding-bottom: 56px; }
         }
@@ -1022,7 +1144,7 @@ export default function CraftPage() {
         </motion.div>
 
         {/* ─── Template Strip ─── */}
-        {craftMode === 'manual' && <section className="sticky top-[58px] z-40 mb-8 -mx-4 sm:-mx-8 md:-mx-16 px-4 sm:px-8 md:px-16 overflow-x-auto hide-scrollbar py-2.5"
+        {craftMode === 'manual' && <section className="sticky top-[58px] z-40 mb-8 -mx-4 sm:-mx-8 md:-mx-16 px-4 sm:px-8 md:px-16 overflow-x-auto py-2.5"
           style={{ background: 'rgba(8,13,8,0.92)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(45,158,107,0.07)' }}>
           <div className="flex items-center gap-2 pb-0.5" style={{ minWidth: 'max-content' }}>
             <span className="flex-shrink-0 text-[11px] mr-3"
@@ -1067,41 +1189,13 @@ export default function CraftPage() {
               animate={aiLoading ? {
                 boxShadow: [
                   '0 0 0px rgba(93,255,168,0)',
-                  '0 0 32px rgba(93,255,168,0.08), inset 0 0 50px rgba(93,255,168,0.025)',
+                  '0 0 28px rgba(93,255,168,0.07), inset 0 0 40px rgba(93,255,168,0.02)',
                   '0 0 0px rgba(93,255,168,0)',
                 ],
               } : { boxShadow: '0 0 0px rgba(93,255,168,0)' }}
               transition={aiLoading ? { duration: 2.4, repeat: Infinity, ease: 'easeInOut' } : { duration: 0.6 }}
             >
-              {/* AI loading overlay: particles + shimmer */}
-              <AnimatePresence>
-                {aiLoading && (
-                  <motion.div
-                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                    transition={{ duration: 0.35 }}
-                    style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden', zIndex: 5 }}
-                  >
-                    {[0, 1, 2, 3].map(i => (
-                      <motion.div key={i}
-                        style={{
-                          position: 'absolute', width: 3, height: 3, borderRadius: '50%',
-                          background: '#5DFFA8', boxShadow: '0 0 7px rgba(93,255,168,0.9)',
-                          left: `${15 + i * 23}%`, bottom: 8,
-                        }}
-                        animate={{ y: [0, -90], opacity: [0, 0.75, 0] }}
-                        transition={{ duration: 2.2, delay: i * 0.55, repeat: Infinity, ease: 'easeOut' }}
-                      />
-                    ))}
-                    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 1, overflow: 'hidden' }}>
-                      <motion.div
-                        style={{ height: '100%', width: '38%', background: 'linear-gradient(90deg, transparent, rgba(93,255,168,0.75), transparent)' }}
-                        animate={{ x: ['-100%', '380%'] }}
-                        transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
-                      />
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              <AnimatePresence>{aiLoading && <CraftLoadingOverlay />}</AnimatePresence>
               <div className="flex items-center gap-2.5 mb-5">
                 <div className="w-1 h-4 rounded-full" style={{ background: '#5DFFA8', opacity: 0.45 }} />
                 <span className="text-[11px] uppercase tracking-widest"
@@ -1114,7 +1208,7 @@ export default function CraftPage() {
                 </span>
               </div>
               <textarea
-                className="w-full bg-transparent text-sm leading-relaxed resize-none focus:outline-none c-scroll"
+                className="w-full bg-transparent text-sm leading-relaxed resize-none focus:outline-none"
                 style={{
                   fontFamily: 'var(--font-dm-sans)', color: '#D4EDE0',
                   minHeight: '140px',
@@ -1150,34 +1244,13 @@ export default function CraftPage() {
                 >
                   {aiLoading && (
                     <motion.div
-                      animate={{ opacity: [0, 0.2, 0] }}
-                      transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-                      style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'radial-gradient(ellipse at center, rgba(93,255,168,0.35) 0%, transparent 70%)' }}
+                      animate={{ opacity: [0, 0.15, 0] }}
+                      transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
+                      style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'radial-gradient(ellipse at center, rgba(93,255,168,0.3) 0%, transparent 70%)' }}
                     />
                   )}
                   {aiLoading ? (
-                    <div className="flex items-center gap-2.5 relative z-10">
-                      <div style={{ width: 14, height: 14, position: 'relative', flexShrink: 0 }}>
-                        <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: '1px solid rgba(93,255,168,0.2)' }} />
-                        <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: 'linear' }} style={{ position: 'absolute', inset: 0 }}>
-                          <div style={{ position: 'absolute', top: -1.5, left: '50%', width: 3, height: 3, borderRadius: '50%', background: '#5DFFA8', transform: 'translateX(-50%)', boxShadow: '0 0 5px #5DFFA8' }} />
-                        </motion.div>
-                      </div>
-                      <AnimatePresence mode="wait">
-                        <motion.span key={aiStage} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.2 }}>
-                          {IMPROVE_STAGES[aiStage]}
-                        </motion.span>
-                      </AnimatePresence>
-                      <div className="flex gap-[3px] ml-1.5">
-                        {[0, 1, 2].map(i => (
-                          <motion.div key={i}
-                            style={{ width: 3, height: 3, borderRadius: '50%', background: '#5DFFA8', flexShrink: 0 }}
-                            animate={{ opacity: [0.25, 1, 0.25], scale: [0.7, 1.2, 0.7] }}
-                            transition={{ duration: 1.1, delay: i * 0.2, repeat: Infinity, ease: 'easeInOut' }}
-                          />
-                        ))}
-                      </div>
-                    </div>
+                    <LoadingButtonContent stage={aiStage} />
                   ) : (
                     <span className="relative z-10 flex items-center gap-2"><Sparkles size={13} strokeWidth={1.5} /> Generate Prompt</span>
                   )}
@@ -1472,57 +1545,14 @@ export default function CraftPage() {
           style={{ background: 'rgba(13,21,13,0.55)', border: '1px solid rgba(45,158,107,0.1)', position: 'relative', overflow: 'hidden' }}
           animate={isImproving ? {
             boxShadow: [
-              '0 0 0px rgba(93,255,168,0), inset 0 0 0px rgba(93,255,168,0)',
-              '0 0 30px rgba(93,255,168,0.07), inset 0 0 50px rgba(93,255,168,0.02)',
-              '0 0 0px rgba(93,255,168,0), inset 0 0 0px rgba(93,255,168,0)',
+              '0 0 0px rgba(93,255,168,0)',
+              '0 0 28px rgba(93,255,168,0.07), inset 0 0 40px rgba(93,255,168,0.02)',
+              '0 0 0px rgba(93,255,168,0)',
             ],
           } : { boxShadow: '0 0 0px rgba(93,255,168,0)' }}
-          transition={isImproving ? { duration: 2.8, repeat: Infinity, ease: 'easeInOut' } : { duration: 0.6 }}
+          transition={isImproving ? { duration: 2.4, repeat: Infinity, ease: 'easeInOut' } : { duration: 0.6 }}
         >
-          {/* ── AI scan overlay ── */}
-          <AnimatePresence>
-            {isImproving && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.4 }}
-                style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden', zIndex: 10 }}
-              >
-                {/* Dim veil */}
-                <div style={{ position: 'absolute', inset: 0, background: 'rgba(2,8,2,0.32)' }} />
-                {/* Scan sweep unit */}
-                <motion.div
-                  animate={{ y: ['-60px', '900px'] }}
-                  transition={{ duration: 3.4, repeat: Infinity, ease: 'linear' }}
-                  style={{ position: 'absolute', left: 0, right: 0, top: 0 }}
-                >
-                  <div style={{ height: 48, background: 'linear-gradient(to bottom, transparent, rgba(93,255,168,0.06))' }} />
-                  <div style={{
-                    height: 2,
-                    background: 'linear-gradient(90deg, transparent 0%, rgba(93,255,168,0.45) 12%, rgba(93,255,168,0.9) 50%, rgba(93,255,168,0.45) 88%, transparent 100%)',
-                    boxShadow: '0 0 18px rgba(93,255,168,0.65), 0 0 6px rgba(93,255,168,1)',
-                  }} />
-                  <div style={{ height: 18, background: 'linear-gradient(to bottom, rgba(93,255,168,0.04), transparent)' }} />
-                </motion.div>
-                {/* Corner brackets */}
-                {[
-                  { top: 12, left: 12, borderTop: '1px solid rgba(93,255,168,0.4)', borderLeft: '1px solid rgba(93,255,168,0.4)' },
-                  { top: 12, right: 12, borderTop: '1px solid rgba(93,255,168,0.4)', borderRight: '1px solid rgba(93,255,168,0.4)' },
-                  { bottom: 12, left: 12, borderBottom: '1px solid rgba(93,255,168,0.4)', borderLeft: '1px solid rgba(93,255,168,0.4)' },
-                  { bottom: 12, right: 12, borderBottom: '1px solid rgba(93,255,168,0.4)', borderRight: '1px solid rgba(93,255,168,0.4)' },
-                ].map((s, i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, scale: 0.7 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: i * 0.06, duration: 0.3, ease: 'easeOut' }}
-                    style={{ position: 'absolute', width: 14, height: 14, ...s }}
-                  />
-                ))}
-              </motion.div>
-            )}
-          </AnimatePresence>
+          <AnimatePresence>{isImproving && <CraftLoadingOverlay />}</AnimatePresence>
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2.5">
               <div className="w-1 h-4 rounded-full" style={{ background: '#7A8DC4', opacity: 0.45 }} />
@@ -1608,61 +1638,18 @@ export default function CraftPage() {
                 cursor: isImproving ? 'default' : undefined,
               }}
             >
-              {/* Pulsing radial glow inside button while loading */}
               {isImproving && (
                 <motion.div
-                  animate={{ opacity: [0, 0.18, 0] }}
+                  animate={{ opacity: [0, 0.15, 0] }}
                   transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
                   style={{
                     position: 'absolute', inset: 0, pointerEvents: 'none',
-                    background: 'radial-gradient(ellipse at center, rgba(93,255,168,0.35) 0%, transparent 70%)',
+                    background: 'radial-gradient(ellipse at center, rgba(93,255,168,0.3) 0%, transparent 70%)',
                   }}
                 />
               )}
-
               {isImproving ? (
-                <div className="flex items-center gap-2.5 relative z-10">
-                  {/* Orbit animation */}
-                  <div style={{ width: 15, height: 15, position: 'relative', flexShrink: 0 }}>
-                    <div style={{
-                      position: 'absolute', inset: 0, borderRadius: '50%',
-                      border: '1px solid rgba(93,255,168,0.18)',
-                    }} />
-                    <motion.div
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 2.2, repeat: Infinity, ease: 'linear' }}
-                      style={{ position: 'absolute', inset: 0 }}
-                    >
-                      <div style={{
-                        position: 'absolute', top: -1.5, left: '50%',
-                        width: 3, height: 3, borderRadius: '50%',
-                        background: '#5DFFA8', transform: 'translateX(-50%)',
-                        boxShadow: '0 0 5px #5DFFA8',
-                      }} />
-                    </motion.div>
-                    <motion.div
-                      animate={{ scale: [0.5, 1, 0.5], opacity: [0.4, 1, 0.4] }}
-                      transition={{ duration: 1.1, repeat: Infinity, ease: 'easeInOut' }}
-                      style={{
-                        position: 'absolute', top: '50%', left: '50%',
-                        width: 4, height: 4, borderRadius: '50%',
-                        background: '#5DFFA8', transform: 'translate(-50%, -50%)',
-                      }}
-                    />
-                  </div>
-                  {/* Cycling status text */}
-                  <AnimatePresence mode="wait">
-                    <motion.span
-                      key={improveStage}
-                      initial={{ opacity: 0, y: 5 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -5 }}
-                      transition={{ duration: 0.22 }}
-                    >
-                      {IMPROVE_STAGES[improveStage]}
-                    </motion.span>
-                  </AnimatePresence>
-                </div>
+                <LoadingButtonContent stage={improveStage} />
               ) : (
                 <span className="relative z-10 flex items-center gap-2"><Wand2 size={14} strokeWidth={1.5} /> Improve with AI</span>
               )}
@@ -1809,159 +1796,6 @@ export default function CraftPage() {
 
       </div>
 
-      {/* ─── History Sidebar ─── */}
-      {/* ─── History Modal ─── */}
-      <AnimatePresence>
-        {sidebarOpen && (
-          <motion.div
-            key="craft-history-modal"
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            transition={{ duration: 0.18 }}
-            className="fixed inset-0 z-[60] flex items-center justify-center p-4"
-            style={{ background: 'rgba(4,9,4,0.88)', backdropFilter: 'blur(12px)' }}
-            onClick={e => { if (e.target === e.currentTarget) setSidebarOpen(false) }}
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.96, y: 8 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.96, y: 8 }}
-              transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-              className="relative w-full max-w-2xl max-h-[85vh] flex flex-col rounded-2xl overflow-hidden"
-              style={{
-                background: 'linear-gradient(180deg, #0D1A0D 0%, #080D08 100%)',
-                boxShadow: '0 0 0 1px rgba(45,158,107,0.18), 0 32px 80px rgba(0,0,0,0.7)',
-              }}
-            >
-              {/* Top glow line */}
-              <div className="absolute top-0 left-0 right-0 h-px"
-                style={{ background: 'linear-gradient(90deg, transparent, rgba(93,255,168,0.3), transparent)' }} />
-
-              {/* Header */}
-              <div className="flex-shrink-0 flex items-center justify-between px-6 py-5"
-                style={{ borderBottom: '1px solid rgba(45,158,107,0.1)' }}>
-                <div className="flex items-center gap-3">
-                  <Clock size={13} strokeWidth={1.5} style={{ color: '#2D9E6B', opacity: 0.7 }} />
-                  <div className="w-px h-4" style={{ background: 'rgba(45,158,107,0.2)' }} />
-                  <div>
-                    <h2 className="text-sm font-semibold tracking-tight" style={{ fontFamily: 'var(--font-sora)', color: 'rgba(212,237,224,0.9)' }}>
-                      Prompt Vault
-                    </h2>
-                    <p className="text-[10px] mt-0.5" style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.5)' }}>
-                      {history.length} saved {history.length === 1 ? 'prompt' : 'prompts'}
-                    </p>
-                  </div>
-                </div>
-                <button onClick={() => setSidebarOpen(false)}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center transition-all"
-                  style={{ color: 'rgba(141,184,154,0.45)' }}
-                  onMouseEnter={e => { e.currentTarget.style.color = 'rgba(212,237,224,0.8)'; e.currentTarget.style.background = 'rgba(45,158,107,0.08)' }}
-                  onMouseLeave={e => { e.currentTarget.style.color = 'rgba(141,184,154,0.45)'; e.currentTarget.style.background = 'transparent' }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                  </svg>
-                </button>
-              </div>
-
-              {/* List */}
-              <div className="flex-1 overflow-y-auto">
-                {history.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-24 px-8 text-center gap-3">
-                    <div className="w-10 h-10 rounded-full flex items-center justify-center"
-                      style={{ background: 'rgba(45,158,107,0.06)', border: '1px solid rgba(45,158,107,0.12)' }}>
-                      <Clock size={16} strokeWidth={1.5} style={{ color: 'rgba(141,184,154,0.4)' }} />
-                    </div>
-                    <p className="text-sm text-center leading-relaxed" style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.45)' }}>
-                      No saved prompts yet.<br />Copy a prompt to save it here.
-                    </p>
-                  </div>
-                ) : (
-                  <div style={{ borderTop: 'none' }}>
-                    {history.slice(0, 20).map((entry, i) => {
-                      const catColor = CATEGORY_COLOR[entry.category] ?? '#2D9E6B'
-                      const firstLine = entry.assembled.split('\n').find(l => l.trim()) ?? ''
-                      return (
-                        <div
-                          key={entry.id}
-                          className="group relative flex items-start gap-4 px-6 py-4 cursor-pointer transition-all duration-200 hover:bg-white/[0.02]"
-                          style={{
-                            borderBottom: '1px solid rgba(45,158,107,0.06)',
-                            animation: `fadeUp 0.35s ease-out ${i * 0.04}s both`,
-                          }}
-                          onClick={() => { loadFromHistory(entry); setSidebarOpen(false) }}
-                        >
-                          {/* Category dot */}
-                          <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center mt-0.5"
-                            style={{ background: `${catColor}12`, border: `1px solid ${catColor}30` }}>
-                            <div className="w-2 h-2 rounded-full" style={{ background: catColor, opacity: 0.8 }} />
-                          </div>
-
-                          {/* Content */}
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm leading-snug truncate pr-2"
-                              style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(212,237,224,0.85)' }}>
-                              {firstLine.slice(0, 120)}{firstLine.length > 120 ? '…' : ''}
-                            </p>
-                            <div className="flex items-center gap-3 mt-1.5 flex-wrap">
-                              <span className="text-[10px]"
-                                style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.5)' }}>
-                                {formatRelativeDate(entry.createdAt)}
-                              </span>
-                              <span className="text-[10px] px-1.5 py-0.5 rounded-[2px]"
-                                style={{
-                                  fontFamily: 'var(--font-jetbrains-mono)',
-                                  color: catColor,
-                                  background: `${catColor}14`,
-                                  border: `1px solid ${catColor}25`,
-                                  letterSpacing: '0.04em',
-                                }}>
-                                {entry.category}
-                              </span>
-                              {entry.blocks?.length > 0 && (
-                                <span className="text-[10px]"
-                                  style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.35)' }}>
-                                  {entry.blocks.length} blocks
-                                </span>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Actions */}
-                          <div className="flex items-center gap-3 opacity-60 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex-shrink-0 mt-0.5">
-                            <span className="text-[11px] underline underline-offset-2"
-                              style={{ fontFamily: 'var(--font-jetbrains-mono)', color: '#2D9E6B', textDecorationColor: 'rgba(45,158,107,0.3)' }}>
-                              Load
-                            </span>
-                            <button
-                              onClick={e => handleDeleteHistory(e, entry.id)}
-                              className="transition-colors"
-                              style={{ color: 'rgba(141,184,154,0.25)' }}
-                              onMouseEnter={e => (e.currentTarget.style.color = 'rgba(196,122,90,0.8)')}
-                              onMouseLeave={e => (e.currentTarget.style.color = 'rgba(141,184,154,0.25)')}
-                              title="Delete">
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-                                <polyline points="3 6 5 6 21 6" />
-                                <path d="M19 6l-1 14H6L5 6" />
-                                <path d="M10 11v6M14 11v6" />
-                              </svg>
-                            </button>
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                )}
-              </div>
-
-              {/* Footer */}
-              {history.length > 0 && (
-                <div className="flex-shrink-0 px-6 py-3" style={{ borderTop: '1px solid rgba(45,158,107,0.08)' }}>
-                  <p className="text-[10px]" style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.3)' }}>
-                    Stored locally in your browser · Max 50 entries
-                  </p>
-                </div>
-              )}
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* ─── Footer ─── */}
       <div className="relative z-10 flex justify-center py-6 mt-4">
@@ -2014,5 +1848,154 @@ export default function CraftPage() {
       </div>
 
     </motion.main>
+
+    {/* ─── History Modal — outside motion.main so fixed positioning works ─── */}
+    <AnimatePresence>
+      {sidebarOpen && (
+        <motion.div
+          key="craft-history-modal"
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+          transition={{ duration: 0.18 }}
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+          style={{ background: 'rgba(4,9,4,0.88)', backdropFilter: 'blur(12px)' }}
+          onClick={e => { if (e.target === e.currentTarget) setSidebarOpen(false) }}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96, y: 8 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.96, y: 8 }}
+            transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+            className="relative w-full max-w-2xl max-h-[85vh] flex flex-col rounded-2xl overflow-hidden"
+            style={{
+              background: 'linear-gradient(180deg, #0D1A0D 0%, #080D08 100%)',
+              boxShadow: '0 0 0 1px rgba(45,158,107,0.18), 0 32px 80px rgba(0,0,0,0.7)',
+            }}
+          >
+            {/* Top glow line */}
+            <div className="absolute top-0 left-0 right-0 h-px"
+              style={{ background: 'linear-gradient(90deg, transparent, rgba(93,255,168,0.3), transparent)' }} />
+
+            {/* Header */}
+            <div className="flex-shrink-0 flex items-center justify-between px-6 py-5"
+              style={{ borderBottom: '1px solid rgba(45,158,107,0.1)' }}>
+              <div className="flex items-center gap-3">
+                <Clock size={13} strokeWidth={1.5} style={{ color: '#2D9E6B', opacity: 0.7 }} />
+                <div className="w-px h-4" style={{ background: 'rgba(45,158,107,0.2)' }} />
+                <div>
+                  <h2 className="text-sm font-semibold tracking-tight" style={{ fontFamily: 'var(--font-sora)', color: 'rgba(212,237,224,0.9)' }}>
+                    Prompt Vault
+                  </h2>
+                  <p className="text-[10px] mt-0.5" style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.5)' }}>
+                    {history.length} saved {history.length === 1 ? 'prompt' : 'prompts'}
+                  </p>
+                </div>
+              </div>
+              <button onClick={() => setSidebarOpen(false)}
+                className="w-7 h-7 rounded-lg flex items-center justify-center transition-all"
+                style={{ color: 'rgba(141,184,154,0.45)' }}
+                onMouseEnter={e => { e.currentTarget.style.color = 'rgba(212,237,224,0.8)'; e.currentTarget.style.background = 'rgba(45,158,107,0.08)' }}
+                onMouseLeave={e => { e.currentTarget.style.color = 'rgba(141,184,154,0.45)'; e.currentTarget.style.background = 'transparent' }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+
+            {/* List */}
+            <div className="flex-1 overflow-y-auto">
+              {history.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-24 px-8 text-center gap-3">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center"
+                    style={{ background: 'rgba(45,158,107,0.06)', border: '1px solid rgba(45,158,107,0.12)' }}>
+                    <Clock size={16} strokeWidth={1.5} style={{ color: 'rgba(141,184,154,0.4)' }} />
+                  </div>
+                  <p className="text-sm text-center leading-relaxed" style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.45)' }}>
+                    No saved prompts yet.<br />Copy a prompt to save it here.
+                  </p>
+                </div>
+              ) : (
+                <div>
+                  {history.slice(0, 20).map((entry, i) => {
+                    const catColor = CATEGORY_COLOR[entry.category] ?? '#2D9E6B'
+                    const firstLine = entry.assembled.split('\n').find(l => l.trim()) ?? ''
+                    return (
+                      <div
+                        key={entry.id}
+                        className="group relative flex items-start gap-4 px-6 py-4 cursor-pointer transition-all duration-200 hover:bg-white/[0.02]"
+                        style={{
+                          borderBottom: '1px solid rgba(45,158,107,0.06)',
+                          animation: `fadeUp 0.35s ease-out ${i * 0.04}s both`,
+                        }}
+                        onClick={() => { loadFromHistory(entry); setSidebarOpen(false) }}
+                      >
+                        <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center mt-0.5"
+                          style={{ background: `${catColor}12`, border: `1px solid ${catColor}30` }}>
+                          <div className="w-2 h-2 rounded-full" style={{ background: catColor, opacity: 0.8 }} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm leading-snug truncate pr-2"
+                            style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(212,237,224,0.85)' }}>
+                            {firstLine.slice(0, 120)}{firstLine.length > 120 ? '…' : ''}
+                          </p>
+                          <div className="flex items-center gap-3 mt-1.5 flex-wrap">
+                            <span className="text-[10px]"
+                              style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.5)' }}>
+                              {formatRelativeDate(entry.createdAt)}
+                            </span>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded-[2px]"
+                              style={{
+                                fontFamily: 'var(--font-jetbrains-mono)',
+                                color: catColor,
+                                background: `${catColor}14`,
+                                border: `1px solid ${catColor}25`,
+                                letterSpacing: '0.04em',
+                              }}>
+                              {entry.category}
+                            </span>
+                            {entry.blocks?.length > 0 && (
+                              <span className="text-[10px]"
+                                style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.35)' }}>
+                                {entry.blocks.length} blocks
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3 opacity-60 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex-shrink-0 mt-0.5">
+                          <span className="text-[11px] underline underline-offset-2"
+                            style={{ fontFamily: 'var(--font-jetbrains-mono)', color: '#2D9E6B', textDecorationColor: 'rgba(45,158,107,0.3)' }}>
+                            Load
+                          </span>
+                          <button
+                            onClick={e => handleDeleteHistory(e, entry.id)}
+                            className="transition-colors"
+                            style={{ color: 'rgba(141,184,154,0.25)' }}
+                            onMouseEnter={e => (e.currentTarget.style.color = 'rgba(196,122,90,0.8)')}
+                            onMouseLeave={e => (e.currentTarget.style.color = 'rgba(141,184,154,0.25)')}
+                            title="Delete">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                              <polyline points="3 6 5 6 21 6" />
+                              <path d="M19 6l-1 14H6L5 6" />
+                              <path d="M10 11v6M14 11v6" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Modal footer */}
+            {history.length > 0 && (
+              <div className="flex-shrink-0 px-6 py-3" style={{ borderTop: '1px solid rgba(45,158,107,0.08)' }}>
+                <p className="text-[10px]" style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.3)' }}>
+                  Stored locally in your browser · Max 50 entries
+                </p>
+              </div>
+            )}
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+    </>
   )
 }
