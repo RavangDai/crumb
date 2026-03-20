@@ -3,51 +3,17 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import Image from 'next/image'
 import { TransitionLink } from '@/context/transition'
-import { motion, AnimatePresence, Reorder, useDragControls } from 'framer-motion'
+import { motion, AnimatePresence, Reorder } from 'framer-motion'
 import { getVault } from '@/lib/vault'
 import {
-  UserCircle2, Crosshair, BookOpen, Zap, ArrowLeftRight, ShieldOff, LayoutTemplate,
   Code2, PenLine, Palette, BarChart2, Search, Package, Megaphone, GraduationCap,
   OctagonX, AlertTriangle, Lightbulb, Wand2, PenSquare, Clock, ArrowRight, Sparkles, Wrench,
   type LucideIcon,
 } from 'lucide-react'
-
-// ─── Types ───────────────────────────────────────────────────────────────────
-
-type BlockType = 'persona' | 'objective' | 'context' | 'technique' | 'example' | 'constraint' | 'format'
-type TechniqueId = 'chain-of-thought' | 'self-check' | 'adversarial' | 'confidence' | 'contrastive'
-type Severity = 'error' | 'warning' | 'tip'
-
-interface Block {
-  id: string
-  type: BlockType
-  content: string
-  techniqueId?: TechniqueId
-  exampleInput?: string
-  exampleOutput?: string
-}
-
-interface LinterWarning {
-  id: string
-  severity: Severity
-  message: string
-}
-
-interface DNAScore {
-  clarity: number
-  specificity: number
-  structure: number
-  context: number
-  guardrails: number
-}
-
-interface PromptEntry {
-  id: string
-  assembled: string
-  blocks: Block[]
-  category: string
-  createdAt: number
-}
+import type { Block, BlockType, TechniqueId, Severity, LinterWarning, DNAScore, PromptEntry } from './types'
+import { BLOCK_META, TECHNIQUES, FORMAT_CHIPS } from './constants'
+import { PentagonDNA } from './PentagonDNA'
+import { BlockCard } from './BlockCard'
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -74,46 +40,6 @@ function formatRelativeDate(ts: number): string {
   if (diff < 172_800_000) return 'yesterday'
   return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
 }
-
-const BLOCK_META: Record<BlockType, { label: string; color: string; bg: string; placeholder: string; Icon: LucideIcon }> = {
-  persona:    { label: 'PERSONA',    color: '#2D9E6B', bg: 'rgba(45,158,107,0.07)',  placeholder: 'senior [LANGUAGE] developer with 10+ years of experience', Icon: UserCircle2 },
-  objective:  { label: 'OBJECTIVE',  color: '#5DFFA8', bg: 'rgba(93,255,168,0.04)',  placeholder: 'Review this code for bugs, performance issues, and best practices', Icon: Crosshair },
-  context:    { label: 'CONTEXT',    color: '#8DB89A', bg: 'rgba(141,184,154,0.04)', placeholder: 'Relevant background, code snippets, or details...', Icon: BookOpen },
-  technique:  { label: 'TECHNIQUE',  color: '#A8D4BA', bg: 'rgba(168,212,186,0.04)', placeholder: '', Icon: Zap },
-  example:    { label: 'EXAMPLE',    color: '#C4A45A', bg: 'rgba(196,164,90,0.04)',  placeholder: '', Icon: ArrowLeftRight },
-  constraint: { label: 'CONSTRAINT', color: '#C47A5A', bg: 'rgba(196,122,90,0.05)',  placeholder: 'Critical issues first. No praise. Max 3 bullet points.', Icon: ShieldOff },
-  format:     { label: 'FORMAT',     color: '#7A8DC4', bg: 'rgba(122,141,196,0.05)', placeholder: 'Describe output structure...', Icon: LayoutTemplate },
-}
-
-const TECHNIQUES: Record<TechniqueId, { label: string; description: string; content: string }> = {
-  'chain-of-thought': {
-    label: 'Chain of Thought',
-    description: 'Forces step-by-step reasoning',
-    content: 'Think step by step before giving your final answer.',
-  },
-  'self-check': {
-    label: 'Self-Check',
-    description: 'AI reviews its own answer',
-    content: 'Before responding, review your answer for errors, gaps, and inconsistencies.',
-  },
-  'adversarial': {
-    label: 'Adversarial',
-    description: 'AI challenges its own output',
-    content: 'After your response, identify the top 3 potential flaws or edge cases in your answer.',
-  },
-  'confidence': {
-    label: 'Confidence Rating',
-    description: 'AI rates certainty per claim',
-    content: 'Rate your confidence (1–10) on each key claim or recommendation you make.',
-  },
-  'contrastive': {
-    label: 'Contrastive',
-    description: 'Compare multiple approaches',
-    content: 'Consider at least two distinct approaches before recommending one. Explain the tradeoffs.',
-  },
-}
-
-const FORMAT_CHIPS = ['Bullet List', 'JSON', 'Step-by-step', 'Essay', 'Table', 'Code Block', 'Markdown']
 
 const CATEGORIES = [
   { id: 'code-dev',      label: 'Code & Dev',    Icon: Code2 },
@@ -285,193 +211,6 @@ function removeFromHistory(id: string): PromptEntry[] {
   return updated
 }
 
-// ─── Pentagon DNA ─────────────────────────────────────────────────────────────
-
-function PentagonDNA({ score }: { score: DNAScore }) {
-  const [showBars, setShowBars] = useState(false)
-  const [hoveredAxis, setHoveredAxis] = useState<number | null>(null)
-  const [displayScore, setDisplayScore] = useState(0)
-  const displayScoreRef = useRef(0)
-
-  const axes = [
-    { label: 'Clarity',    value: score.clarity },
-    { label: 'Specific',   value: score.specificity },
-    { label: 'Structure',  value: score.structure },
-    { label: 'Context',    value: score.context },
-    { label: 'Guardrails', value: score.guardrails },
-  ]
-
-  const overall = Math.round(axes.reduce((s, a) => s + a.value, 0) / axes.length)
-
-  // Animate score count-up whenever overall changes
-  useEffect(() => {
-    const target = overall
-    const start = displayScoreRef.current
-    if (start === target) return
-    const duration = 700
-    const startTime = performance.now()
-    let raf: number
-    const tick = (now: number) => {
-      const t = Math.min((now - startTime) / duration, 1)
-      const eased = 1 - Math.pow(1 - t, 3)
-      const current = Math.round(start + (target - start) * eased)
-      displayScoreRef.current = current
-      setDisplayScore(current)
-      if (t < 1) { raf = requestAnimationFrame(tick) }
-    }
-    raf = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(raf)
-  }, [overall])
-
-  // Expanded geometry: cx/cy shifted inward, viewBox padded for label room
-  const cx = 140, cy = 148, R = 88
-  const pt = (i: number, r: number) => ({
-    x: cx + r * Math.cos(-Math.PI / 2 + (i * 2 * Math.PI) / 5),
-    y: cy + r * Math.sin(-Math.PI / 2 + (i * 2 * Math.PI) / 5),
-  })
-  const rings = [0.25, 0.5, 0.75, 1]
-  const outer = axes.map((_, i) => pt(i, R))
-  const data  = axes.map((ax, i) => pt(i, (ax.value / 100) * R))
-  const toPath = (pts: { x: number; y: number }[]) =>
-    pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ') + 'Z'
-
-  const ringR = 36
-  const ringCirc = 2 * Math.PI * ringR
-  const ringColor = overall > 65 ? '#5DFFA8' : overall > 35 ? '#2D9E6B' : '#C47A5A'
-
-  return (
-    <div className="flex flex-col items-center gap-4 w-full"
-      onMouseEnter={() => setShowBars(true)}
-      onMouseLeave={() => { setShowBars(false); setHoveredAxis(null) }}>
-
-      {/* SVG: viewBox expanded to prevent label clipping */}
-      <svg width="100%" height="auto" viewBox="0 0 280 296" style={{ maxWidth: '280px' }}>
-        {rings.map(r => (
-          <path key={r} d={toPath(axes.map((_, i) => pt(i, R * r)))}
-            fill="none" stroke="rgba(45,158,107,0.1)" strokeWidth="1" />
-        ))}
-        {outer.map((p, i) => (
-          <line key={i} x1={cx} y1={cy} x2={p.x.toFixed(1)} y2={p.y.toFixed(1)}
-            stroke="rgba(45,158,107,0.08)" strokeWidth="1" />
-        ))}
-        <path d={toPath(outer)} fill="none" stroke="rgba(45,158,107,0.2)" strokeWidth="1" />
-        <motion.path
-          d={toPath(data)}
-          fill="rgba(45,158,107,0.1)"
-          stroke="#2D9E6B" strokeWidth="2"
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-          transition={{ duration: 0.4 }}
-        />
-        {data.map((p, i) => (
-          <motion.circle key={i} cx={p.x.toFixed(1)} cy={p.y.toFixed(1)} r="4.5"
-            fill={axes[i].value > 65 ? '#5DFFA8' : axes[i].value > 35 ? '#2D9E6B' : '#C47A5A'}
-            initial={{ scale: 0 }} animate={{ scale: 1 }}
-            transition={{ delay: i * 0.07, type: 'spring', stiffness: 300 }}
-          />
-        ))}
-
-        {/* Axis labels with invisible hover rectangles for tooltip */}
-        {outer.map((p, i) => {
-          const angle = -Math.PI / 2 + (i * 2 * Math.PI) / 5
-          const lx = cx + (R + 28) * Math.cos(angle)
-          const ly = cy + (R + 28) * Math.sin(angle)
-          const isHovered = hoveredAxis === i
-          const isHighVal = axes[i].value > 65
-          return (
-            <g key={i}
-              onMouseEnter={() => setHoveredAxis(i)}
-              onMouseLeave={() => setHoveredAxis(null)}
-              style={{ cursor: 'help' }}>
-              <text
-                x={lx.toFixed(1)} y={ly.toFixed(1)}
-                textAnchor="middle" dominantBaseline="middle"
-                fontSize="11"
-                fill={isHighVal ? 'rgba(93,255,168,0.9)' : isHovered ? 'rgba(212,237,224,0.9)' : 'rgba(141,184,154,0.7)'}
-                fontFamily="var(--font-jetbrains-mono)"
-                style={{ transition: 'fill 0.15s' }}>
-                {axes[i].label}
-              </text>
-              {/* Invisible hit area */}
-              <rect x={lx - 36} y={ly - 12} width="72" height="24" fill="transparent" />
-            </g>
-          )
-        })}
-
-        {/* Score ring track */}
-        <circle cx={cx} cy={cy} r={ringR} fill="none" stroke="rgba(45,158,107,0.12)" strokeWidth="3" />
-        {/* Score ring progress */}
-        <motion.circle
-          cx={cx} cy={cy} r={ringR}
-          fill="none"
-          stroke={ringColor}
-          strokeWidth="3"
-          strokeLinecap="round"
-          strokeDasharray={ringCirc}
-          initial={{ strokeDashoffset: ringCirc }}
-          animate={{ strokeDashoffset: (1 - overall / 100) * ringCirc }}
-          transition={{ duration: 0.9, delay: 0.3, ease: 'easeOut' }}
-          transform={`rotate(-90, ${cx}, ${cy})`}
-        />
-        <text x={cx} y={cy - 8} textAnchor="middle" fontSize="26" fontWeight="700"
-          fill="#D4EDE0" fontFamily="var(--font-sora)">{displayScore}</text>
-        <text x={cx} y={cy + 13} textAnchor="middle" fontSize="9"
-          fill="rgba(141,184,154,0.5)" fontFamily="var(--font-jetbrains-mono)" letterSpacing="0.15em">SCORE</text>
-      </svg>
-
-      {/* Axis tooltip */}
-      <AnimatePresence>
-        {hoveredAxis !== null && (
-          <motion.div
-            initial={{ opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -4 }}
-            transition={{ duration: 0.15 }}
-            className="w-full px-3 py-2 text-center"
-            style={{
-              fontFamily: 'var(--font-jetbrains-mono)', fontSize: '10px',
-              color: 'rgba(141,184,154,0.75)',
-              background: 'rgba(13,21,13,0.7)',
-              border: '1px solid rgba(45,158,107,0.12)',
-              borderRadius: '2px',
-            }}>
-            <span style={{ color: 'rgba(212,237,224,0.9)', fontWeight: 600 }}>{axes[hoveredAxis].label}: </span>
-            {AXIS_TOOLTIPS[hoveredAxis]}
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Per-axis breakdown — visible on hover */}
-      <AnimatePresence>
-        {showBars && (
-          <motion.div
-            className="w-full flex flex-col gap-2.5 px-1 overflow-hidden"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.22, ease: 'easeInOut' }}>
-            {axes.map(ax => (
-              <div key={ax.label} className="flex items-center gap-3">
-                <span style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '11px', color: 'rgba(141,184,154,0.75)', width: '68px', flexShrink: 0 }}>
-                  {ax.label}
-                </span>
-                <div className="flex-1 h-[3px] rounded-full overflow-hidden" style={{ background: 'rgba(45,158,107,0.1)' }}>
-                  <motion.div className="h-full rounded-full"
-                    style={{ background: ax.value > 65 ? '#5DFFA8' : ax.value > 35 ? '#2D9E6B' : '#C47A5A' }}
-                    initial={{ width: 0 }} animate={{ width: `${ax.value}%` }}
-                    transition={{ duration: 0.5 }} />
-                </div>
-                <span style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '11px', color: 'rgba(141,184,154,0.6)', width: '28px', textAlign: 'right', flexShrink: 0 }}>
-                  {ax.value}
-                </span>
-              </div>
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  )
-}
-
 // ─── Add Block Menu ───────────────────────────────────────────────────────────
 
 const BLOCK_MENU: { type: BlockType; desc: string }[] = [
@@ -520,166 +259,6 @@ function AddBlockMenu({ onAdd, onClose, usedTypes }: { onAdd: (t: BlockType) => 
         )
       })}
     </motion.div>
-  )
-}
-
-// ─── Block Card ───────────────────────────────────────────────────────────────
-
-function BlockCard({ block, onChange, onDelete }: {
-  block: Block
-  onChange: (b: Block) => void
-  onDelete: () => void
-}) {
-  const meta = BLOCK_META[block.type]
-  const BlockIcon = meta.Icon
-  const controls = useDragControls()
-
-  return (
-    <Reorder.Item value={block} dragListener={false} dragControls={controls} className="select-none">
-      <motion.div
-        layout
-        initial={{ opacity: 0, y: 10, scale: 0.98 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.96, y: -4 }}
-        whileDrag={{ scale: 1.025, boxShadow: `0 20px 48px rgba(0,0,0,0.55), 0 0 0 1px ${meta.color}35` }}
-        transition={{ type: 'spring', damping: 26, stiffness: 240 }}
-        className="group relative mb-2.5"
-        style={{ background: meta.bg, border: `1px solid ${meta.color}1e`, borderLeft: `3px solid ${meta.color}`, borderRadius: '4px' }}
-        whileHover={{ boxShadow: `0 2px 20px rgba(0,0,0,0.3), 0 0 0 1px ${meta.color}28` }}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between px-4 py-2.5"
-          style={{ borderBottom: `1px solid ${meta.color}18` }}>
-          {/* Colored type badge */}
-          <span style={{
-            fontFamily: 'var(--font-jetbrains-mono)', fontSize: '11px',
-            color: meta.color, letterSpacing: '0.07em',
-            background: `${meta.color}14`,
-            border: `1px solid ${meta.color}28`,
-            padding: '2px 8px 2px 6px', borderRadius: '3px',
-            display: 'inline-flex', alignItems: 'center', gap: '5px',
-          }}>
-            <BlockIcon size={11} strokeWidth={1.5} />
-            {meta.label}
-          </span>
-          <div className="flex items-center gap-2.5">
-            {/* Drag handle — always visible, prominent on hover */}
-            <div
-              onPointerDown={e => controls.start(e)}
-              className="cursor-grab active:cursor-grabbing touch-none transition-opacity"
-              style={{ color: meta.color, opacity: 0.5 }}
-              onMouseEnter={e => (e.currentTarget.style.opacity = '0.85')}
-              onMouseLeave={e => (e.currentTarget.style.opacity = '0.5')}
-              title="Drag to reorder">
-              <svg width="10" height="14" viewBox="0 0 10 14" fill="currentColor">
-                <circle cx="2.5" cy="2.5" r="1.3"/>
-                <circle cx="7.5" cy="2.5" r="1.3"/>
-                <circle cx="2.5" cy="7" r="1.3"/>
-                <circle cx="7.5" cy="7" r="1.3"/>
-                <circle cx="2.5" cy="11.5" r="1.3"/>
-                <circle cx="7.5" cy="11.5" r="1.3"/>
-              </svg>
-            </div>
-            <button onClick={onDelete}
-              className="opacity-0 group-hover:opacity-100 transition-opacity hover:opacity-60"
-              style={{ color: 'rgba(196,122,90,0.8)', fontSize: '13px', lineHeight: 1 }}>✕</button>
-          </div>
-        </div>
-
-        {/* Body */}
-        <div className="px-5 py-4">
-          {block.type === 'technique' ? (
-            <div className="flex flex-col gap-2.5">
-              <div className="flex flex-wrap gap-1.5">
-                {(Object.entries(TECHNIQUES) as [TechniqueId, typeof TECHNIQUES[TechniqueId]][]).map(([id, tech]) => (
-                  <button key={id} onClick={() => onChange({ ...block, techniqueId: id })}
-                    className="text-[11px] px-2.5 py-1"
-                    style={{
-                      fontFamily: 'var(--font-jetbrains-mono)', borderRadius: '2px',
-                      transition: 'background 100ms ease, color 100ms ease, border-color 100ms ease',
-                      ...(block.techniqueId === id
-                        ? { color: '#080D08', background: '#A8D4BA', border: '1px solid #A8D4BA' }
-                        : { color: 'rgba(168,212,186,0.8)', background: 'rgba(168,212,186,0.05)', border: '1px solid rgba(168,212,186,0.22)' }
-                      ),
-                    }}
-                    onMouseEnter={e => { if (block.techniqueId !== id) { e.currentTarget.style.background = 'rgba(168,212,186,0.12)'; e.currentTarget.style.borderColor = 'rgba(168,212,186,0.38)'; e.currentTarget.style.color = 'rgba(168,212,186,1)' } }}
-                    onMouseLeave={e => { if (block.techniqueId !== id) { e.currentTarget.style.background = 'rgba(168,212,186,0.05)'; e.currentTarget.style.borderColor = 'rgba(168,212,186,0.22)'; e.currentTarget.style.color = 'rgba(168,212,186,0.8)' } }}
-                  >
-                    {tech.label}
-                  </button>
-                ))}
-              </div>
-              {block.techniqueId && (
-                <div className="flex flex-col gap-1.5 pt-1">
-                  <p style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '12px', color: 'rgba(168,212,186,0.85)', lineHeight: '1.6' }}>
-                    → {TECHNIQUES[block.techniqueId].content}
-                  </p>
-                  <p style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '11px', color: 'rgba(168,212,186,0.55)' }}>
-                    {TECHNIQUES[block.techniqueId].description}
-                  </p>
-                </div>
-              )}
-            </div>
-          ) : block.type === 'example' ? (
-            <div className="flex flex-col gap-2">
-              <div>
-                <div className="text-[11px] mb-1.5" style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(196,164,90,0.75)', letterSpacing: '0.07em' }}>INPUT</div>
-                <textarea className="w-full bg-transparent text-sm leading-relaxed resize-none focus:outline-none"
-                  style={{ fontFamily: 'var(--font-dm-sans)', color: '#D4EDE0' }}
-                  rows={2} placeholder="Example input..."
-                  value={block.exampleInput || ''}
-                  onChange={e => onChange({ ...block, exampleInput: e.target.value })} />
-              </div>
-              <div className="h-px" style={{ background: 'rgba(196,164,90,0.08)' }} />
-              <div>
-                <div className="text-[11px] mb-1.5" style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(196,164,90,0.75)', letterSpacing: '0.07em' }}>EXPECTED OUTPUT</div>
-                <textarea className="w-full bg-transparent text-sm leading-relaxed resize-none focus:outline-none"
-                  style={{ fontFamily: 'var(--font-dm-sans)', color: '#D4EDE0' }}
-                  rows={2} placeholder="What the ideal response looks like..."
-                  value={block.exampleOutput || ''}
-                  onChange={e => onChange({ ...block, exampleOutput: e.target.value })} />
-              </div>
-            </div>
-          ) : block.type === 'format' ? (
-            <div className="flex flex-col gap-2.5">
-              <div className="flex flex-wrap gap-1.5">
-                {FORMAT_CHIPS.map(fmt => (
-                  <button key={fmt} onClick={() => onChange({ ...block, content: fmt })}
-                    className="text-[11px] px-2.5 py-1"
-                    style={{
-                      fontFamily: 'var(--font-jetbrains-mono)', borderRadius: '2px',
-                      transition: 'background 100ms ease, color 100ms ease, border-color 100ms ease',
-                      ...(block.content === fmt
-                        ? { color: '#080D08', background: '#7A8DC4', border: '1px solid #7A8DC4' }
-                        : { color: 'rgba(122,141,196,0.82)', background: 'rgba(122,141,196,0.06)', border: '1px solid rgba(122,141,196,0.22)' }
-                      ),
-                    }}
-                    onMouseEnter={e => { if (block.content !== fmt) { e.currentTarget.style.background = 'rgba(122,141,196,0.13)'; e.currentTarget.style.borderColor = 'rgba(122,141,196,0.38)'; e.currentTarget.style.color = 'rgba(122,141,196,1)' } }}
-                    onMouseLeave={e => { if (block.content !== fmt) { e.currentTarget.style.background = 'rgba(122,141,196,0.06)'; e.currentTarget.style.borderColor = 'rgba(122,141,196,0.22)'; e.currentTarget.style.color = 'rgba(122,141,196,0.82)' } }}
-                  >
-                    {fmt}
-                  </button>
-                ))}
-              </div>
-              <div className="h-px" style={{ background: 'rgba(122,141,196,0.1)' }} />
-              <input className="w-full bg-transparent text-sm focus:outline-none"
-                style={{ fontFamily: 'var(--font-dm-sans)', color: '#D4EDE0' }}
-                placeholder="Or describe a custom format..."
-                value={block.content} onChange={e => onChange({ ...block, content: e.target.value })} />
-            </div>
-          ) : (
-            <textarea
-              className="w-full bg-transparent text-sm leading-relaxed resize-none focus:outline-none"
-              style={{ fontFamily: 'var(--font-dm-sans)', color: '#D4EDE0' }}
-              rows={block.type === 'context' ? 4 : 2}
-              placeholder={meta.placeholder}
-              value={block.content}
-              onChange={e => onChange({ ...block, content: e.target.value })}
-            />
-          )}
-        </div>
-      </motion.div>
-    </Reorder.Item>
   )
 }
 
@@ -795,14 +374,6 @@ function LoadingButtonContent({ stage }: { stage: number }) {
     </div>
   )
 }
-
-const AXIS_TOOLTIPS = [
-  'How free of vague or ambiguous language your prompt is',
-  'How precise and concrete your instructions and targets are',
-  'Whether the desired output format is clearly defined',
-  'How much relevant background context is provided',
-  'Whether rules, limits, and constraints are explicitly set',
-]
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
@@ -1021,18 +592,22 @@ export default function CraftPage() {
       initial={{ filter: 'blur(18px)', opacity: 0 }}
       animate={{ filter: 'blur(0px)', opacity: 1 }}
       transition={{ type: 'spring', damping: 30, stiffness: 100 }}
+      onAnimationComplete={() => {
+        const el = document.querySelector('main')
+        if (el) el.style.filter = 'none'
+      }}
     >
       <style>{`
         html, body,
-        html *, body * {
-          scrollbar-width: none !important;
-          -ms-overflow-style: none !important;
+        main, main * {
+          scrollbar-width: none;
+          -ms-overflow-style: none;
         }
         html::-webkit-scrollbar, body::-webkit-scrollbar,
-        *::-webkit-scrollbar {
-          display: none !important;
-          width: 0 !important;
-          height: 0 !important;
+        main::-webkit-scrollbar, main *::-webkit-scrollbar {
+          display: none;
+          width: 0;
+          height: 0;
         }
         textarea::placeholder, input::placeholder { color: rgba(141,184,154,0.5); }
         @media (min-width: 1024px) {
@@ -1047,39 +622,6 @@ export default function CraftPage() {
         <div className="absolute bottom-[-60px] left-[5%] w-[320px] h-[320px] rounded-full"
           style={{ background: 'radial-gradient(ellipse, rgba(45,158,107,0.025) 0%, transparent 70%)' }} />
       </div>
-
-      {/* ─── Nav ─── */}
-      <nav className="fixed top-0 left-0 right-0 z-50 flex justify-between items-center px-4 sm:px-8 md:px-14 py-4"
-        style={{
-          backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-          background: 'rgba(8,13,8,0.6)',
-          borderBottom: '1px solid rgba(45,158,107,0.08)',
-        }}>
-        <div className="flex items-center gap-2.5">
-          <div className="w-6 h-6 relative">
-            <Image src="/Craftv2.png" alt="Craft" fill className="object-contain" />
-          </div>
-          <div className="flex items-center gap-2" style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '13px' }}>
-            <TransitionLink href="/" type="home" style={{ color: 'rgba(141,184,154,0.55)' }} className="hover:opacity-75 transition-opacity">
-              CrumbCraft.
-            </TransitionLink>
-            <span style={{ color: 'rgba(141,184,154,0.25)' }}>/</span>
-            <span style={{ color: '#D4EDE0', fontWeight: 600 }}>Craft</span>
-          </div>
-        </div>
-        <TransitionLink href="/crumb"
-          type="crumb"
-          className="flex items-center gap-1.5 transition-opacity duration-200 hover:opacity-80"
-          style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '12px', color: 'rgba(141,184,154,0.5)' }}
-          title="Switch to Crumb — AI memory compression">
-          <div className="w-4 h-4 relative opacity-50">
-            <Image src="/Crumbv2.png" alt="Crumb" fill className="object-contain"
-              style={{ filter: 'hue-rotate(100deg) saturate(0.35)' }} />
-          </div>
-          <span>Crumb</span>
-          <ArrowRight size={9} strokeWidth={2} style={{ opacity: 0.5 }} />
-        </TransitionLink>
-      </nav>
 
       <div className="relative z-10 px-4 sm:px-8 md:px-16 pt-24">
 
@@ -1804,50 +1346,83 @@ export default function CraftPage() {
         </span>
       </div>
 
-      {/* ─── Bottom Dock ─── */}
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
-        <motion.div
-          initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5, type: 'spring', damping: 30, stiffness: 200 }}
-          className="flex items-center gap-1 px-2 py-2"
-          style={{
-            backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-            background: 'rgba(8,13,8,0.45)', borderRadius: '20px', border: '1px solid rgba(45,158,107,0.1)',
-          }}>
-          <button onClick={() => builderRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all"
-            style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '11px', color: 'rgba(141,184,154,0.72)' }}
-            onMouseEnter={e => { e.currentTarget.style.color = '#5DFFA8'; e.currentTarget.style.background = 'rgba(45,158,107,0.1)' }}
-            onMouseLeave={e => { e.currentTarget.style.color = 'rgba(141,184,154,0.72)'; e.currentTarget.style.background = 'transparent' }}>
-            <PenSquare size={14} strokeWidth={1.5} />
-            <span className="hidden sm:inline">Builder</span>
-          </button>
-
-          <div className="w-px h-5" style={{ background: 'rgba(45,158,107,0.15)' }} />
-
-          <button onClick={handleImprove} disabled={!hasContent || isImproving}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all disabled:opacity-30"
-            style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '11px', color: isImproving ? '#5DFFA8' : 'rgba(141,184,154,0.72)' }}
-            onMouseEnter={e => { if (!isImproving) { e.currentTarget.style.color = '#5DFFA8'; e.currentTarget.style.background = 'rgba(45,158,107,0.1)' } }}
-            onMouseLeave={e => { if (!isImproving) { e.currentTarget.style.color = 'rgba(141,184,154,0.72)'; e.currentTarget.style.background = 'transparent' } }}>
-            <Wand2 size={14} strokeWidth={1.5} />
-            <span className="hidden sm:inline">{isImproving ? 'Improving…' : 'Improve'}</span>
-          </button>
-
-          <div className="w-px h-5" style={{ background: 'rgba(45,158,107,0.15)' }} />
-
-          <button onClick={() => setSidebarOpen(v => !v)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all"
-            style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '11px', color: sidebarOpen ? '#5DFFA8' : 'rgba(141,184,154,0.72)', background: sidebarOpen ? 'rgba(45,158,107,0.1)' : 'transparent' }}
-            onMouseEnter={e => { e.currentTarget.style.color = '#5DFFA8'; e.currentTarget.style.background = 'rgba(45,158,107,0.1)' }}
-            onMouseLeave={e => { e.currentTarget.style.color = sidebarOpen ? '#5DFFA8' : 'rgba(141,184,154,0.72)'; e.currentTarget.style.background = sidebarOpen ? 'rgba(45,158,107,0.1)' : 'transparent' }}>
-            <Clock size={14} strokeWidth={1.5} />
-            <span className="hidden sm:inline">History</span>
-          </button>
-        </motion.div>
-      </div>
-
     </motion.main>
+
+    {/* ─── Nav — outside motion.main so fixed positioning works ─── */}
+    <nav className="fixed top-0 left-0 right-0 z-50 flex justify-between items-center px-4 sm:px-8 md:px-14 py-4"
+      style={{
+        backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+        background: 'rgba(8,13,8,0.6)',
+        borderBottom: '1px solid rgba(45,158,107,0.08)',
+      }}>
+      <div className="flex items-center gap-2.5">
+        <div className="w-6 h-6 relative">
+          <Image src="/Craftv2.png" alt="Craft" fill className="object-contain" />
+        </div>
+        <div className="flex items-center gap-2" style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '13px' }}>
+          <TransitionLink href="/" type="home" style={{ color: 'rgba(141,184,154,0.55)' }} className="hover:opacity-75 transition-opacity">
+            CrumbCraft.
+          </TransitionLink>
+          <span style={{ color: 'rgba(141,184,154,0.25)' }}>/</span>
+          <span style={{ color: '#D4EDE0', fontWeight: 600 }}>Craft</span>
+        </div>
+      </div>
+      <TransitionLink href="/crumb"
+        type="crumb"
+        className="flex items-center gap-1.5 transition-opacity duration-200 hover:opacity-80"
+        style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '12px', color: 'rgba(141,184,154,0.5)' }}
+        title="Switch to Crumb — AI memory compression">
+        <div className="w-4 h-4 relative opacity-50">
+          <Image src="/Crumbv2.png" alt="Crumb" fill className="object-contain"
+            style={{ filter: 'hue-rotate(100deg) saturate(0.35)' }} />
+        </div>
+        <span>Crumb</span>
+        <ArrowRight size={9} strokeWidth={2} style={{ opacity: 0.5 }} />
+      </TransitionLink>
+    </nav>
+
+    {/* ─── Bottom Dock — outside motion.main so fixed positioning works ─── */}
+    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
+      <motion.div
+        initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5, type: 'spring', damping: 30, stiffness: 200 }}
+        className="flex items-center gap-1 px-2 py-2"
+        style={{
+          backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+          background: 'rgba(8,13,8,0.45)', borderRadius: '20px', border: '1px solid rgba(45,158,107,0.1)',
+        }}>
+        <button onClick={() => builderRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all"
+          style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '11px', color: 'rgba(141,184,154,0.72)' }}
+          onMouseEnter={e => { e.currentTarget.style.color = '#5DFFA8'; e.currentTarget.style.background = 'rgba(45,158,107,0.1)' }}
+          onMouseLeave={e => { e.currentTarget.style.color = 'rgba(141,184,154,0.72)'; e.currentTarget.style.background = 'transparent' }}>
+          <PenSquare size={14} strokeWidth={1.5} />
+          <span className="hidden sm:inline">Builder</span>
+        </button>
+
+        <div className="w-px h-5" style={{ background: 'rgba(45,158,107,0.15)' }} />
+
+        <button onClick={handleImprove} disabled={!hasContent || isImproving}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all disabled:opacity-30"
+          style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '11px', color: isImproving ? '#5DFFA8' : 'rgba(141,184,154,0.72)' }}
+          onMouseEnter={e => { if (!isImproving) { e.currentTarget.style.color = '#5DFFA8'; e.currentTarget.style.background = 'rgba(45,158,107,0.1)' } }}
+          onMouseLeave={e => { if (!isImproving) { e.currentTarget.style.color = 'rgba(141,184,154,0.72)'; e.currentTarget.style.background = 'transparent' } }}>
+          <Wand2 size={14} strokeWidth={1.5} />
+          <span className="hidden sm:inline">{isImproving ? 'Improving…' : 'Improve'}</span>
+        </button>
+
+        <div className="w-px h-5" style={{ background: 'rgba(45,158,107,0.15)' }} />
+
+        <button onClick={() => setSidebarOpen(v => !v)}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all"
+          style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '11px', color: sidebarOpen ? '#5DFFA8' : 'rgba(141,184,154,0.72)', background: sidebarOpen ? 'rgba(45,158,107,0.1)' : 'transparent' }}
+          onMouseEnter={e => { e.currentTarget.style.color = '#5DFFA8'; e.currentTarget.style.background = 'rgba(45,158,107,0.1)' }}
+          onMouseLeave={e => { e.currentTarget.style.color = sidebarOpen ? '#5DFFA8' : 'rgba(141,184,154,0.72)'; e.currentTarget.style.background = sidebarOpen ? 'rgba(45,158,107,0.1)' : 'transparent' }}>
+          <Clock size={14} strokeWidth={1.5} />
+          <span className="hidden sm:inline">History</span>
+        </button>
+      </motion.div>
+    </div>
 
     {/* ─── History Modal — outside motion.main so fixed positioning works ─── */}
     <AnimatePresence>
