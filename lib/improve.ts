@@ -60,12 +60,22 @@ function extractResult(raw: string): { improved: string; changes: string[] } | n
   return null
 }
 
+function getBuiltInGeminiKey(): string | undefined {
+  const keys = [
+    process.env.GEMINI_API_KEY,
+    process.env.GEMINI_API_KEY_2,
+    process.env.GEMINI_API_KEY_3,
+  ].filter(Boolean) as string[]
+  if (keys.length === 0) return undefined
+  return keys[Math.floor(Math.random() * keys.length)]
+}
+
 export async function improvePrompt(
   rawPrompt: string,
   userApiKey?: string,
   provider: AIProvider = 'gemini'
 ): Promise<{ improved: string; changes: string[] }> {
-  const apiKey = userApiKey || process.env.GEMINI_API_KEY
+  const apiKey = userApiKey || getBuiltInGeminiKey()
   if (!apiKey) throw new Error('No API key available. Add your API key in Settings.')
 
   const outputText = await callAI({

@@ -181,8 +181,22 @@ export default function VaultModal({ onClose, onLoad }: Props) {
 
         {/* Footer */}
         {entries.length > 0 && (
-          <div className="px-6 py-3 border-t border-white/5">
+          <div className="px-6 py-3 border-t border-white/5 flex items-center justify-between gap-4">
             <p className="text-[10px] text-muted/40 font-mono">Stored locally in your browser · Max 50 entries</p>
+            <button
+              onClick={() => {
+                const blob = new Blob([JSON.stringify(entries, null, 2)], { type: 'application/json' })
+                const url = URL.createObjectURL(blob)
+                const a = document.createElement('a')
+                a.href = url
+                a.download = `crumb-vault-${new Date().toISOString().slice(0, 10)}.json`
+                a.click()
+                URL.revokeObjectURL(url)
+              }}
+              className="text-[10px] font-mono text-muted/50 hover:text-primary transition-colors whitespace-nowrap"
+            >
+              Export JSON
+            </button>
           </div>
         )}
       </div>

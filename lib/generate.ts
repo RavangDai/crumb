@@ -59,12 +59,22 @@ function extractResult(raw: string): { prompt: string; approach: string[] } | nu
   return null
 }
 
+function getBuiltInGeminiKey(): string | undefined {
+  const keys = [
+    process.env.GEMINI_API_KEY,
+    process.env.GEMINI_API_KEY_2,
+    process.env.GEMINI_API_KEY_3,
+  ].filter(Boolean) as string[]
+  if (keys.length === 0) return undefined
+  return keys[Math.floor(Math.random() * keys.length)]
+}
+
 export async function generatePrompt(
   description: string,
   userApiKey?: string,
   provider: AIProvider = 'gemini'
 ): Promise<{ prompt: string; approach: string[] }> {
-  const apiKey = userApiKey || process.env.GEMINI_API_KEY
+  const apiKey = userApiKey || getBuiltInGeminiKey()
   if (!apiKey) throw new Error('No API key available. Add your API key in Settings.')
 
   const userMessage = `Here is what I want the AI to do:\n\n${description}${

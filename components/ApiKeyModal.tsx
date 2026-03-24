@@ -88,7 +88,7 @@ const PROVIDERS: {
     placeholder: 'sk-ant-...',
     link: 'https://console.anthropic.com/settings/keys',
     linkLabel: 'Get an Anthropic key',
-    model: 'claude-haiku',
+    model: 'claude-haiku-4-5-20251001',
   },
 ]
 
@@ -185,7 +185,7 @@ export default function ApiKeyModal({ open, onClose, theme }: Props) {
                     API Key
                   </h2>
                   <p className="text-[10px] mt-0.5" style={{ fontFamily: 'var(--font-jetbrains-mono)', color: t.muted }}>
-                    Bypass rate limits with your own key
+                    Use your own key to bypass rate limits
                   </p>
                 </div>
               </div>
@@ -234,7 +234,7 @@ export default function ApiKeyModal({ open, onClose, theme }: Props) {
               {/* Model info */}
               <p className="text-[11px]" style={{ fontFamily: 'var(--font-jetbrains-mono)', color: t.muted }}>
                 Using <span style={{ color: t.text }}>{providerInfo.model}</span>
-                {' '}— stored locally, never sent to our servers.
+                {' '}— stored locally in your browser, never retained on our servers.
               </p>
 
               {/* Input */}
@@ -336,7 +336,7 @@ export default function ApiKeyModal({ open, onClose, theme }: Props) {
             {/* Footer */}
             <div className="px-6 py-3.5" style={{ borderTop: `1px solid ${t.border}` }}>
               <p className="text-[10px] leading-relaxed" style={{ fontFamily: 'var(--font-jetbrains-mono)', color: t.muted }}>
-                If no key is set, the app uses its built-in Gemini key (rate-limited).
+                If no key is set, the app uses its built-in Gemini key (rate-limited). Your key is forwarded through our server to reach the AI provider but is never stored or logged.
               </p>
             </div>
           </motion.div>
