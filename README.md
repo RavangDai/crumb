@@ -1,6 +1,6 @@
 # CrumbCraft
 
-Two tools for working smarter with AI — built together, used separately.
+Two tools for working smarter with AI, built together, used separately.
 
 **Crumb** compresses AI conversations into portable context files you can carry into any new session.
 **Craft** turns rough descriptions into polished, expert-level prompts.
@@ -9,30 +9,30 @@ Two tools for working smarter with AI — built together, used separately.
 
 ## Tools
 
-### Crumb — AI Memory Compression
+### Crumb: AI Memory Compression
 
 Paste a conversation from ChatGPT, Claude, Gemini, or anywhere else. Crumb compresses it into a structured `.crumb` file with seven sections: Mission, Current State, Decisions Made, Dead Ends, Key Context, Open Questions, and Next Step.
 
-Start a new AI session, paste the crumb file, and continue exactly where you left off — with full context, zero re-explaining.
+Start a new AI session, paste the crumb file, and continue exactly where you left off, with full context and zero re-explaining.
 
 **Features**
 - Three compression depths: Snapshot, Memory, Full
-- Rolling context — update an existing crumb with new conversation instead of starting over
+- Rolling context: update an existing crumb with new conversation instead of starting over
 - Confidence score showing how well the compression captured the original
-- Context Vault — save and reload up to 50 crumbs locally
+- Context Vault: save and reload up to 50 crumbs locally
 - Export vault as JSON for backup
 
-### Craft — AI Prompt Builder
+### Craft: AI Prompt Builder
 
 Describe what you want, even vaguely. Craft generates a structured, expert-level prompt with persona, constraints, output format, and chain-of-thought where appropriate. Also improves prompts you already have.
 
 **Features**
-- Generate from scratch — works well even from brief or vague descriptions
-- Improve an existing prompt — sharpens specificity, adds missing context slots, upgrades output format
+- Generate from scratch, works well even from brief or vague descriptions
+- Improve an existing prompt: sharpens specificity, adds missing context slots, upgrades output format
 - Block-based prompt builder with drag-and-drop reordering
-- Prompt DNA visualization — radar chart scoring role, task, context, constraints, format
+- Prompt DNA visualization: radar chart scoring role, task, context, constraints, format
 - Built-in linter that flags weak patterns before you use the prompt
-- History — last 50 generated prompts saved locally
+- History: last 50 generated prompts saved locally
 
 ---
 
@@ -52,11 +52,11 @@ Keys are stored in your browser's localStorage and forwarded through the server 
 
 ## Stack
 
-- **Framework** — Next.js 16 (App Router)
-- **UI** — Tailwind CSS v4, Framer Motion, Lucide React
-- **Fonts** — Sora, DM Sans, JetBrains Mono (via `next/font`)
-- **AI** — Gemini 2.5 Flash (default), OpenAI, Anthropic via a unified `callAI()` abstraction
-- **Storage** — localStorage only, no database
+- **Framework**: Next.js 16 (App Router)
+- **UI**: Tailwind CSS v4, Framer Motion, Lucide React
+- **Fonts**: Sora, DM Sans, JetBrains Mono (via `next/font`)
+- **AI**: Gemini 2.5 Flash (default), OpenAI, Anthropic via a unified `callAI()` abstraction
+- **Storage**: localStorage only, no database
 
 ---
 
@@ -64,7 +64,6 @@ Keys are stored in your browser's localStorage and forwarded through the server 
 
 ```bash
 git clone https://github.com/RavangDai/crumb.git
-cd crumb/crumb
 npm install
 ```
 
@@ -73,7 +72,7 @@ Create a `.env.local` file:
 ```env
 GEMINI_API_KEY=your_key_here
 
-# Optional: additional keys for load distribution
+# Node 2 and 3: optional, but recommended to avoid rate limits
 GEMINI_API_KEY_2=
 GEMINI_API_KEY_3=
 ```
@@ -124,11 +123,13 @@ components/
 
 ## Environment Variables
 
-| Variable           | Required | Description                                 |
-|--------------------|----------|---------------------------------------------|
-| `GEMINI_API_KEY`   | Yes      | Primary Gemini key used when no user key is set |
-| `GEMINI_API_KEY_2` | No       | Additional key, randomly selected to distribute load |
-| `GEMINI_API_KEY_3` | No       | Additional key, randomly selected to distribute load |
+Crumb exposes three selectable nodes in the UI. Each node maps to a dedicated Gemini API key so you can spread usage across multiple free-tier keys and switch nodes if one hits its rate limit.
+
+| Variable           | Required | Node   |
+|--------------------|----------|--------|
+| `GEMINI_API_KEY`   | Yes      | Node 1 |
+| `GEMINI_API_KEY_2` | No       | Node 2 |
+| `GEMINI_API_KEY_3` | No       | Node 3 |
 
 ---
 
