@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { compressConversation } from '@/lib/compress'
+import type { AIProvider } from '@/lib/ai'
 
 export async function POST(req: NextRequest) {
   try {
-    const { conversation, server = 1, depth = 'memory', existingCrumb } = await req.json()
+    const { conversation, server = 1, depth = 'memory', existingCrumb, apiKey, provider = 'gemini' } = await req.json()
 
     if (!conversation || conversation.trim().length === 0) {
       return NextResponse.json(
@@ -19,7 +20,14 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const crumbFile = await compressConversation(conversation, server, depth, existingCrumb || undefined)
+    const crumbFile = await compressConversation(
+      conversation,
+      server,
+      depth,
+      existingCrumb || undefined,
+      apiKey || undefined,
+      provider as AIProvider
+    )
 
     return NextResponse.json({ crumbFile })
 

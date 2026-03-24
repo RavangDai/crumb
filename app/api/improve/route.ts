@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { improvePrompt } from '@/lib/improve'
+import type { AIProvider } from '@/lib/ai'
 
 export async function POST(req: NextRequest) {
   try {
-    const { prompt } = await req.json()
+    const { prompt, apiKey, provider = 'gemini' } = await req.json()
 
     if (!prompt || prompt.trim().length === 0) {
       return NextResponse.json({ error: 'Prompt is required' }, { status: 400 })
@@ -13,7 +14,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Prompt too long. Max 20,000 characters.' }, { status: 400 })
     }
 
-    const result = await improvePrompt(prompt)
+    const result = await improvePrompt(prompt, apiKey || undefined, provider as AIProvider)
     return NextResponse.json(result)
 
   } catch (error: unknown) {

@@ -5,9 +5,11 @@ import Image from 'next/image'
 import { TransitionLink } from '@/context/transition'
 import { motion, AnimatePresence, Reorder } from 'framer-motion'
 import { getVault } from '@/lib/vault'
+import { getUserApiKey, getUserProvider } from '@/lib/apikey'
+import ApiKeyModal from '@/components/ApiKeyModal'
 import {
   Code2, PenLine, Palette, BarChart2, Search, Package, Megaphone, GraduationCap,
-  OctagonX, AlertTriangle, Lightbulb, Wand2, PenSquare, Clock, ArrowRight, Sparkles, Wrench,
+  OctagonX, AlertTriangle, Lightbulb, Wand2, PenSquare, Clock, ArrowRight, Sparkles, Wrench, Key,
   type LucideIcon,
 } from 'lucide-react'
 import type { Block, BlockType, TechniqueId, Severity, LinterWarning, DNAScore, PromptEntry } from './types'
@@ -410,6 +412,7 @@ export default function CraftPage() {
   const [expandedChanges, setExpandedChanges] = useState<number[]>([])
 
   const [hoveredHistoryId, setHoveredHistoryId] = useState<string | null>(null)
+  const [showApiKey, setShowApiKey] = useState(false)
 
   const builderRef  = useRef<HTMLDivElement>(null)
   const addMenuRef  = useRef<HTMLDivElement>(null)
@@ -507,7 +510,7 @@ export default function CraftPage() {
       const res = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ description: aiInput }),
+        body: JSON.stringify({ description: aiInput, apiKey: getUserApiKey() || undefined, provider: getUserProvider() }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Something went wrong')
@@ -536,7 +539,7 @@ export default function CraftPage() {
       const res = await fetch('/api/improve', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: assembled }),
+        body: JSON.stringify({ prompt: assembled, apiKey: getUserApiKey() || undefined, provider: getUserProvider() }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Something went wrong')
@@ -1421,6 +1424,17 @@ export default function CraftPage() {
           <Clock size={14} strokeWidth={1.5} />
           <span className="hidden sm:inline">History</span>
         </button>
+
+        <div className="w-px h-5" style={{ background: 'rgba(45,158,107,0.15)' }} />
+
+        <button onClick={() => setShowApiKey(true)}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all"
+          style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: '11px', color: 'rgba(141,184,154,0.72)', background: 'transparent' }}
+          onMouseEnter={e => { e.currentTarget.style.color = '#5DFFA8'; e.currentTarget.style.background = 'rgba(45,158,107,0.1)' }}
+          onMouseLeave={e => { e.currentTarget.style.color = 'rgba(141,184,154,0.72)'; e.currentTarget.style.background = 'transparent' }}>
+          <Key size={14} strokeWidth={1.5} />
+          <span className="hidden sm:inline">API Key</span>
+        </button>
       </motion.div>
     </div>
 
@@ -1571,6 +1585,8 @@ export default function CraftPage() {
         </motion.div>
       )}
     </AnimatePresence>
+
+    <ApiKeyModal open={showApiKey} onClose={() => setShowApiKey(false)} theme="craft" />
     </>
   )
 }

@@ -8,10 +8,12 @@ import BrainFileOutput from '@/components/BrainFileOutput'
 import CompressionVisualizer from '@/components/CompressionVisualizer'
 import WaveBackground from '@/components/WaveBackground'
 import VaultModal from '@/components/VaultModal'
+import ApiKeyModal from '@/components/ApiKeyModal'
 import { CompressionDepth } from '@/lib/prompt'
 import { ConfidenceData, VaultEntry } from '@/lib/types'
 import { saveToVault, extractVaultTitle } from '@/lib/vault'
-import { Zap, Loader2, ArrowUp, PenLine, History, PenSquare } from 'lucide-react'
+import { getUserApiKey, getUserProvider } from '@/lib/apikey'
+import { Zap, Loader2, ArrowUp, PenLine, History, PenSquare, Key } from 'lucide-react'
 
 const MIN_WORDS = 30
 
@@ -26,6 +28,7 @@ export default function Home() {
 
   // Vault
   const [showVault, setShowVault] = useState(false)
+  const [showApiKey, setShowApiKey] = useState(false)
 
   // Rolling context
   const [showUpdateInput, setShowUpdateInput] = useState(false)
@@ -73,7 +76,7 @@ export default function Home() {
       const res = await fetch('/api/compress', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ conversation, server: selectedServer, depth: compressionDepth }),
+        body: JSON.stringify({ conversation, server: selectedServer, depth: compressionDepth, apiKey: getUserApiKey() || undefined, provider: getUserProvider() }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Something went wrong')
@@ -118,6 +121,8 @@ export default function Home() {
           server: selectedServer,
           depth: compressionDepth,
           existingCrumb: crumbFile,
+          apiKey: getUserApiKey() || undefined,
+          provider: getUserProvider(),
         }),
       })
       const data = await res.json()
@@ -688,6 +693,17 @@ AI: Good choice! Here's how to set it up...`}
 
           <div className="w-px h-5 bg-border-ocean/30" />
 
+          <button
+            onClick={() => setShowApiKey(true)}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-mono transition-all hover:bg-primary/10 text-muted hover:text-primary"
+            title="API Key"
+          >
+            <Key size={16} strokeWidth={1.5} />
+            <span className="hidden sm:inline">API Key</span>
+          </button>
+
+          <div className="w-px h-5 bg-border-ocean/30" />
+
           <TransitionLink
             href="/craft"
             type="craft"
@@ -707,6 +723,8 @@ AI: Good choice! Here's how to set it up...`}
           onLoad={handleLoadFromVault}
         />
       )}
+
+      <ApiKeyModal open={showApiKey} onClose={() => setShowApiKey(false)} theme="crumb" />
 
     </main>
   )

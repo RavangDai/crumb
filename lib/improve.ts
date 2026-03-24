@@ -1,3 +1,5 @@
+import { callAI, AIProvider } from './ai'
+
 const IMPROVE_SYSTEM_PROMPT = `You are an expert prompt engineer. Rewrite the user's prompt so it produces noticeably better AI output.
 
 ## Your job
@@ -34,16 +36,11 @@ Return ONLY valid JSON with no markdown wrapper:
 
 The "changes" array must have exactly 3 entries. Each explains a specific change and why it leads to better AI output. No vague claims like "enhanced clarity" — say what the AI will do differently.`
 
-// ─── Multi-strategy JSON extraction ──────────────────────────────────────────
-
 function extractResult(raw: string): { improved: string; changes: string[] } | null {
   const candidates: string[] = [
     raw,
-    // strip multiline code fences
     raw.replace(/```(?:json)?\s*\n?([\s\S]*?)\n?\s*```/gi, '$1').trim(),
   ]
-
-  // Also extract the first {...} block found anywhere in the text
   const jsonBlock = raw.match(/\{[\s\S]*\}/)
   if (jsonBlock) candidates.push(jsonBlock[0])
 
@@ -51,7 +48,6 @@ function extractResult(raw: string): { improved: string; changes: string[] } | n
     if (!s) continue
     try {
       const p = JSON.parse(s)
-      // Accept direct shape or one level of nesting
       const node = typeof p.improved === 'string' ? p : (p.result ?? p.output ?? p.data ?? null)
       if (!node) continue
       if (typeof node.improved === 'string' && Array.isArray(node.changes)) {
@@ -64,66 +60,25 @@ function extractResult(raw: string): { improved: string; changes: string[] } | n
   return null
 }
 
-// ─── Main export ──────────────────────────────────────────────────────────────
+export async function improvePrompt(
+  rawPrompt: string,
+  userApiKey?: string,
+  provider: AIProvider = 'gemini'
+): Promise<{ improved: string; changes: string[] }> {
+  const apiKey = userApiKey || process.env.GEMINI_API_KEY
+  if (!apiKey) throw new Error('No API key available. Add your API key in Settings.')
 
-export async function improvePrompt(rawPrompt: string): Promise<{ improved: string; changes: string[] }> {
-  const apiKey = process.env.GEMINI_API_KEY
-  if (!apiKey) throw new Error('GEMINI_API_KEY is not configured.')
-
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        // Use systemInstruction so the model treats it as a system prompt,
-        // not as part of the user message
-        systemInstruction: {
-          parts: [{ text: IMPROVE_SYSTEM_PROMPT }]
-        },
-        contents: [
-          {
-            role: 'user',
-            parts: [{ text: `Here is the prompt to improve:\n\n${rawPrompt}` }]
-          }
-        ],
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 3000,
-          thinkingConfig: {
-            thinkingBudget: 1024,
-          },
-        }
-      })
-    }
-  )
-
-  if (!response.ok) {
-    const err = await response.json()
-    throw new Error(err.error?.message || 'Gemini API error')
-  }
-
-  const data = await response.json()
-
-  // Same part-access pattern as the working compress.ts
-  const parts: Array<{ text?: string; thought?: boolean }> =
-    data.candidates?.[0]?.content?.parts ?? []
-
-  // Skip thought parts (thinking trace), take first real output
-  const outputText =
-    parts.find(p => !p.thought && typeof p.text === 'string')?.text ??
-    parts[0]?.text
-
-  console.log('[improve] parts count:', parts.length)
-  console.log('[improve] outputText snippet:', outputText?.slice(0, 400))
-
-  if (!outputText) throw new Error('No response from Gemini')
+  const outputText = await callAI({
+    systemPrompt: IMPROVE_SYSTEM_PROMPT,
+    userMessage: `Here is the prompt to improve:\n\n${rawPrompt}`,
+    temperature: 0.7,
+    maxTokens: 3000,
+    thinkingBudget: 1024,
+  }, apiKey, provider)
 
   const result = extractResult(outputText)
   if (!result) {
-    throw new Error(
-      `Could not parse improvement response — model returned: ${outputText.slice(0, 300)}`
-    )
+    throw new Error(`Could not parse improvement response — model returned: ${outputText.slice(0, 300)}`)
   }
   return result
 }

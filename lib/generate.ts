@@ -1,22 +1,31 @@
-const GENERATE_SYSTEM_PROMPT = `You are an elite prompt engineer. The user gives you a plain-language description of what they want an AI to do. Your job is to craft the most effective prompt possible — nothing more, nothing less.
+import { callAI, AIProvider } from './ai'
 
-## Core rules
+const GENERATE_SYSTEM_PROMPT = `You are an elite prompt engineer with deep expertise in getting exceptional results from AI models. The user gives you a description of what they want — sometimes detailed, sometimes just a few vague words. Your job is to produce the most powerful, effective prompt possible regardless of how good or bad their description is.
 
-**Match the scope to the input.** If the user's description is short or vague, write a focused, concise prompt (~150–250 words). Do NOT inflate a simple request into an enterprise framework. Save depth for when the user gives you enough detail to warrant it.
+## When the input is vague or sparse
 
-**Never assume what wasn't said.** If the user says "improve my webapp" — do not assume SaaS, cloud infra, or enterprise scale. Assume a personal or small-team project unless stated. If a key detail is missing that would change the prompt significantly, add a single [placeholder] for the user to fill in — do not invent details.
+This is where you shine. A weak description is not a reason to produce a weak prompt — it's an invitation to apply expert judgment. Do the following:
 
-**Pick the right output format for the task.** Bullet lists, step-by-step, and plain paragraphs are often better than JSON. Only specify JSON output if the task is genuinely data-structured. Do NOT put markdown code fences (backticks) inside the generated prompt — they break parsing.
+1. **Infer the most likely intent.** "help with emails" → the user probably wants to write professional, persuasive emails. "fix my code" → they want a senior developer reviewing for bugs and quality. Commit to the most reasonable interpretation.
+2. **Fill the gaps with expert defaults.** Choose the persona, constraints, and output format that a prompt engineer would pick for this type of task. Don't ask — decide.
+3. **Use one [PLACEHOLDER] only when the missing info would completely change the prompt** (e.g. the specific topic, the target audience, or the code to review). Everything else, fill in with smart defaults.
+4. **Produce a full, rich prompt.** A vague input is not a signal to write less — it's a signal to write more thoughtfully. Give the AI model everything it needs.
 
-**Apply these techniques where they fit — not all at once:**
-- Persona: a specific expert role (never "a helpful assistant")
-- Objective: concrete outcome, not a vibe
-- Chain of thought: only for analytical, multi-step, or reasoning tasks
-- Output format: name it explicitly when it matters
-- Constraints: hard "Do not" rules for the behaviours that would ruin the output
-- Context slot: one [PASTE X HERE] placeholder when the user clearly needs to supply material
+## Techniques to apply (mix and match as the task demands)
 
-**Keep it tight.** A 200-word prompt that does one thing precisely beats a 900-word spec that tries to do everything.
+- **Persona**: A sharply defined expert role. "Senior backend engineer who has built high-traffic APIs" beats "a developer".
+- **Objective**: A concrete, measurable outcome. "Identify the 3 most critical bugs and explain the fix" beats "find bugs".
+- **Context slot**: Add [PASTE YOUR X HERE] only when the user clearly needs to supply material the AI can't work without.
+- **Chain of thought**: For analytical, multi-step, or reasoning tasks — tell the AI to think before answering.
+- **Output format**: Specify exactly what structure the response should take. Name it, show it if helpful.
+- **Constraints**: Hard behavioral rules. "Do not suggest rewrites of working code." "Every claim must cite a source." These prevent the most common failure modes.
+- **Self-check**: "Before responding, verify your answer for gaps and errors." Adds a quality layer for high-stakes tasks.
+
+## Output quality bar
+
+The generated prompt must be noticeably better than what the user wrote. When you read it back, it should feel like a professional prompt engineer spent time on it. Specific, purposeful, and immediately usable.
+
+Do NOT put markdown code fences (backticks) inside the generated prompt — they break parsing.
 
 Return ONLY valid JSON with no markdown wrapper:
 {
@@ -24,7 +33,7 @@ Return ONLY valid JSON with no markdown wrapper:
   "approach": ["<specific technique you applied and why>", "<specific technique you applied and why>", "<specific technique you applied and why>"]
 }
 
-The "approach" array must have exactly 3 entries. Be concrete — name what you added and why it matters for this specific input.`
+The "approach" array must have exactly 3 entries. Be concrete — explain what inference or technique you applied and why it makes the prompt meaningfully better.`
 
 function extractResult(raw: string): { prompt: string; approach: string[] } | null {
   const candidates: string[] = [
@@ -50,48 +59,27 @@ function extractResult(raw: string): { prompt: string; approach: string[] } | nu
   return null
 }
 
-export async function generatePrompt(description: string): Promise<{ prompt: string; approach: string[] }> {
-  const apiKey = process.env.GEMINI_API_KEY
-  if (!apiKey) throw new Error('GEMINI_API_KEY is not configured.')
+export async function generatePrompt(
+  description: string,
+  userApiKey?: string,
+  provider: AIProvider = 'gemini'
+): Promise<{ prompt: string; approach: string[] }> {
+  const apiKey = userApiKey || process.env.GEMINI_API_KEY
+  if (!apiKey) throw new Error('No API key available. Add your API key in Settings.')
 
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        systemInstruction: {
-          parts: [{ text: GENERATE_SYSTEM_PROMPT }]
-        },
-        contents: [
-          {
-            role: 'user',
-            parts: [{ text: `Here is what I want the AI to do:\n\n${description}` }]
-          }
-        ],
-        generationConfig: {
-          temperature: 0.45,
-          maxOutputTokens: 2000,
-          thinkingConfig: { thinkingBudget: 0 },
-        }
-      })
-    }
-  )
+  const userMessage = `Here is what I want the AI to do:\n\n${description}${
+    description.trim().split(/\s+/).length < 15
+      ? '\n\n[Note: This description is brief — infer intent and produce a full, professional prompt with smart defaults.]'
+      : ''
+  }`
 
-  if (!response.ok) {
-    const err = await response.json()
-    throw new Error(err.error?.message || 'Gemini API error')
-  }
-
-  const data = await response.json()
-  const parts: Array<{ text?: string; thought?: boolean }> =
-    data.candidates?.[0]?.content?.parts ?? []
-
-  const outputText =
-    parts.find(p => !p.thought && typeof p.text === 'string')?.text ??
-    parts[0]?.text
-
-  if (!outputText) throw new Error('No response from Gemini')
+  const outputText = await callAI({
+    systemPrompt: GENERATE_SYSTEM_PROMPT,
+    userMessage,
+    temperature: 0.6,
+    maxTokens: 3000,
+    thinkingBudget: 8000,
+  }, apiKey, provider)
 
   const result = extractResult(outputText)
   if (!result) {
