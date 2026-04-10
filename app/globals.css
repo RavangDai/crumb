@@ -157,3 +157,43 @@ body::-webkit-scrollbar-thumb:hover {
   animation: scaleIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
+/* ─── Craft page premium ─── */
+
+/* Eyebrow terminal flicker — one-shot */
+@keyframes craftEyebrowFlicker {
+  0%   { opacity: 0; }
+  30%  { opacity: 0.4; }
+  50%  { opacity: 1; }
+  64%  { opacity: 0.6; }
+  80%  { opacity: 1; }
+  100% { opacity: 1; }
+}
+
+/* "Workshop" headline glow pulse — repeating */
+@keyframes craftHeadlineGlow {
+  0%, 100% { text-shadow: none; }
+  50%       { text-shadow: 0 0 22px rgba(45, 158, 107, 0.45); }
+}
+
+/* Panel top-edge light sweep */
+@keyframes craftEdgeSweep {
+  0%   { transform: translateX(-120%); }
+  100% { transform: translateX(420%); }
+}
+
+/* Anatomy tag pop-in */
+@keyframes craftTagPop {
+  0%   { opacity: 0; transform: scale(0.7) translateY(6px); }
+  70%  { transform: scale(1.05) translateY(-1px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.craft-eyebrow-flicker {
+  animation: craftEyebrowFlicker 0.75s ease-out both;
+}
+
+.craft-headline-glow {
+  animation: craftHeadlineGlow 3.5s ease-in-out infinite;
+  animation-delay: 0.9s;
+}
+

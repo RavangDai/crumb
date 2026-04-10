@@ -9,9 +9,10 @@ import { getUserApiKey, getUserProvider } from '@/lib/apikey'
 import ApiKeyModal from '@/components/ApiKeyModal'
 import {
   Code2, PenLine, Palette, BarChart2, Search, Package, Megaphone, GraduationCap,
-  OctagonX, AlertTriangle, Lightbulb, Wand2, PenSquare, Clock, ArrowRight, Sparkles, Wrench, Key,
+  OctagonX, AlertTriangle, Lightbulb, Wand2, PenSquare, Clock, ArrowRight, Sparkles, Wrench, Key, Github, Star, GitBranch,
   type LucideIcon,
 } from 'lucide-react'
+import type { RepoMeta } from '@/lib/craft-repo'
 import type { Block, BlockType, TechniqueId, Severity, LinterWarning, DNAScore, PromptEntry } from './types'
 import { BLOCK_META, TECHNIQUES, FORMAT_CHIPS } from './constants'
 import { PentagonDNA } from './PentagonDNA'
@@ -266,56 +267,158 @@ function AddBlockMenu({ onAdd, onClose, usedTypes }: { onAdd: (t: BlockType) => 
 
 const IMPROVE_STAGES = ['Reading prompt…', 'Analysing structure…', 'Engineering…', 'Refining…']
 
-// ─── Shared Loading Overlay ──────────────────────────────────────────────────
+// ─── Shared Loading Overlay — Neural Parse ───────────────────────────────────
+
+const DATA_CHARS = ['01', '10', '11', '00', '█', '1', '0', '▓', '░', '11', '00', '01']
 
 function CraftLoadingOverlay() {
+  const rows = useMemo(() =>
+    Array.from({ length: 9 }, () => ({
+      y: 6 + Math.random() * 88,
+      w: 18 + Math.random() * 52,
+      dur: 0.65 + Math.random() * 1.05,
+      delay: Math.random() * 3.8,
+      repeatDelay: 1.1 + Math.random() * 2.2,
+    })), []
+  )
+
+  const nodes = useMemo(() =>
+    Array.from({ length: 24 }, () => ({
+      x: 4 + Math.random() * 92,
+      y: 4 + Math.random() * 92,
+      r: 1.2 + Math.random() * 1.8,
+      dur: 1.0 + Math.random() * 2.4,
+      delay: Math.random() * 3.2,
+      repeatDelay: 0.3 + Math.random() * 1.8,
+    })), []
+  )
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.35 }}
-      style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden', zIndex: 10 }}
+      transition={{ duration: 0.18 }}
+      style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden', zIndex: 10, borderRadius: 'inherit' }}
     >
-      {/* Dim veil */}
-      <div style={{ position: 'absolute', inset: 0, background: 'rgba(2,8,2,0.25)' }} />
+      {/* Ambient veil */}
+      <div style={{ position: 'absolute', inset: 0, background: 'rgba(2,8,2,0.14)' }} />
 
-      {/* Scan sweep */}
+      {/* Breathing radial — top-left */}
       <motion.div
-        animate={{ y: ['-60px', '900px'] }}
-        transition={{ duration: 3.2, repeat: Infinity, ease: 'linear' }}
-        style={{ position: 'absolute', left: 0, right: 0, top: 0 }}
-      >
-        <div style={{ height: 40, background: 'linear-gradient(to bottom, transparent, rgba(93,255,168,0.05))' }} />
-        <div style={{
-          height: 1.5,
-          background: 'linear-gradient(90deg, transparent 0%, rgba(93,255,168,0.4) 15%, rgba(93,255,168,0.85) 50%, rgba(93,255,168,0.4) 85%, transparent 100%)',
-          boxShadow: '0 0 14px rgba(93,255,168,0.5), 0 0 4px rgba(93,255,168,0.8)',
-        }} />
-        <div style={{ height: 14, background: 'linear-gradient(to bottom, rgba(93,255,168,0.03), transparent)' }} />
-      </motion.div>
+        animate={{ scale: [1, 1.22, 1], opacity: [0.04, 0.14, 0.04] }}
+        transition={{ duration: 3.8, repeat: Infinity, ease: 'easeInOut' }}
+        style={{
+          position: 'absolute', top: '-25%', left: '-8%',
+          width: '55%', paddingBottom: '55%', borderRadius: '50%',
+          background: 'radial-gradient(ellipse, rgba(93,255,168,1) 0%, transparent 70%)',
+        }}
+      />
 
-      {/* Corner brackets */}
-      {[
-        { top: 10, left: 10, borderTop: '1px solid rgba(93,255,168,0.35)', borderLeft: '1px solid rgba(93,255,168,0.35)' },
-        { top: 10, right: 10, borderTop: '1px solid rgba(93,255,168,0.35)', borderRight: '1px solid rgba(93,255,168,0.35)' },
-        { bottom: 10, left: 10, borderBottom: '1px solid rgba(93,255,168,0.35)', borderLeft: '1px solid rgba(93,255,168,0.35)' },
-        { bottom: 10, right: 10, borderBottom: '1px solid rgba(93,255,168,0.35)', borderRight: '1px solid rgba(93,255,168,0.35)' },
-      ].map((s, i) => (
+      {/* Row read lines — neural parse */}
+      {rows.map((r, i) => (
         <motion.div key={i}
-          initial={{ opacity: 0, scale: 0.6 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: i * 0.06, duration: 0.3, ease: 'easeOut' }}
-          style={{ position: 'absolute', width: 12, height: 12, ...s }}
+          style={{
+            position: 'absolute', left: 0, top: `${r.y}%`,
+            height: 1, transformOrigin: 'left center',
+            width: `${r.w}%`,
+          }}
+          animate={{ scaleX: [0, 1, 1, 0], opacity: [0, 0.24, 0.18, 0] }}
+          transition={{
+            duration: r.dur, delay: r.delay,
+            repeat: Infinity, repeatDelay: r.repeatDelay,
+            ease: [0.25, 0.46, 0.45, 0.94],
+            times: [0, 0.28, 0.72, 1],
+          }}
+        >
+          <div style={{
+            height: '100%', width: '100%',
+            background: 'linear-gradient(90deg, rgba(93,255,168,0.65), rgba(93,255,168,0.22) 70%, transparent)',
+          }} />
+        </motion.div>
+      ))}
+
+      {/* Node constellation */}
+      {nodes.map((n, i) => (
+        <motion.div key={i}
+          style={{
+            position: 'absolute',
+            left: `${n.x}%`, top: `${n.y}%`,
+            width: n.r * 2, height: n.r * 2,
+            borderRadius: '50%',
+            background: '#5DFFA8',
+            transform: 'translate(-50%, -50%)',
+            boxShadow: n.r > 2.5 ? '0 0 5px rgba(93,255,168,0.55)' : 'none',
+          }}
+          animate={{ opacity: [0, n.r > 2.5 ? 0.7 : 0.38, 0], scale: [0.3, 1, 0.3] }}
+          transition={{
+            duration: n.dur, delay: n.delay,
+            repeat: Infinity, repeatDelay: n.repeatDelay,
+            ease: 'easeInOut',
+          }}
         />
       ))}
 
-      {/* Bottom shimmer */}
-      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 1, overflow: 'hidden' }}>
+      {/* Corner brackets — draw-in with flicker */}
+      {[
+        { top: 7, left: 7, borderTop: '1px solid rgba(93,255,168,0.6)', borderLeft: '1px solid rgba(93,255,168,0.6)' },
+        { top: 7, right: 7, borderTop: '1px solid rgba(93,255,168,0.6)', borderRight: '1px solid rgba(93,255,168,0.6)' },
+        { bottom: 7, left: 7, borderBottom: '1px solid rgba(93,255,168,0.6)', borderLeft: '1px solid rgba(93,255,168,0.6)' },
+        { bottom: 7, right: 7, borderBottom: '1px solid rgba(93,255,168,0.6)', borderRight: '1px solid rgba(93,255,168,0.6)' },
+      ].map((s, i) => (
+        <motion.div key={i}
+          initial={{ opacity: 0, scale: 0.2 }}
+          animate={{ opacity: [0, 1, 0.55, 1], scale: 1 }}
+          transition={{
+            opacity: { duration: 0.45, delay: i * 0.05, times: [0, 0.35, 0.55, 1] },
+            scale: { duration: 0.38, delay: i * 0.05, ease: [0.16, 1, 0.3, 1] },
+          }}
+          style={{ position: 'absolute', width: 16, height: 16, ...s }}
+        />
+      ))}
+
+      {/* Right-edge data stream */}
+      <div style={{
+        position: 'absolute', right: 13, top: '8%', bottom: '8%',
+        display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+        pointerEvents: 'none',
+      }}>
+        {DATA_CHARS.map((char, i) => (
+          <motion.span key={i}
+            animate={{ opacity: [0, 0.32, 0] }}
+            transition={{
+              duration: 0.55, delay: i * 0.09,
+              repeat: Infinity, repeatDelay: 2.0,
+              ease: 'easeOut',
+            }}
+            style={{ fontFamily: 'var(--font-jetbrains-mono)', fontSize: 7, color: '#5DFFA8', lineHeight: 1, display: 'block' }}
+          >
+            {char}
+          </motion.span>
+        ))}
+      </div>
+
+      {/* Bottom shimmer — sharp, fast, with pause */}
+      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '1.5px', overflow: 'hidden' }}>
         <motion.div
-          style={{ height: '100%', width: '35%', background: 'linear-gradient(90deg, transparent, rgba(93,255,168,0.7), transparent)' }}
-          animate={{ x: ['-100%', '400%'] }}
-          transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+          style={{
+            height: '100%', width: '38%',
+            background: 'linear-gradient(90deg, transparent, rgba(93,255,168,0.5) 25%, rgba(93,255,168,0.95) 50%, rgba(93,255,168,0.5) 75%, transparent)',
+          }}
+          animate={{ x: ['-100%', '370%'] }}
+          transition={{ duration: 1.3, repeat: Infinity, repeatDelay: 0.8, ease: 'easeInOut' }}
+        />
+      </div>
+
+      {/* Top shimmer — opposite direction, delayed */}
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', overflow: 'hidden' }}>
+        <motion.div
+          style={{
+            height: '100%', width: '28%',
+            background: 'linear-gradient(90deg, transparent, rgba(93,255,168,0.35) 50%, transparent)',
+          }}
+          animate={{ x: ['370%', '-100%'] }}
+          transition={{ duration: 2.2, repeat: Infinity, repeatDelay: 0.5, ease: 'easeInOut', delay: 0.65 }}
         />
       </div>
     </motion.div>
@@ -324,54 +427,227 @@ function CraftLoadingOverlay() {
 
 // ─── Shared Loading Button Content ───────────────────────────────────────────
 
-function LoadingButtonContent({ stage }: { stage: number }) {
+const REPO_STAGES = ['Fetching repository…', 'Reading file tree…', 'Analysing stack…', 'Engineering prompt…']
+
+function LoadingButtonContent({ stage, stages = IMPROVE_STAGES }: { stage: number; stages?: string[] }) {
   return (
     <div className="flex items-center gap-2.5 relative z-10">
-      {/* Orbit spinner */}
-      <div style={{ width: 14, height: 14, position: 'relative', flexShrink: 0 }}>
-        <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: '1px solid rgba(93,255,168,0.18)' }} />
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-          style={{ position: 'absolute', inset: 0 }}
-        >
-          <div style={{
-            position: 'absolute', top: -1.5, left: '50%',
-            width: 3, height: 3, borderRadius: '50%',
-            background: '#5DFFA8', transform: 'translateX(-50%)',
-            boxShadow: '0 0 5px #5DFFA8',
-          }} />
-        </motion.div>
-        <motion.div
-          animate={{ scale: [0.5, 1, 0.5], opacity: [0.4, 1, 0.4] }}
-          transition={{ duration: 1.1, repeat: Infinity, ease: 'easeInOut' }}
-          style={{
-            position: 'absolute', top: '50%', left: '50%',
-            width: 3.5, height: 3.5, borderRadius: '50%',
-            background: '#5DFFA8', transform: 'translate(-50%, -50%)',
-          }}
-        />
-      </div>
-      {/* Cycling text */}
-      <AnimatePresence mode="wait">
-        <motion.span key={stage}
-          initial={{ opacity: 0, y: 4 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -4 }}
-          transition={{ duration: 0.2 }}
-        >
-          {IMPROVE_STAGES[stage]}
-        </motion.span>
-      </AnimatePresence>
-      {/* Thinking dots */}
-      <div className="flex gap-[3px] ml-1">
-        {[0, 1, 2].map(i => (
+      {/* Waveform bars — audio-analysis feel */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '2px', flexShrink: 0, height: 14 }}>
+        {([0.14, 0, 0.28, 0.07] as const).map((delay, i) => (
           <motion.div key={i}
-            style={{ width: 2.5, height: 2.5, borderRadius: '50%', background: '#5DFFA8', flexShrink: 0 }}
-            animate={{ opacity: [0.2, 1, 0.2], scale: [0.7, 1.2, 0.7] }}
-            transition={{ duration: 1.1, delay: i * 0.2, repeat: Infinity, ease: 'easeInOut' }}
+            style={{ width: 2, borderRadius: 1, background: 'currentColor', originY: 0.5 }}
+            animate={{ height: ['3px', '11px', '4px', '13px', '5px', '9px', '3px'] }}
+            transition={{
+              duration: 1.05,
+              delay,
+              repeat: Infinity,
+              ease: 'easeInOut',
+            }}
           />
         ))}
+      </div>
+      {/* Cycling text — blur crossfade */}
+      <AnimatePresence mode="wait">
+        <motion.span key={stage}
+          initial={{ opacity: 0, filter: 'blur(6px)', y: 5 }}
+          animate={{ opacity: 1, filter: 'blur(0px)', y: 0 }}
+          exit={{ opacity: 0, filter: 'blur(6px)', y: -5 }}
+          transition={{ duration: 0.22 }}
+        >
+          {stages[stage]}
+        </motion.span>
+      </AnimatePresence>
+    </div>
+  )
+}
+
+// ─── Prompt Anatomy ──────────────────────────────────────────────────────────
+
+const ANATOMY_PATTERNS: { label: string; color: string; regex: RegExp }[] = [
+  { label: 'Persona',     color: '#2D9E6B', regex: /\byou are\b/i },
+  { label: 'Objective',   color: '#5DFFA8', regex: /\b(your (goal|task|job|objective)|you will|you must)\b/i },
+  { label: 'Context',     color: '#7A8DC4', regex: /\b(context|background|given|note that)\b/i },
+  { label: 'Format',      color: '#C4A45A', regex: /\b(format|structure|respond (as|in|with)|output)\b/i },
+  { label: 'Constraints', color: '#C47A5A', regex: /\b(do not|never|always|must not|avoid|only|no more than)\b/i },
+  { label: 'Technique',   color: '#8DB89A', regex: /\b(think (step|through)|chain of thought|reason|before (answering|responding)|verify)\b/i },
+]
+
+function detectAnatomy(prompt: string): { label: string; color: string }[] {
+  return ANATOMY_PATTERNS.filter(p => p.regex.test(prompt)).map(({ label, color }) => ({ label, color }))
+}
+
+// ─── Shared Prompt Result Card ────────────────────────────────────────────────
+
+function PromptResultCard({
+  prompt,
+  approach,
+  copied,
+  onCopy,
+  onExport,
+  onRefineInManual,
+  approachLabel = 'What we engineered',
+}: {
+  prompt: string
+  approach: string[]
+  copied: boolean
+  onCopy: () => void
+  onExport: () => void
+  onRefineInManual: () => void
+  approachLabel?: string
+}) {
+  const anatomy = detectAnatomy(prompt)
+  const tokenCount = Math.round(prompt.length / 4)
+
+  return (
+    <div className="relative overflow-hidden p-7" style={{ background: 'rgba(8,20,12,0.7)', border: '1px solid rgba(93,255,168,0.18)' }}>
+
+      {/* ── Materialize scan — one-time on mount ── */}
+      <motion.div
+        initial={{ y: 0 }}
+        animate={{ y: 1200 }}
+        transition={{ duration: 0.85, delay: 0.06, ease: [0.22, 1, 0.36, 1] }}
+        style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 60, pointerEvents: 'none', zIndex: 4 }}
+      >
+        {/* Beam body */}
+        <div style={{
+          position: 'absolute', bottom: 0, left: 0, right: 0, height: 40,
+          background: 'linear-gradient(to bottom, transparent, rgba(93,255,168,0.05) 60%, rgba(93,255,168,0.09))',
+        }} />
+        {/* Leading edge */}
+        <div style={{
+          position: 'absolute', bottom: 0, left: 0, right: 0, height: 1.5,
+          background: 'linear-gradient(90deg, transparent 0%, rgba(93,255,168,0.4) 15%, rgba(93,255,168,0.95) 50%, rgba(93,255,168,0.4) 85%, transparent)',
+          boxShadow: '0 0 10px rgba(93,255,168,0.4), 0 0 3px rgba(93,255,168,0.8)',
+        }} />
+      </motion.div>
+
+      {/* ── Top panel shimmer ── */}
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, overflow: 'hidden', pointerEvents: 'none', zIndex: 2 }}>
+        <motion.div
+          style={{ height: '100%', width: '45%', background: 'linear-gradient(90deg, transparent, rgba(93,255,168,0.3) 50%, transparent)' }}
+          animate={{ x: ['-100%', '320%'] }}
+          transition={{ duration: 5, repeat: Infinity, repeatDelay: 5, ease: 'linear', delay: 1.2 }}
+        />
+      </div>
+
+      {/* Header */}
+      <div className="relative z-10 flex items-center justify-between mb-5">
+        <div className="flex items-center gap-2.5">
+          <motion.div
+            animate={{ opacity: [0.5, 1, 0.5] }}
+            transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+            style={{ width: 4, height: 16, borderRadius: 9999, background: '#5DFFA8' }}
+          />
+          <span className="text-[11px] uppercase tracking-widest"
+            style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(93,255,168,0.7)' }}>
+            Generated Prompt
+          </span>
+        </div>
+        <span className="text-[11px]" style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.4)' }}>
+          {tokenCount} tokens · {prompt.trim().split(/\s+/).length} words
+        </span>
+      </div>
+
+      {/* Anatomy tags — staggered spring */}
+      {anatomy.length > 0 && (
+        <div className="relative z-10 flex flex-wrap gap-1.5 mb-5">
+          {anatomy.map((a, i) => (
+            <motion.span key={a.label}
+              initial={{ opacity: 0, scale: 0.7, y: 6 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ type: 'spring', stiffness: 460, damping: 18, delay: 0.12 + i * 0.06 }}
+              className="text-[10px] px-2 py-0.5"
+              style={{
+                fontFamily: 'var(--font-jetbrains-mono)', borderRadius: '2px',
+                color: a.color,
+                border: `1px solid ${a.color}44`,
+                background: `${a.color}12`,
+              }}>
+              {a.label}
+            </motion.span>
+          ))}
+        </div>
+      )}
+
+      {/* Prompt text box */}
+      <div className="relative z-10 mb-6 p-4 overflow-hidden"
+        style={{ background: 'rgba(4,10,4,0.65)', border: '1px solid rgba(93,255,168,0.08)' }}>
+        <p className="text-sm leading-relaxed whitespace-pre-wrap"
+          style={{ fontFamily: 'var(--font-jetbrains-mono)', color: '#5DFFA8', lineHeight: '1.82' }}>
+          {prompt}
+        </p>
+        {/* Inner edge gradient */}
+        <div style={{
+          position: 'absolute', inset: 0, pointerEvents: 'none',
+          background: 'linear-gradient(to bottom, rgba(93,255,168,0.03) 0%, transparent 25%, transparent 75%, rgba(93,255,168,0.02) 100%)',
+        }} />
+        {/* Left accent line */}
+        <div style={{
+          position: 'absolute', left: 0, top: 0, bottom: 0, width: 2,
+          background: 'linear-gradient(to bottom, transparent, rgba(93,255,168,0.35) 30%, rgba(93,255,168,0.35) 70%, transparent)',
+        }} />
+      </div>
+
+      {/* What we engineered */}
+      {approach.length > 0 && (
+        <div className="relative z-10 mb-6 flex flex-col gap-3 pt-5" style={{ borderTop: '1px solid rgba(93,255,168,0.07)' }}>
+          <span className="text-[11px] uppercase tracking-[0.1em]"
+            style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(93,255,168,0.48)' }}>
+            {approachLabel}
+          </span>
+          {approach.map((a, i) => (
+            <motion.div key={i}
+              initial={{ opacity: 0, x: -8, filter: 'blur(3px)' }}
+              animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+              transition={{ delay: 0.2 + i * 0.1, duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+              className="flex items-start gap-3">
+              <span style={{ color: '#5DFFA8', opacity: 0.35, fontFamily: 'var(--font-jetbrains-mono)', fontSize: '11px', flexShrink: 0, marginTop: 2 }}>
+                {String(i + 1).padStart(2, '0')}
+              </span>
+              <p className="text-sm leading-relaxed" style={{ color: 'rgba(212,237,224,0.72)' }}>{a}</p>
+            </motion.div>
+          ))}
+        </div>
+      )}
+
+      {/* Actions */}
+      <div className="relative z-10 flex items-center gap-3 pt-4 flex-wrap" style={{ borderTop: '1px solid rgba(93,255,168,0.07)' }}>
+        <motion.button onClick={onCopy}
+          whileTap={{ scale: 0.96 }}
+          className="flex items-center gap-2 text-sm px-6 py-2.5 transition-colors"
+          style={{
+            fontFamily: 'var(--font-jetbrains-mono)', borderRadius: '2px',
+            color: copied ? '#5DFFA8' : '#D4EDE0',
+            background: copied ? 'rgba(93,255,168,0.08)' : 'rgba(93,255,168,0.07)',
+            border: `1px solid ${copied ? 'rgba(93,255,168,0.4)' : 'rgba(93,255,168,0.2)'}`,
+            transition: 'background 0.18s, border-color 0.18s, color 0.18s',
+          }}
+          onMouseEnter={e => { if (!copied) { e.currentTarget.style.background = 'rgba(93,255,168,0.13)'; e.currentTarget.style.borderColor = 'rgba(93,255,168,0.35)' } }}
+          onMouseLeave={e => { if (!copied) { e.currentTarget.style.background = 'rgba(93,255,168,0.07)'; e.currentTarget.style.borderColor = 'rgba(93,255,168,0.2)' } }}
+        >
+          {copied ? '✓ Copied' : 'Copy Prompt'}
+        </motion.button>
+        <button onClick={onExport}
+          className="text-sm px-4 py-2.5 transition-colors"
+          style={{
+            fontFamily: 'var(--font-jetbrains-mono)', borderRadius: '2px',
+            color: 'rgba(141,184,154,0.6)', border: '1px solid rgba(45,158,107,0.14)', background: 'transparent',
+            transition: 'background 0.18s, border-color 0.18s, color 0.18s',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(45,158,107,0.06)'; e.currentTarget.style.color = 'rgba(141,184,154,0.9)'; e.currentTarget.style.borderColor = 'rgba(45,158,107,0.28)' }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(141,184,154,0.6)'; e.currentTarget.style.borderColor = 'rgba(45,158,107,0.14)' }}
+        >
+          Export .txt
+        </button>
+        <button onClick={onRefineInManual}
+          className="flex items-center gap-2 text-sm px-4 py-2.5 ml-auto transition-all hover:opacity-75"
+          style={{
+            fontFamily: 'var(--font-jetbrains-mono)', borderRadius: '2px',
+            color: 'rgba(141,184,154,0.5)', border: '1px solid rgba(45,158,107,0.12)', background: 'transparent',
+          }}>
+          <Wrench size={12} strokeWidth={1.5} /> Refine in Manual
+        </button>
       </div>
     </div>
   )
@@ -394,7 +670,10 @@ export default function CraftPage() {
   // Mode toggle
   const [craftMode, setCraftMode] = useState<'manual' | 'ai'>('manual')
 
-  // AI Generate mode
+  // AI sub-mode: describe (free text) vs repo (GitHub URL)
+  const [aiSubMode, setAiSubMode] = useState<'describe' | 'repo'>('describe')
+
+  // AI Generate mode (describe)
   const [aiInput, setAiInput]             = useState('')
   const [aiLoading, setAiLoading]         = useState(false)
   const [aiStage, setAiStage]             = useState(0)
@@ -402,6 +681,16 @@ export default function CraftPage() {
   const [aiApproach, setAiApproach]       = useState<string[]>([])
   const [aiError, setAiError]             = useState('')
   const [aiCopied, setAiCopied]           = useState(false)
+
+  // AI Repo mode
+  const [repoUrl, setRepoUrl]           = useState('')
+  const [repoLoading, setRepoLoading]   = useState(false)
+  const [repoResult, setRepoResult]     = useState('')
+  const [repoApproach, setRepoApproach] = useState<string[]>([])
+  const [repoMeta, setRepoMeta]         = useState<RepoMeta | null>(null)
+  const [repoSummary, setRepoSummary]   = useState('')
+  const [repoError, setRepoError]       = useState('')
+  const [repoCopied, setRepoCopied]     = useState(false)
 
   // AI Improve
   const [isImproving, setIsImproving]         = useState(false)
@@ -416,6 +705,23 @@ export default function CraftPage() {
 
   const builderRef  = useRef<HTMLDivElement>(null)
   const addMenuRef  = useRef<HTMLDivElement>(null)
+
+  // Ambient forest spore particles — client-only to avoid SSR/hydration mismatch
+  const [particles, setParticles] = useState<Array<{
+    x: number; size: number; riseHeight: number; opacityPeak: number; duration: number; delay: number
+  }>>([])
+  useEffect(() => {
+    setParticles(
+      Array.from({ length: 24 }, () => ({
+        x: 3 + Math.random() * 94,
+        size: 1 + Math.random() * 1.6,
+        riseHeight: 240 + Math.random() * 260,
+        opacityPeak: 0.025 + Math.random() * 0.055,
+        duration: 10 + Math.random() * 16,
+        delay: Math.random() * 12,
+      }))
+    )
+  }, [])
 
   useEffect(() => { setHistory(getHistory()) }, [])
   const [vaultHasEntries, setVaultHasEntries] = useState(false)
@@ -500,6 +806,14 @@ export default function CraftPage() {
     return () => clearInterval(id)
   }, [aiLoading])
 
+  const [repoStage, setRepoStage] = useState(0)
+  useEffect(() => {
+    if (!repoLoading) { setRepoStage(0); return }
+    const id = setInterval(() => setRepoStage(s => (s + 1) % 4), 2200)
+    return () => clearInterval(id)
+  }, [repoLoading])
+
+
   const handleGenerate = async () => {
     if (!aiInput.trim() || aiLoading) return
     setAiLoading(true)
@@ -520,6 +834,33 @@ export default function CraftPage() {
       setAiError(err instanceof Error ? err.message : 'Something went wrong')
     } finally {
       setAiLoading(false)
+    }
+  }
+
+  const handleRepoAnalyze = async () => {
+    if (!repoUrl.trim() || repoLoading) return
+    setRepoLoading(true)
+    setRepoResult('')
+    setRepoApproach([])
+    setRepoMeta(null)
+    setRepoSummary('')
+    setRepoError('')
+    try {
+      const res = await fetch('/api/craft-repo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ repoUrl, apiKey: getUserApiKey() || undefined, provider: getUserProvider() }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Something went wrong')
+      setRepoResult(data.prompt)
+      setRepoApproach(data.approach)
+      setRepoMeta(data.repoMeta)
+      setRepoSummary(data.repoSummary)
+    } catch (err) {
+      setRepoError(err instanceof Error ? err.message : 'Something went wrong')
+    } finally {
+      setRepoLoading(false)
     }
   }
 
@@ -619,32 +960,86 @@ export default function CraftPage() {
       `}</style>
 
       {/* Background */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-[-120px] right-[10%] w-[440px] h-[440px] rounded-full"
-          style={{ background: 'radial-gradient(ellipse, rgba(45,158,107,0.04) 0%, transparent 70%)' }} />
-        <div className="absolute bottom-[-60px] left-[5%] w-[320px] h-[320px] rounded-full"
-          style={{ background: 'radial-gradient(ellipse, rgba(45,158,107,0.025) 0%, transparent 70%)' }} />
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        {/* Radial glows */}
+        <motion.div
+          className="absolute top-[-140px] right-[8%] w-[520px] h-[520px] rounded-full"
+          style={{ background: 'radial-gradient(ellipse, rgba(45,158,107,0.055) 0%, transparent 70%)' }}
+          animate={{ scale: [1, 1.08, 1], opacity: [0.7, 1, 0.7] }}
+          transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+        />
+        <motion.div
+          className="absolute bottom-[-80px] left-[3%] w-[380px] h-[380px] rounded-full"
+          style={{ background: 'radial-gradient(ellipse, rgba(45,158,107,0.035) 0%, transparent 70%)' }}
+          animate={{ scale: [1, 1.12, 1], opacity: [0.6, 1, 0.6] }}
+          transition={{ duration: 11, repeat: Infinity, ease: 'easeInOut', delay: 3 }}
+        />
+        <motion.div
+          className="absolute top-[40%] left-[40%] w-[300px] h-[300px] rounded-full"
+          style={{ background: 'radial-gradient(ellipse, rgba(93,255,168,0.012) 0%, transparent 70%)' }}
+          animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
+          transition={{ duration: 14, repeat: Infinity, ease: 'easeInOut', delay: 6 }}
+        />
+        {/* Rising spore particles */}
+        {particles.map((p, i) => (
+          <motion.div key={i}
+            style={{
+              position: 'absolute',
+              left: `${p.x}%`, bottom: 0,
+              width: p.size, height: p.size,
+              borderRadius: '50%',
+              background: '#5DFFA8',
+            }}
+            animate={{
+              y: [0, -p.riseHeight],
+              opacity: [0, p.opacityPeak, p.opacityPeak * 0.4, 0],
+            }}
+            transition={{
+              duration: p.duration,
+              delay: p.delay,
+              repeat: Infinity,
+              ease: 'linear',
+              times: [0, 0.25, 0.7, 1],
+            }}
+          />
+        ))}
       </div>
 
       <div className="relative z-10 px-4 sm:px-8 md:px-16 pt-24">
 
         {/* ─── Hero ─── */}
-        <motion.section className="mb-12"
-          initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
-          transition={{ type: 'spring', damping: 25, stiffness: 120, delay: 0.1 }}>
-          <p className="mb-3 text-xs tracking-[0.22em]"
-            style={{ fontFamily: 'var(--font-jetbrains-mono)', color: '#2D9E6B' }}>
+        <section className="mb-12">
+          <motion.p
+            className="mb-3 text-xs tracking-[0.22em]"
+            style={{ fontFamily: 'var(--font-jetbrains-mono)', color: '#2D9E6B' }}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: [0, 0.4, 1, 0.7, 1], y: 0 }}
+            transition={{ duration: 0.7, delay: 0.05, times: [0, 0.3, 0.55, 0.7, 1] }}>
             // compose · analyze · iterate
-          </p>
-          <h1 className="font-heading font-semibold leading-tight tracking-tight"
-            style={{ fontSize: 'clamp(1.8rem, 3.8vw, 2.8rem)' }}>
+          </motion.p>
+          <motion.h1
+            className="font-heading font-semibold leading-tight tracking-tight"
+            style={{ fontSize: 'clamp(1.8rem, 3.8vw, 2.8rem)' }}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ type: 'spring', damping: 26, stiffness: 130, delay: 0.12 }}>
             <span style={{ color: '#D4EDE0' }}>Prompt</span>{' '}
-            <span style={{ color: '#2D9E6B' }}>Workshop</span>
-          </h1>
-          <p className="mt-3 text-base leading-relaxed" style={{ color: 'rgba(141,184,154,0.72)', maxWidth: '460px' }}>
+            <motion.span
+              style={{ color: '#2D9E6B', display: 'inline-block' }}
+              animate={{ textShadow: ['0 0 0px rgba(45,158,107,0)', '0 0 18px rgba(45,158,107,0.4)', '0 0 0px rgba(45,158,107,0)'] }}
+              transition={{ duration: 3.5, delay: 0.8, repeat: Infinity, repeatDelay: 5 }}>
+              Workshop
+            </motion.span>
+          </motion.h1>
+          <motion.p
+            className="mt-3 text-base leading-relaxed"
+            style={{ color: 'rgba(141,184,154,0.72)', maxWidth: '460px' }}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ type: 'spring', damping: 28, stiffness: 120, delay: 0.22 }}>
             Build with technique blocks. Score with live DNA. Copy what actually works.
-          </p>
-        </motion.section>
+          </motion.p>
+        </section>
 
         {/* ─── Mode Toggle ─── */}
         <motion.div
@@ -652,40 +1047,58 @@ export default function CraftPage() {
           initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
           transition={{ type: 'spring', damping: 25, stiffness: 120, delay: 0.18 }}
         >
-          <div className="flex" style={{ border: '1px solid rgba(45,158,107,0.18)', borderRadius: '3px', overflow: 'hidden' }}>
+          <div className="flex relative" style={{ border: '1px solid rgba(45,158,107,0.18)', borderRadius: '3px', overflow: 'hidden' }}>
             <button
               onClick={() => setCraftMode('manual')}
-              className="flex items-center gap-2 px-5 py-2.5 text-xs transition-all"
+              className="relative flex items-center gap-2 px-5 py-2.5 text-xs"
               style={{
                 fontFamily: 'var(--font-jetbrains-mono)',
-                ...(craftMode === 'manual'
-                  ? { color: '#080D08', background: '#2D9E6B' }
-                  : { color: 'rgba(141,184,154,0.5)', background: 'transparent' }
-                ),
+                color: craftMode === 'manual' ? '#080D08' : 'rgba(141,184,154,0.5)',
+                zIndex: 1,
+                transition: 'color 0.18s',
               }}
             >
+              {craftMode === 'manual' && (
+                <motion.div layoutId="craft-mode-pill"
+                  style={{ position: 'absolute', inset: 0, background: '#2D9E6B', zIndex: -1 }}
+                  transition={{ type: 'spring', stiffness: 520, damping: 34 }}
+                />
+              )}
               <Wrench size={12} strokeWidth={1.5} />
               Manual
             </button>
             <button
               onClick={() => setCraftMode('ai')}
-              className="flex items-center gap-2 px-5 py-2.5 text-xs transition-all"
+              className="relative flex items-center gap-2 px-5 py-2.5 text-xs"
               style={{
                 fontFamily: 'var(--font-jetbrains-mono)',
                 borderLeft: '1px solid rgba(45,158,107,0.18)',
-                ...(craftMode === 'ai'
-                  ? { color: '#080D08', background: '#5DFFA8' }
-                  : { color: 'rgba(141,184,154,0.5)', background: 'transparent' }
-                ),
+                color: craftMode === 'ai' ? '#080D08' : 'rgba(141,184,154,0.5)',
+                zIndex: 1,
+                transition: 'color 0.18s',
               }}
             >
+              {craftMode === 'ai' && (
+                <motion.div layoutId="craft-mode-pill"
+                  style={{ position: 'absolute', inset: 0, background: '#5DFFA8', zIndex: -1 }}
+                  transition={{ type: 'spring', stiffness: 520, damping: 34 }}
+                />
+              )}
               <Sparkles size={12} strokeWidth={1.5} />
               AI
             </button>
           </div>
-          <span className="ml-3 text-[11px]" style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.5)' }}>
-            {craftMode === 'manual' ? '— block-by-block control' : '— describe it, we engineer it'}
-          </span>
+          <AnimatePresence mode="wait">
+            <motion.span key={craftMode}
+              initial={{ opacity: 0, filter: 'blur(4px)', y: 4 }}
+              animate={{ opacity: 1, filter: 'blur(0px)', y: 0 }}
+              exit={{ opacity: 0, filter: 'blur(4px)', y: -4 }}
+              transition={{ duration: 0.2 }}
+              className="ml-3 text-[11px]"
+              style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.5)' }}>
+              {craftMode === 'manual' ? '— block-by-block control' : '— describe it, we engineer it'}
+            </motion.span>
+          </AnimatePresence>
         </motion.div>
 
         {/* ─── Template Strip ─── */}
@@ -728,18 +1141,63 @@ export default function CraftPage() {
             transition={{ type: 'spring', damping: 28, stiffness: 200 }}
             className="flex flex-col gap-6"
           >
-            {/* Input area */}
+            {/* Sub-mode tabs: Describe | From Repo */}
+            <div className="flex items-center gap-1"
+              style={{ borderBottom: '1px solid rgba(45,158,107,0.1)' }}>
+              {([
+                { id: 'describe', label: 'Describe', icon: <Sparkles size={11} strokeWidth={1.5} /> },
+                { id: 'repo',    label: 'From Repo', icon: <Github size={11} strokeWidth={1.5} /> },
+              ] as const).map(tab => (
+                <button key={tab.id} onClick={() => setAiSubMode(tab.id)}
+                  className="relative flex items-center gap-1.5 px-4 py-2.5 text-[11px]"
+                  style={{
+                    fontFamily: 'var(--font-jetbrains-mono)',
+                    color: aiSubMode === tab.id ? '#5DFFA8' : 'rgba(141,184,154,0.5)',
+                    marginBottom: '-1px',
+                    transition: 'color 0.18s',
+                  }}>
+                  {tab.icon} {tab.label}
+                  {aiSubMode === tab.id && (
+                    <motion.div layoutId="ai-sub-tab-bar"
+                      style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 2, background: '#5DFFA8', borderRadius: '1px 1px 0 0' }}
+                      transition={{ type: 'spring', stiffness: 600, damping: 36 }}
+                    />
+                  )}
+                </button>
+              ))}
+              <AnimatePresence mode="wait">
+                <motion.span key={aiSubMode}
+                  initial={{ opacity: 0, y: 3 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -3 }}
+                  transition={{ duration: 0.18 }}
+                  className="ml-auto text-[10px] pb-2.5"
+                  style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.28)' }}>
+                  {aiSubMode === 'describe' ? 'describe it → we engineer it' : 'paste a GitHub URL → we read the repo'}
+                </motion.span>
+              </AnimatePresence>
+            </div>
+
+            <AnimatePresence mode="wait">
+            {aiSubMode === 'describe' ? (
+            <motion.div key="describe-panel"
+              initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.18 }}
+            >
+            {/* Describe input */}
             <motion.div className="p-7 relative overflow-hidden"
               style={{ background: 'rgba(13,21,13,0.55)', border: '1px solid rgba(45,158,107,0.12)' }}
               animate={aiLoading ? {
-                boxShadow: [
-                  '0 0 0px rgba(93,255,168,0)',
-                  '0 0 28px rgba(93,255,168,0.07), inset 0 0 40px rgba(93,255,168,0.02)',
-                  '0 0 0px rgba(93,255,168,0)',
-                ],
+                boxShadow: ['0 0 0px rgba(93,255,168,0)', '0 0 32px rgba(93,255,168,0.08), inset 0 0 60px rgba(93,255,168,0.025)', '0 0 0px rgba(93,255,168,0)'],
               } : { boxShadow: '0 0 0px rgba(93,255,168,0)' }}
-              transition={aiLoading ? { duration: 2.4, repeat: Infinity, ease: 'easeInOut' } : { duration: 0.6 }}
+              transition={aiLoading ? { duration: 2.6, repeat: Infinity, ease: 'easeInOut' } : { duration: 0.5 }}
             >
+              {/* Top shimmer */}
+              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, overflow: 'hidden', pointerEvents: 'none', zIndex: 2 }}>
+                <motion.div
+                  style={{ height: '100%', width: '40%', background: 'linear-gradient(90deg, transparent, rgba(45,158,107,0.4) 50%, transparent)' }}
+                  animate={{ x: ['-100%', '350%'] }}
+                  transition={{ duration: 7, repeat: Infinity, repeatDelay: 6, ease: 'linear' }}
+                />
+              </div>
               <AnimatePresence>{aiLoading && <CraftLoadingOverlay />}</AnimatePresence>
               <div className="flex items-center gap-2.5 mb-5">
                 <div className="w-1 h-4 rounded-full" style={{ background: '#5DFFA8', opacity: 0.45 }} />
@@ -754,11 +1212,8 @@ export default function CraftPage() {
               </div>
               <textarea
                 className="w-full bg-transparent text-sm leading-relaxed resize-none focus:outline-none"
-                style={{
-                  fontFamily: 'var(--font-dm-sans)', color: '#D4EDE0',
-                  minHeight: '140px',
-                }}
-                placeholder={"I want an AI that reviews my pull request and gives me specific feedback on code quality, potential bugs, and anything that looks like a security issue. Should be blunt, not nice."}
+                style={{ fontFamily: 'var(--font-dm-sans)', color: '#D4EDE0', minHeight: '140px' }}
+                placeholder="I want an AI that reviews my pull request and gives me specific feedback on code quality, potential bugs, and anything that looks like a security issue. Should be blunt, not nice."
                 value={aiInput}
                 onChange={e => { setAiInput(e.target.value); setAiResult(''); setAiApproach([]); setAiError('') }}
                 onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleGenerate() }}
@@ -788,17 +1243,14 @@ export default function CraftPage() {
                   }}
                 >
                   {aiLoading && (
-                    <motion.div
-                      animate={{ opacity: [0, 0.15, 0] }}
-                      transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
+                    <motion.div animate={{ opacity: [0, 0.15, 0] }} transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
                       style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'radial-gradient(ellipse at center, rgba(93,255,168,0.3) 0%, transparent 70%)' }}
                     />
                   )}
-                  {aiLoading ? (
-                    <LoadingButtonContent stage={aiStage} />
-                  ) : (
-                    <span className="relative z-10 flex items-center gap-2"><Sparkles size={13} strokeWidth={1.5} /> Generate Prompt</span>
-                  )}
+                  {aiLoading
+                    ? <LoadingButtonContent stage={aiStage} />
+                    : <span className="relative z-10 flex items-center gap-2"><Sparkles size={13} strokeWidth={1.5} /> Generate Prompt</span>
+                  }
                 </button>
               </div>
               {aiError && (
@@ -809,109 +1261,173 @@ export default function CraftPage() {
               )}
             </motion.div>
 
-            {/* Generated result */}
+            {/* Describe result */}
             <AnimatePresence>
             {aiResult && (
               <motion.div
                 initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }}
                 transition={{ type: 'spring', damping: 28, stiffness: 200 }}
-                className="p-7"
-                style={{ background: 'rgba(8,20,12,0.7)', border: '1px solid rgba(93,255,168,0.18)' }}
+                className="mt-6"
               >
-                <div className="flex items-center justify-between mb-5">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-1 h-4 rounded-full" style={{ background: '#5DFFA8', opacity: 0.6 }} />
-                    <span className="text-[11px] uppercase tracking-widest"
-                      style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(93,255,168,0.7)' }}>
-                      Generated Prompt
-                    </span>
-                  </div>
-                  <span className="text-[11px]" style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.6)' }}>
-                    {Math.round(aiResult.length / 4)} tokens
-                  </span>
-                </div>
-
-                <p className="text-sm leading-relaxed mb-6 whitespace-pre-wrap"
-                  style={{ fontFamily: 'var(--font-jetbrains-mono)', color: '#5DFFA8', lineHeight: '1.75' }}>
-                  {aiResult}
-                </p>
-
-                {aiApproach.length > 0 && (
-                  <div className="mb-6 flex flex-col gap-2.5 pt-5" style={{ borderTop: '1px solid rgba(93,255,168,0.08)' }}>
-                    <span className="text-[11px] uppercase tracking-[0.08em] mb-1"
-                      style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(93,255,168,0.62)' }}>
-                      What we engineered
-                    </span>
-                    {aiApproach.map((a, i) => (
-                      <motion.div key={i}
-                        initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: i * 0.08 }}
-                        className="flex items-start gap-3">
-                        <span style={{ color: '#5DFFA8', opacity: 0.45, fontFamily: 'var(--font-jetbrains-mono)', fontSize: '11px', flexShrink: 0, marginTop: 1 }}>
-                          {String(i + 1).padStart(2, '0')}
-                        </span>
-                        <p className="text-sm leading-relaxed" style={{ color: 'rgba(212,237,224,0.78)' }}>{a}</p>
-                      </motion.div>
-                    ))}
-                  </div>
-                )}
-
-                <div className="flex items-center gap-3 pt-4" style={{ borderTop: '1px solid rgba(93,255,168,0.08)' }}>
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(aiResult)
-                      setAiCopied(true)
-                      setTimeout(() => setAiCopied(false), 2200)
-                    }}
-                    className="flex items-center gap-2 text-sm px-6 py-2.5 transition-all"
-                    style={{
-                      fontFamily: 'var(--font-jetbrains-mono)', borderRadius: '2px',
-                      color: aiCopied ? '#5DFFA8' : '#D4EDE0',
-                      background: aiCopied ? 'rgba(93,255,168,0.07)' : 'rgba(93,255,168,0.08)',
-                      border: `1px solid ${aiCopied ? 'rgba(93,255,168,0.35)' : 'rgba(93,255,168,0.2)'}`,
-                    }}
-                    onMouseEnter={e => { if (!aiCopied) { e.currentTarget.style.background = 'rgba(93,255,168,0.14)'; e.currentTarget.style.borderColor = 'rgba(93,255,168,0.32)' } }}
-                    onMouseLeave={e => { if (!aiCopied) { e.currentTarget.style.background = 'rgba(93,255,168,0.08)'; e.currentTarget.style.borderColor = 'rgba(93,255,168,0.2)' } }}
-                  >
-                    {aiCopied ? '✓ Copied' : 'Copy Prompt'}
-                  </button>
-                  <button
-                    onClick={() => {
-                      const blob = new Blob([aiResult], { type: 'text/plain' })
-                      const url = URL.createObjectURL(blob)
-                      const a = document.createElement('a')
-                      a.href = url; a.download = `craft-ai-${Date.now()}.txt`; a.click()
-                      URL.revokeObjectURL(url)
-                    }}
-                    className="text-sm px-4 py-2.5 transition-all"
-                    style={{
-                      fontFamily: 'var(--font-jetbrains-mono)', borderRadius: '2px',
-                      color: 'rgba(141,184,154,0.6)', border: '1px solid rgba(45,158,107,0.14)', background: 'transparent',
-                    }}
-                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(45,158,107,0.06)'; e.currentTarget.style.color = 'rgba(141,184,154,0.9)'; e.currentTarget.style.borderColor = 'rgba(45,158,107,0.25)' }}
-                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(141,184,154,0.6)'; e.currentTarget.style.borderColor = 'rgba(45,158,107,0.14)' }}
-                  >
-                    Export .txt
-                  </button>
-                  <button
-                    onClick={() => {
-                      setCraftMode('manual')
-                      const tmpl: Block[] = [
-                        { id: uid(), type: 'objective', content: aiInput },
-                      ]
-                      setBlocks(tmpl)
-                    }}
-                    className="flex items-center gap-2 text-sm px-4 py-2.5 ml-auto transition-all hover:opacity-80"
-                    style={{
-                      fontFamily: 'var(--font-jetbrains-mono)', borderRadius: '2px',
-                      color: 'rgba(141,184,154,0.55)', border: '1px solid rgba(45,158,107,0.14)', background: 'transparent',
-                    }}>
-                    <Wrench size={12} strokeWidth={1.5} /> Refine in Manual
-                  </button>
-                </div>
+                <PromptResultCard
+                  prompt={aiResult}
+                  approach={aiApproach}
+                  copied={aiCopied}
+                  onCopy={() => { navigator.clipboard.writeText(aiResult); setAiCopied(true); setTimeout(() => setAiCopied(false), 2200) }}
+                  onExport={() => {
+                    const blob = new Blob([aiResult], { type: 'text/plain' })
+                    const url = URL.createObjectURL(blob); const a = document.createElement('a')
+                    a.href = url; a.download = `craft-ai-${Date.now()}.txt`; a.click(); URL.revokeObjectURL(url)
+                  }}
+                  onRefineInManual={() => { setCraftMode('manual'); setBlocks([{ id: uid(), type: 'objective', content: aiInput }]) }}
+                />
               </motion.div>
             )}
             </AnimatePresence>
+            </motion.div>
+
+            ) : (
+
+            <motion.div key="repo-panel"
+              initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.18 }}
+              className="flex flex-col gap-6"
+            >
+            {/* Repo URL input */}
+            <motion.div className="p-7 relative overflow-hidden"
+              style={{ background: 'rgba(13,21,13,0.55)', border: '1px solid rgba(45,158,107,0.12)' }}
+              animate={repoLoading ? {
+                boxShadow: ['0 0 0px rgba(93,255,168,0)', '0 0 32px rgba(93,255,168,0.08), inset 0 0 60px rgba(93,255,168,0.025)', '0 0 0px rgba(93,255,168,0)'],
+              } : { boxShadow: '0 0 0px rgba(93,255,168,0)' }}
+              transition={repoLoading ? { duration: 2.6, repeat: Infinity, ease: 'easeInOut' } : { duration: 0.5 }}
+            >
+              {/* Top shimmer */}
+              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, overflow: 'hidden', pointerEvents: 'none', zIndex: 2 }}>
+                <motion.div
+                  style={{ height: '100%', width: '40%', background: 'linear-gradient(90deg, transparent, rgba(45,158,107,0.4) 50%, transparent)' }}
+                  animate={{ x: ['-100%', '350%'] }}
+                  transition={{ duration: 7, repeat: Infinity, repeatDelay: 6, ease: 'linear', delay: 3.5 }}
+                />
+              </div>
+              <AnimatePresence>{repoLoading && <CraftLoadingOverlay />}</AnimatePresence>
+              <div className="flex items-center gap-2.5 mb-2">
+                <div className="w-1 h-4 rounded-full" style={{ background: '#5DFFA8', opacity: 0.45 }} />
+                <span className="text-[11px] uppercase tracking-widest"
+                  style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.72)' }}>
+                  GitHub Repository
+                </span>
+              </div>
+              <p className="text-[11px] mb-5" style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.45)' }}>
+                Paste any public GitHub repo URL. We read the README, file tree, and tech stack — then craft a system prompt tailored to that exact codebase.
+              </p>
+              <div className="flex items-center gap-3"
+                style={{ background: 'rgba(8,13,8,0.6)', border: '1px solid rgba(45,158,107,0.18)', borderRadius: '2px', padding: '10px 14px' }}>
+                <Github size={14} strokeWidth={1.5} style={{ color: 'rgba(93,255,168,0.5)', flexShrink: 0 }} />
+                <input
+                  type="url"
+                  className="flex-1 bg-transparent text-sm focus:outline-none"
+                  style={{ fontFamily: 'var(--font-jetbrains-mono)', color: '#D4EDE0', minWidth: 0 }}
+                  placeholder="https://github.com/owner/repository"
+                  value={repoUrl}
+                  onChange={e => { setRepoUrl(e.target.value); setRepoResult(''); setRepoError('') }}
+                  onKeyDown={e => { if (e.key === 'Enter') handleRepoAnalyze() }}
+                />
+              </div>
+              <div className="flex items-center justify-between mt-4 pt-4" style={{ borderTop: '1px solid rgba(45,158,107,0.07)' }}>
+                <div className="flex items-center gap-4 text-[10px]" style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.4)' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><GitBranch size={10} strokeWidth={1.5} /> public repos only</span>
+                  <span>· Enter to analyze</span>
+                </div>
+                <button
+                  onClick={handleRepoAnalyze}
+                  disabled={!repoUrl.trim().includes('github.com') || repoLoading}
+                  className="flex items-center gap-2.5 text-sm px-6 py-2.5 relative overflow-hidden transition-all disabled:opacity-30"
+                  style={{
+                    fontFamily: 'var(--font-jetbrains-mono)', borderRadius: '2px',
+                    color: repoLoading ? '#5DFFA8' : '#080D08',
+                    background: repoLoading ? 'rgba(93,255,168,0.04)' : '#5DFFA8',
+                    border: `1px solid ${repoLoading ? 'rgba(93,255,168,0.35)' : '#5DFFA8'}`,
+                  }}
+                >
+                  {repoLoading && (
+                    <motion.div animate={{ opacity: [0, 0.15, 0] }} transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
+                      style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'radial-gradient(ellipse at center, rgba(93,255,168,0.3) 0%, transparent 70%)' }}
+                    />
+                  )}
+                  {repoLoading
+                    ? <LoadingButtonContent stage={repoStage} stages={REPO_STAGES} />
+                    : <span className="relative z-10 flex items-center gap-2"><Github size={13} strokeWidth={1.5} /> Analyze Repo</span>
+                  }
+                </button>
+              </div>
+              {repoError && (
+                <div className="mt-3 flex items-start gap-2.5">
+                  <OctagonX size={13} strokeWidth={1.5} style={{ color: '#C47A5A', flexShrink: 0, marginTop: 2 }} />
+                  <p className="text-sm" style={{ color: 'rgba(196,122,90,0.8)' }}>{repoError}</p>
+                </div>
+              )}
+            </motion.div>
+
+            {/* Repo result */}
+            <AnimatePresence>
+            {repoResult && repoMeta && (
+              <motion.div
+                initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }}
+                transition={{ type: 'spring', damping: 28, stiffness: 200 }}
+                className="flex flex-col gap-4"
+              >
+                {/* Repo info pill */}
+                <div className="flex flex-wrap items-center gap-3 px-4 py-3"
+                  style={{ background: 'rgba(8,13,8,0.8)', border: '1px solid rgba(45,158,107,0.18)', borderRadius: '2px' }}>
+                  <div className="flex items-center gap-2">
+                    <Github size={13} strokeWidth={1.5} style={{ color: 'rgba(93,255,168,0.6)' }} />
+                    <span className="text-[12px] font-medium" style={{ fontFamily: 'var(--font-jetbrains-mono)', color: '#5DFFA8' }}>
+                      {repoMeta.fullName}
+                    </span>
+                  </div>
+                  <div className="h-3 w-px" style={{ background: 'rgba(45,158,107,0.25)' }} />
+                  <span className="text-[11px]" style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.6)' }}>
+                    {repoMeta.language}
+                  </span>
+                  {repoMeta.stars > 0 && <>
+                    <div className="h-3 w-px" style={{ background: 'rgba(45,158,107,0.25)' }} />
+                    <span className="flex items-center gap-1 text-[11px]" style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.6)' }}>
+                      <Star size={10} strokeWidth={1.5} /> {repoMeta.stars.toLocaleString()}
+                    </span>
+                  </>}
+                  {repoMeta.fileCount > 0 && <>
+                    <div className="h-3 w-px" style={{ background: 'rgba(45,158,107,0.25)' }} />
+                    <span className="text-[11px]" style={{ fontFamily: 'var(--font-jetbrains-mono)', color: 'rgba(141,184,154,0.6)' }}>
+                      {repoMeta.fileCount} files
+                    </span>
+                  </>}
+                  {repoSummary && (
+                    <p className="w-full mt-1 text-[11px] leading-relaxed" style={{ fontFamily: 'var(--font-dm-sans)', color: 'rgba(141,184,154,0.55)' }}>
+                      {repoSummary}
+                    </p>
+                  )}
+                </div>
+
+                <PromptResultCard
+                  prompt={repoResult}
+                  approach={repoApproach}
+                  copied={repoCopied}
+                  onCopy={() => { navigator.clipboard.writeText(repoResult); setRepoCopied(true); setTimeout(() => setRepoCopied(false), 2200) }}
+                  onExport={() => {
+                    const blob = new Blob([repoResult], { type: 'text/plain' })
+                    const url = URL.createObjectURL(blob); const a = document.createElement('a')
+                    a.href = url; a.download = `craft-repo-${repoMeta.name}-${Date.now()}.txt`; a.click(); URL.revokeObjectURL(url)
+                  }}
+                  onRefineInManual={() => { setCraftMode('manual'); setBlocks([{ id: uid(), type: 'context', content: repoResult }]) }}
+                  approachLabel="What we inferred from the repo"
+                />
+              </motion.div>
+            )}
+            </AnimatePresence>
+            </motion.div>
+            )}
+            </AnimatePresence>
+
           </motion.div>
         )}
         </AnimatePresence>
